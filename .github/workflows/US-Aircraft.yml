@@ -1,8 +1,9 @@
 name: Monthly US Aircraft Scraper
 
 on:
-  # Runs on pushes targeting the default branch
-  push:
+push:
+  schedule:
+    - cron: '0 0 1 * *'
   workflow_dispatch:
 
 jobs:
@@ -30,8 +31,12 @@ jobs:
       - name: Check for changes
         id: git-check
         run: |
-          git add data/us_aircraft.csv
-          git diff --cached --quiet || echo "changes=true" >> $GITHUB_OUTPUT
+          if [ -f "data/us_aircraft.csv" ]; then
+            git add data/us_aircraft.csv
+            git diff --cached --quiet || echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "No CSV file found, skipping commit"
+          fi
       
       - name: Commit and push if changes
         if: steps.git-check.outputs.changes == 'true'
