@@ -2,9 +2,8 @@ name: Monthly US Aircraft Scraper
 
 on:
   schedule:
-    # Run on the 1st of every month at 00:00 UTC
     - cron: '0 0 1 * *'
-     push:
+    push:
   workflow_dispatch:
 
 jobs:
@@ -12,59 +11,56 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
       
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install requests beautifulsoup4 pandas lxml
-        
-    - name: Run scraper
-      run: |
-        python scrape_us_aircraft.py
-        
-    - name: Check for changes
-      id: git-check
-      run: |
-        git add data/us_aircraft.csv
-        git diff --cached --quiet || echo "changes=true" >> $GITHUB_OUTPUT
-        
-    - name: Commit and push if changes
-      if: steps.git-check.outputs.changes == 'true'
-      run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git add data/
-        git commit -m "Update US military aircraft data - $(date +'%B %Y')"
-        git push
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Create summary
-      run: |
-        echo "## US Military Aircraft Scraper Results" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Run Date:** $(date +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        if [ "${{ steps.git-check.outputs.changes }}" == "true" ]; then
-          echo "✅ New data collected and committed" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "ℹ️ No changes detected" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Files Updated" >> $GITHUB_STEP_SUMMARY
-        find data/ -name "us_aircraft.csv" -type f -mmin -5 -ls | awk '{print "- " $11}' >> $GITHUB_STEP_SUMMARY
-        
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Data Summary" >> $GITHUB_STEP_SUMMARY
-        if [ -f "data/us_aircraft.csv" ]; then
-          echo "**Total aircraft records:** $(tail -n +2 data/us_aircraft.csv | wc -l)" >> $GITHUB_STEP_SUMMARY
-        fi
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 pandas lxml
+      
+      - name: Run scraper
+        run: |
+          python scrape_us_aircraft.py
+      
+      - name: Check for changes
+        id: git-check
+        run: |
+          git add data/us_aircraft.csv
+          git diff --cached --quiet || echo "changes=true" >> $GITHUB_OUTPUT
+      
+      - name: Commit and push if changes
+        if: steps.git-check.outputs.changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/
+          git commit -m "Update US military aircraft data - $(date +'%B %Y')"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create summary
+        run: |
+          echo "## US Military Aircraft Scraper Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run Date:** $(date +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.git-check.outputs.changes }}" == "true" ]; then
+            echo "✅ New data collected and committed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ No changes detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Files Updated" >> $GITHUB_STEP_SUMMARY
+          find data/ -name "us_aircraft.csv" -type f -mmin -5 -ls | awk '{print "- " $11}' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Data Summary" >> $GITHUB_STEP_SUMMARY
+          if [ -f "data/us_aircraft.csv" ]; then
+            echo "**Total aircraft records:** $(tail -n +2 data/us_aircraft.csv | wc -l)" >> $GITHUB_STEP_SUMMARY
+          fi
