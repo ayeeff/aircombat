@@ -1,5 +1,5 @@
 const data = [
-    {rank: 1, country: "United States", countryCode: "us", aircraft: "F-22A (20) + F-35A Blk-4 (25) + F-15EX (15)", missile: "AIM-120D-3 (180) / AIM-260 (230)", A: 98, B: 96, C: 92, D: 99, E: 97, F: 93, G: 95, LI: 95.9, FPS: 5751},
+    {rank: 1, country: "United States", countryCode: "us", aircraft: "F-22A (20) + F-35A Blk-4 (25) + F-15EX (15)", missile: "AIM-120D-3 (180) / AIM-260 (230)", A: 98, B: 96, C: 92, D: 99, E: 97, F: 93, G: 95, LI: 95.8, FPS: 5751},
     {rank: 2, country: "Russia", countryCode: "ru", aircraft: "Su-57 (12) + Su-35S (28) + Su-30SM2 (20)", missile: "R-77M (200) / R-37M (400)", A: 95, B: 88, C: 100, D: 96, E: 94, F: 85, G: 95, LI: 94.6, FPS: 5678},
     {rank: 3, country: "China", countryCode: "cn", aircraft: "J-20A (40) + J-35A (20)", missile: "PL-15 (200) / PL-21 (300)", A: 97, B: 90, C: 94, D: 97, E: 89, F: 88, G: 100, LI: 94.3, FPS: 5660},
     {rank: 4, country: "Israel", countryCode: "il", aircraft: "F-35I (39) + F-15IA (21)", missile: "AIM-120D-3 (180) + Rampage ALBM (250)", A: 96, B: 95, C: 88, D: 97, E: 97, F: 90, G: 90, LI: 93.4, FPS: 5604},
@@ -11,14 +11,14 @@ const data = [
     {rank: 10, country: "Italy", countryCode: "it", aircraft: "F-35A/B (28) + Typhoon T4 (32)", missile: "AIM-120D-3 (180) / Meteor (150)", A: 92, B: 90, C: 86, D: 92, E: 90, F: 85, G: 80, LI: 88.6, FPS: 5316},
     {rank: 11, country: "France", countryCode: "fr", aircraft: "Rafale F4 (36) + F3R (24)", missile: "Meteor (150) / MICA-NG (100)", A: 93, B: 89, C: 84, D: 93, E: 91, F: 86, G: 80, LI: 88.5, FPS: 5311},
     {rank: 12, country: "Canada", countryCode: "ca", aircraft: "CF-18A/B (60)", missile: "AIM-120C-7 (120)", A: 92, B: 88, C: 85, D: 92, E: 90, F: 88, G: 65, LI: 86.7, FPS: 5204},
-    {rank: 13, country: "Germany", countryCode: "de", aircraft: "Eurofighter T4 (40) + Tornado ECR (20)", missile: "Meteor (150) / AIM-120C-5 (105)", A: 86, B: 78, C: 84, D: 88, E: 86, F: 83, G: 80, LI: 83.9, FPS: 5034},
-    {rank: 14, country: "Pakistan", countryCode: "pk", aircraft: "J-10C (20) + JF-17C (26) + F-16AM-52+ (14)", missile: "PL-15E (200) / AIM-120C-5 (105)", A: 88, B: 75, C: 84, D: 85, E: 78, F: 85, G: 70, LI: 81.8, FPS: 4905},
-    {rank: 15, country: "Turkey", countryCode: "tr", aircraft: "F-16C/D Block-70 (35) + F-4E-2020 (25)", missile: "AIM-120C-7 (120)", A: 82, B: 76, C: 81, D: 78, E: 80, F: 82, G: 98, LI: 81.7, FPS: 4900},
-    {rank: 16, country: "Spain", countryCode: "es", aircraft: "EF-18M (40) + Eurofighter T4 (20)", missile: "AIM-120C-7 (120) / Meteor (150)", A: 83, B: 76, C: 83, D: 85, E: 83, F: 80, G: 70, LI: 80.8, FPS: 4848},
-    {rank: 17, country: "Thailand", countryCode: "th", aircraft: "F-16A/B MLU (48) + JAS-39C/D (12)", missile: "AIM-120C (105) / Meteor (150)", A: 85, B: 82, C: 83, D: 82, E: 82, F: 82, G: 60, LI: 80.7, FPS: 4842},
-    {rank: 18, country: "Iran", countryCode: "ir", aircraft: "F-14A/AM (41) + F-4E (19)", missile: "Fakour-90 (190)", A: 78, B: 72, C: 88, D: 68, E: 75, F: 72, G: 100, LI: 79.5, FPS: 4767},
-    {rank: 19, country: "India", countryCode: "in", aircraft: "Rafale F3R (36) + Su-30MKI Super-30 (24)", missile: "Meteor (150) / RVV-AE-PD (120)", A: 80, B: 80, C: 83, D: 73, E: 80, F: 80, G: 75, LI: 79.1, FPS: 4748},
-    {rank: 20, country: "Saudi Arabia", countryCode: "sa", aircraft: "F-15SA (40) + Typhoon T3 (20)", missile: "AIM-120C-7 (120) / Meteor (150)", A: 82, B: 78, C: 83, D: 79, E: 80, F: 82, G: 55, LI: 78.3, FPS: 4696}
+    {rank: 13, country: "Germany", countryCode: "de", aircraft: "Eurofighter T4 (40) + Tornado ECR (20)", missile: "Meteor (150) / AIM-120C-5 (105)", A: 84, B: 76, C: 81, D: 85, E: 84, F: 80, G: 80, LI: 81.7, FPS: 4901},
+    {rank: 14, country: "Turkey", countryCode: "tr", aircraft: "F-16C/D Block-70 (35) + F-4E-2020 (25)", missile: "AIM-120C-7 (120)", A: 80, B: 74, C: 78, D: 75, E: 78, F: 80, G: 98, LI: 79.5, FPS: 4770},
+    {rank: 15, country: "Pakistan", countryCode: "pk", aircraft: "J-10C (20) + JF-17C (26) + F-16AM-52+ (14)", missile: "PL-15E (200) / AIM-120C-5 (105)", A: 85, B: 72, C: 81, D: 82, E: 75, F: 82, G: 70, LI: 79.0, FPS: 4743},
+    {rank: 16, country: "Thailand", countryCode: "th", aircraft: "F-16A/B MLU (48) + JAS-39C/D (12)", missile: "AIM-120C (105) / Meteor (150)", A: 82, B: 80, C: 80, D: 80, E: 80, F: 80, G: 60, LI: 78.5, FPS: 4707},
+    {rank: 17, country: "Spain", countryCode: "es", aircraft: "EF-18M (40) + Eurofighter T4 (20)", missile: "AIM-120C-7 (120) / Meteor (150)", A: 80, B: 74, C: 80, D: 82, E: 80, F: 78, G: 70, LI: 78.3, FPS: 4698},
+    {rank: 18, country: "Iran", countryCode: "ir", aircraft: "F-14A/AM (41) + F-4E (19)", missile: "Fakour-90 (190)", A: 75, B: 70, C: 85, D: 65, E: 72, F: 70, G: 100, LI: 77.0, FPS: 4617},
+    {rank: 19, country: "India", countryCode: "in", aircraft: "Rafale F3R (36) + Su-30MKI Super-30 (24)", missile: "Meteor (150) / RVV-AE-PD (120)", A: 78, B: 78, C: 80, D: 70, E: 78, F: 78, G: 75, LI: 77.0, FPS: 4617},
+    {rank: 20, country: "Saudi Arabia", countryCode: "sa", aircraft: "F-15SA (40) + Typhoon T3 (20)", missile: "AIM-120C-7 (120) / Meteor (150)", A: 80, B: 75, C: 80, D: 75, E: 78, F: 80, G: 55, LI: 75.8, FPS: 4548}
 ];
 
 // Populate rankings table
