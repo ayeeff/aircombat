@@ -6,8 +6,7 @@
     <title>Air Combat Power Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ayeeff/aircombat/js/style.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ayeeff/aircombat/js/style.css ">
 </head>
 <body class="p-8 relative">
     <div class="cyber-grid"></div>
@@ -21,7 +20,7 @@
             <p class="text-2xl text-slate-300 mb-4 rajdhani">Beyond Visual Range Lethality Analysis • 2025</p>
             <div class="flex items-center justify-center gap-4 text-slate-400">
                 <div class="w-16 h-px bg-gradient-to-r from-transparent via-slate-500 to-transparent"></div>
-                <span class="text-xs tracking-widest">60-AIRCRAFT COMBAT SIMULATION</span>
+                <span class="text-xs tracking-widest">60-AIRCRAFT COMBAT SIMULATION + UCAV/DRONE INTEGRATION</span>
                 <div class="w-16 h-px bg-gradient-to-r from-transparent via-slate-500 to-transparent"></div>
             </div>
         </div>
@@ -39,7 +38,7 @@
                         <div class="rank-badge">2</div>
                         <img src="https://flagcdn.com/w80/ru.png" alt="Russia" class="w-20 h-14 object-cover my-4 rounded shadow-lg">
                         <div class="text-lg font-bold text-black text-center">Russia</div>
-                        <div class="score-badge">94.8</div>
+                        <div class="score-badge">94.6</div>
                     </div>
                 </div>
                 
@@ -49,7 +48,7 @@
                         <div class="rank-badge">1</div>
                         <img src="https://flagcdn.com/w80/us.png" alt="United States" class="w-20 h-14 object-cover my-4 rounded shadow-lg">
                         <div class="text-lg font-bold text-black text-center">United States</div>
-                        <div class="score-badge">96.1</div>
+                        <div class="score-badge">95.9</div>
                     </div>
                 </div>
                 
@@ -59,7 +58,7 @@
                         <div class="rank-badge">3</div>
                         <img src="https://flagcdn.com/w80/cn.png" alt="China" class="w-20 h-14 object-cover my-4 rounded shadow-lg">
                         <div class="text-lg font-bold text-black text-center">China</div>
-                        <div class="score-badge">94.0</div>
+                        <div class="score-badge">94.3</div>
                     </div>
                 </div>
             </div>
@@ -87,30 +86,34 @@
                 <span class="text-3xl pulse-dot text-purple-400">⚡</span>
                 Sub-System Performance (Top 10)
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div class="speed-card rounded-2xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4 orbitron">🎯 Sensor Reach (25%)</h3>
+                    <h3 class="text-xl font-bold text-white mb-4 orbitron">🎯 Sensor (22.5%)</h3>
                     <div id="sensorChart"></div>
                 </div>
                 <div class="speed-card rounded-2xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4 orbitron">👻 Signature Control (15%)</h3>
+                    <h3 class="text-xl font-bold text-white mb-4 orbitron">👻 Signature (15%)</h3>
                     <div id="signatureChart"></div>
                 </div>
                 <div class="speed-card rounded-2xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4 orbitron">🚀 Missile Reach (25%)</h3>
+                    <h3 class="text-xl font-bold text-white mb-4 orbitron">🚀 Missile (22.5%)</h3>
                     <div id="missileChart"></div>
                 </div>
                 <div class="speed-card rounded-2xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4 orbitron">🔗 Kill-Chain Network (20%)</h3>
+                    <h3 class="text-xl font-bold text-white mb-4 orbitron">🔗 Network (15%)</h3>
                     <div id="networkChart"></div>
                 </div>
                 <div class="speed-card rounded-2xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4 orbitron">🛡️ ECM/Self-Protection (10%)</h3>
+                    <h3 class="text-xl font-bold text-white mb-4 orbitron">🛡️ ECM (10%)</h3>
                     <div id="ecmChart"></div>
                 </div>
                 <div class="speed-card rounded-2xl p-6">
-                    <h3 class="text-xl font-bold text-white mb-4 orbitron">⚙️ Sortie Rate (5%)</h3>
+                    <h3 class="text-xl font-bold text-white mb-4 orbitron">⚙️ Sortie (5%)</h3>
                     <div id="sortieChart"></div>
+                </div>
+                <div class="speed-card rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-white mb-4 orbitron">🤖 UCAV (10%)</h3>
+                    <div id="ucavChart"></div>
                 </div>
             </div>
         </div>
@@ -137,6 +140,7 @@
                             <th class="pb-3 text-slate-400 font-semibold text-center">D</th>
                             <th class="pb-3 text-slate-400 font-semibold text-center">E</th>
                             <th class="pb-3 text-slate-400 font-semibold text-center">F</th>
+                            <th class="pb-3 text-slate-400 font-semibold text-center">G</th>
                         </tr>
                     </thead>
                     <tbody class="text-white" id="rankingsTableBody"></tbody>
@@ -145,7 +149,6 @@
         </div>
     </div>
 
- <script src="https://cdn.jsdelivr.net/gh/ayeeff/aircombat/js/script.js"></script>
-
+ <script src="https://cdn.jsdelivr.net/gh/ayeeff/aircombat/js/script.js "></script>
 </body>
 </html>
