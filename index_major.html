@@ -6,7 +6,7 @@
     <title>Air Combat Power Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/js/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ayeeff/aircombat/js/style.css">
     <style>
         body {
             background: linear-gradient(135deg, rgba(15, 23, 42, 1) 0%, rgba(30, 41, 59, 1) 50%, rgba(12, 30, 61, 1) 100%) !important;
@@ -86,6 +86,54 @@
             </div>
         </div>
 
+        <!-- Sub-System Explainer -->
+        <div class="mb-16 neon-border rounded-2xl p-6">
+            <h2 class="text-3xl font-bold text-white mb-6 text-center orbitron flex items-center justify-center gap-3">
+                <span class="text-3xl pulse-dot text-cyan-400">📖</span>
+                Sub-System Explainer
+            </h2>
+            <div class="speed-card rounded-2xl p-6 overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="border-b-2 border-slate-600">
+                            <th class="pb-3 pr-4 text-slate-300 font-bold text-base">Sub-system (weight)</th>
+                            <th class="pb-3 text-slate-300 font-bold text-base">Measured attribute</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-slate-200">
+                        <tr class="border-b border-slate-700/50">
+                            <td class="py-4 pr-4 font-semibold text-blue-400">A. Sensor reach (22.5%)</td>
+                            <td class="py-4">AESA raw detection range vs. 3 m² target, plus off-board cue quality (AEW/sat-links).</td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50">
+                            <td class="py-4 pr-4 font-semibold text-purple-400">B. Signature control (15%)</td>
+                            <td class="py-4">Frontal RCS, IR-suppression, passive EW suite.</td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50">
+                            <td class="py-4 pr-4 font-semibold text-red-400">C. Missile reach (22.5%)</td>
+                            <td class="py-4">Published / leaked aerodynamic range of primary BVR weapon, plus Pk at NEZ.</td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50">
+                            <td class="py-4 pr-4 font-semibold text-green-400">D. Kill-chain network (15%)</td>
+                            <td class="py-4">Secure L-16-style datalink, AEW density, ground-radar gap-filler coverage, sat-feed.</td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50">
+                            <td class="py-4 pr-4 font-semibold text-orange-400">E. ECM / self-protection (10%)</td>
+                            <td class="py-4">On-board jammer, towed decoy, MAWS, expendable count.</td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50">
+                            <td class="py-4 pr-4 font-semibold text-cyan-400">F. Sustained sortie rate (5%)</td>
+                            <td class="py-4">Crew ratio, hot-pit refuel, local MRO, spares pool.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-4 pr-4 font-semibold text-pink-400">G. UCAV/drone/CCA production (10%)</td>
+                            <td class="py-4">Mass production volume of unmanned combat aerial vehicles, loitering munitions, and collaborative combat aircraft (quantity prioritized over quality, e.g., cheap swarm-capable drones as munitions).</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Sub-System Scores -->
         <div class="mb-16 neon-border rounded-2xl p-6">
             <h2 class="text-3xl font-bold text-white mb-6 text-center orbitron flex items-center justify-center gap-3">
@@ -155,6 +203,6 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/js/script.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/ayeeff/aircombat/js/script.js"></script>
 </body>
 </html>
