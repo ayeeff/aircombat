@@ -1,7 +1,8 @@
 name: Monthly US Aircraft Scraper
 
 on:
-    push:
+  # Runs on pushes targeting the default branch
+  push:
   workflow_dispatch:
 
 jobs:
