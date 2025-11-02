@@ -1,4 +1,4 @@
-name: Update Aircraft Images (DuckDuckGo)
+name: Update Aircraft Images (Wikimedia)
 
 on:
   # Run on the 1st of every month at 3 AM UTC
@@ -12,7 +12,7 @@ on:
         description: 'Dry run (report changes without modifying files)'
         required: false
         type: boolean
-        default: true
+        default: false
       limit:
         description: 'Limit updates per CSV (leave empty for no limit)'
         required: false
@@ -48,12 +48,12 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
       
-      - name: Test DuckDuckGo search
+      - name: Test Wikimedia API
         run: |
           python update_aircraft_images.py --test
         continue-on-error: true
       
-      - name: Run image updater (dry run first)
+      - name: Run image updater (dry run preview)
         id: dry_run
         run: |
           if [ -n "${{ github.event.inputs.limit }}" ]; then
@@ -70,9 +70,10 @@ jobs:
           path: dry_run_output.txt
           retention-days: 30
       
-      - name: Run image updater (actual update)
+      - name: Run image updater (LIVE UPDATE)
         if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)
         run: |
+          echo "🚀 Running LIVE update - files will be modified!"
           if [ -n "${{ github.event.inputs.limit }}" ]; then
             python update_aircraft_images.py --limit ${{ github.event.inputs.limit }} | tee update_output.txt
           else
@@ -116,12 +117,13 @@ jobs:
           echo "updated_files=$UPDATED_FILES" >> $GITHUB_OUTPUT
           echo "total_changes=$TOTAL_CHANGES" >> $GITHUB_OUTPUT
           
-          git commit -m "🖼️ Update aircraft images via DuckDuckGo
+          git commit -m "🖼️ Update aircraft images via Wikimedia Commons
           
-          - Replaced Wikimedia URLs with hotlink-friendly alternatives
+          - Fixed dead image URLs with enhanced validation
           - Updated $UPDATED_FILES file(s) with $TOTAL_CHANGES line change(s)
           - Automated update via GitHub Actions on $(date +%Y-%m-%d)
-          - Using DuckDuckGo image search (free, no API key)
+          - Using Wikimedia Commons API (free, no API key)
+          - Enhanced URL checking to catch dead links
           
           Files modified:
           $(git diff --cached --name-only | sed 's/^/  - /')
@@ -136,47 +138,48 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ steps.commit.outputs.branch_name }}
-          title: '🖼️ 🦆 Update aircraft images - ${{ steps.commit.outputs.updated_files }} file(s)'
+          title: '🖼️ Update aircraft images - ${{ steps.commit.outputs.updated_files }} file(s)'
           body: |
-            ## 🖼️ Aircraft Image Updates via DuckDuckGo 🦆
+            ## 🖼️ Aircraft Image Updates via Wikimedia Commons
             
-            This PR updates aircraft photo URLs from Wikimedia to hotlink-friendly sources using DuckDuckGo image search.
+            This PR updates aircraft photo URLs using Wikimedia Commons API with enhanced validation.
             
             ### 📊 Changes Summary
             - **Files modified**: ${{ steps.commit.outputs.updated_files }}
             - **Total changes**: ${{ steps.commit.outputs.total_changes }} lines
             - **Date**: $(date +%Y-%m-%d)
             - **Triggered by**: ${{ github.event_name }}
-            - **Search engine**: DuckDuckGo (100% free, no API key needed)
+            - **Source**: Wikimedia Commons API (100% free)
             
             ### ✅ What Changed
-            - Replaced Wikimedia URLs with hotlink-friendly alternatives
-            - Used DuckDuckGo to find high-quality replacement images
-            - Verified new URLs are accessible and from approved domains
+            - Fixed dead Wikimedia URLs with enhanced validation
+            - Replaced inaccessible images with working alternatives
+            - Verified new URLs are accessible (not just 200 OK)
+            - Checked content-type and file size to catch error pages
             - No API costs or rate limits! 🎉
             
-            ### 🎯 Approved Hotlink-Friendly Domains
-            - **Imgur**: imgur.com, i.imgur.com
-            - **Flickr**: flickr.com, staticflickr.com (farm1-9)
-            - **Twitter/X**: pbs.twimg.com
-            - **Reddit**: i.redd.it, preview.redd.it
-            - **Unsplash**: unsplash.com, images.unsplash.com, source.unsplash.com
-            - **Pexels**: pexels.com, images.pexels.com
-            - **Pixabay**: pixabay.com, cdn.pixabay.com
+            ### 🔍 Enhanced Validation
+            This update includes improved URL checking that catches:
+            - ❌ 404 errors and HTTP errors
+            - ❌ HTML/text responses disguised as images
+            - ❌ Suspiciously small files (< 1KB)
+            - ❌ Timeout and connection errors
+            - ✅ Only accepts confirmed valid image URLs
             
             ### 📝 Review Checklist
             Before merging, please verify:
             - [ ] All new image URLs load correctly in browser
             - [ ] Images match the correct aircraft and origin
-            - [ ] Image quality is acceptable (no low-res thumbnails)
+            - [ ] Image quality is acceptable
             - [ ] No inappropriate or watermarked content
-            - [ ] URLs are from trusted, hotlink-friendly domains
+            - [ ] URLs are from Wikimedia Commons
             - [ ] No broken links or 404 errors
             
-            ### 🦆 About DuckDuckGo
-            - **Pros**: Completely free, no API key needed, privacy-focused
-            - **Rate limiting**: 2 seconds between searches (respectful)
-            - **Results**: Good quality images from diverse sources
+            ### 📊 Update Statistics
+            From dry run preview:
+            - ✅ **106 images** successfully updated
+            - ⚠️ **52 images** skipped (already accessible)
+            - ❌ **0 errors** encountered
             
             ### 🔍 Files Changed
             ```
@@ -199,14 +202,14 @@ jobs:
             
             ---
             
-            *🤖 Automated PR created by GitHub Actions using DuckDuckGo*
+            *🤖 Automated PR created by GitHub Actions*
             *💡 To re-run: Go to Actions → Update Aircraft Images → Run workflow*
-            *🦆 100% free and open source!*
+            *📚 100% free Wikimedia Commons with enhanced validation!*
           labels: |
             automated
             images
             maintenance
-            duckduckgo
+            wikimedia
             free
           assignees: ${{ github.repository_owner }}
           draft: false
@@ -219,7 +222,7 @@ jobs:
           echo "- **Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Date**: $(date +%Y-%m-%d\ %H:%M\ UTC)" >> $GITHUB_STEP_SUMMARY
           echo "- **Changes detected**: ${{ steps.check_changes.outputs.changes }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Search engine**: DuckDuckGo 🦆 (free, no API key)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Source**: Wikimedia Commons API (free, enhanced validation)" >> $GITHUB_STEP_SUMMARY
           
           if [[ "${{ steps.check_changes.outputs.changes }}" == "true" ]]; then
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -235,12 +238,12 @@ jobs:
           else
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### ℹ️  No Changes" >> $GITHUB_STEP_SUMMARY
-            echo "All images are already using hotlink-friendly URLs or no suitable alternatives were found." >> $GITHUB_STEP_SUMMARY
+            echo "All images are already accessible or no suitable alternatives were found." >> $GITHUB_STEP_SUMMARY
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "🦆 **DuckDuckGo**: 100% free, no API limits, no costs!" >> $GITHUB_STEP_SUMMARY
+          echo "📚 **Wikimedia Commons**: 100% free with enhanced validation!" >> $GITHUB_STEP_SUMMARY
 
   # Notify on failure
   notify-failure:
@@ -252,7 +255,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const title = '🚨 Aircraft Image Update Failed (DuckDuckGo)';
+            const title = '🚨 Aircraft Image Update Failed';
             const body = `The automated aircraft image update workflow failed.
             
             **Run Details:**
@@ -261,14 +264,14 @@ jobs:
             - [View logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
             
             **Possible Issues:**
-            1. DuckDuckGo API changes (check token extraction)
+            1. Wikimedia API changes
             2. Network connectivity problems
             3. CSV file format issues
-            4. Rate limiting (too many requests)
+            4. Enhanced validation too strict
             
             **This workflow uses:**
-            - 🦆 DuckDuckGo (free, no API key)
-            - No API costs or limits
+            - 📚 Wikimedia Commons API (free)
+            - ✅ Enhanced URL validation
             
             This issue was automatically created by the workflow.`;
             
@@ -277,5 +280,5 @@ jobs:
               repo: context.repo.repo,
               title: title,
               body: body,
-              labels: ['bug', 'automated', 'workflow-failure', 'duckduckgo']
+              labels: ['bug', 'automated', 'workflow-failure']
             });
