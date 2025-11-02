@@ -317,7 +317,6 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
        
         for idx, row in enumerate(reader, start=1):
             aircraft = row.get('Aircraft', '')
-            origin = row.get('Origin', '')
             current_photo = row.get('Photo', '')
            
             # Check limit
@@ -328,7 +327,7 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
            
             # Check if current photo needs updating
             if current_photo and is_wikimedia_url(current_photo):
-                print(f"\n[Row {idx}] {aircraft} ({origin})")
+                print(f"\n[Row {idx}] {aircraft}")
                 print(f" Current: {current_photo[:80]}...")
                
                 # Convert to direct URL
