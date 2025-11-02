@@ -327,11 +327,6 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
             title = result['title']
             filename = title[5:]  # Remove 'File:'
            
-            # Skip if too small (e.g., icons)
-            if result.get('size', 0) < 50000:
-                print(f" [{idx}] Skipping small image: {filename[:40]}...")
-                continue
-           
             print(f" [{idx}] Trying search result: {filename[:60]}...")
             direct_url = get_wikimedia_direct_url(filename, preferred_width)
             if direct_url:
