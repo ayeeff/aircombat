@@ -327,26 +327,26 @@
         };
 
         const countries = [
-            {code: 'us', name: 'United States', rank: 1, fps: 5751, flag: 'https://flagcdn.com/w80/us.png'},
-            {code: 'ru', name: 'Russia', rank: 2, fps: 5678, flag: 'https://flagcdn.com/w80/ru.png'},
-            {code: 'cn', name: 'China', rank: 3, fps: 5660, flag: 'https://flagcdn.com/w80/cn.png'},
-            {code: 'il', name: 'Israel', rank: 4, fps: 5604, flag: 'https://flagcdn.com/w80/il.png'},
-            {code: 'gb', name: 'United Kingdom', rank: 5, fps: 5436, flag: 'https://flagcdn.com/w80/gb.png'},
-            {code: 'au', name: 'Australia', rank: 6, fps: 5386, flag: 'https://flagcdn.com/w80/au.png'},
-            {code: 'jp', name: 'Japan', rank: 7, fps: 5370, flag: 'https://flagcdn.com/w80/jp.png'},
-            {code: 'kr', name: 'South Korea', rank: 8, fps: 5322, flag: 'https://flagcdn.com/w80/kr.png'},
-            {code: 'se', name: 'Sweden', rank: 9, fps: 5319, flag: 'https://flagcdn.com/w80/se.png'},
-            {code: 'it', name: 'Italy', rank: 10, fps: 5316, flag: 'https://flagcdn.com/w80/it.png'},
-            {code: 'fr', name: 'France', rank: 11, fps: 5311, flag: 'https://flagcdn.com/w80/fr.png'},
-            {code: 'ca', name: 'Canada', rank: 12, fps: 5204, flag: 'https://flagcdn.com/w80/ca.png'},
-            {code: 'de', name: 'Germany', rank: 13, fps: 4901, flag: 'https://flagcdn.com/w80/de.png'},
-            {code: 'tr', name: 'Turkey', rank: 14, fps: 4770, flag: 'https://flagcdn.com/w80/tr.png'},
-            {code: 'pk', name: 'Pakistan', rank: 15, fps: 4743, flag: 'https://flagcdn.com/w80/pk.png'},
-            {code: 'th', name: 'Thailand', rank: 16, fps: 4707, flag: 'https://flagcdn.com/w80/th.png'},
-            {code: 'es', name: 'Spain', rank: 17, fps: 4698, flag: 'https://flagcdn.com/w80/es.png'},
-            {code: 'ir', name: 'Iran', rank: 18, fps: 4617, flag: 'https://flagcdn.com/w80/ir.png'},
-            {code: 'in', name: 'India', rank: 19, fps: 4617, flag: 'https://flagcdn.com/w80/in.png'},
-            {code: 'sa', name: 'Saudi Arabia', rank: 20, fps: 4548, flag: 'https://flagcdn.com/w80/sa.png'}
+            {code: 'us', name: 'United States', rank: 1, flag: 'https://flagcdn.com/w80/us.png'},
+            {code: 'ru', name: 'Russia', rank: 2, flag: 'https://flagcdn.com/w80/ru.png'},
+            {code: 'cn', name: 'China', rank: 3, flag: 'https://flagcdn.com/w80/cn.png'},
+            {code: 'il', name: 'Israel', rank: 4, flag: 'https://flagcdn.com/w80/il.png'},
+            {code: 'gb', name: 'United Kingdom', rank: 5, flag: 'https://flagcdn.com/w80/gb.png'},
+            {code: 'au', name: 'Australia', rank: 6, flag: 'https://flagcdn.com/w80/au.png'},
+            {code: 'jp', name: 'Japan', rank: 7, flag: 'https://flagcdn.com/w80/jp.png'},
+            {code: 'kr', name: 'South Korea', rank: 8, flag: 'https://flagcdn.com/w80/kr.png'},
+            {code: 'se', name: 'Sweden', rank: 9, flag: 'https://flagcdn.com/w80/se.png'},
+            {code: 'it', name: 'Italy', rank: 10, flag: 'https://flagcdn.com/w80/it.png'},
+            {code: 'fr', name: 'France', rank: 11, flag: 'https://flagcdn.com/w80/fr.png'},
+            {code: 'ca', name: 'Canada', rank: 12, flag: 'https://flagcdn.com/w80/ca.png'},
+            {code: 'de', name: 'Germany', rank: 13, flag: 'https://flagcdn.com/w80/de.png'},
+            {code: 'tr', name: 'Turkey', rank: 14, flag: 'https://flagcdn.com/w80/tr.png'},
+            {code: 'pk', name: 'Pakistan', rank: 15, flag: 'https://flagcdn.com/w80/pk.png'},
+            {code: 'th', name: 'Thailand', rank: 16, flag: 'https://flagcdn.com/w80/th.png'},
+            {code: 'es', name: 'Spain', rank: 17, flag: 'https://flagcdn.com/w80/es.png'},
+            {code: 'ir', name: 'Iran', rank: 18, flag: 'https://flagcdn.com/w80/ir.png'},
+            {code: 'in', name: 'India', rank: 19, flag: 'https://flagcdn.com/w80/in.png'},
+            {code: 'sa', name: 'Saudi Arabia', rank: 20, flag: 'https://flagcdn.com/w80/sa.png'}
         ];
 
         const csvMap = {
@@ -414,7 +414,6 @@
                 button.innerHTML = `
                     <img src="${country.flag}" alt="${country.name}" class="w-5 h-3 md:w-6 md:h-4 flag-badge rounded">
                     <span class="text-xs md:text-sm">#${country.rank} ${country.name}</span>
-                    <span class="text-xs text-slate-400 hidden md:inline">(${country.fps})</span>
                 `;
                 button.onclick = () => switchTab(country.code);
                 tabButtons.appendChild(button);
@@ -483,7 +482,7 @@
                         <img src="${country.flag}" alt="${country.name}" class="w-12 h-8 md:w-16 md:h-10 flag-badge rounded-lg">
                         <div>
                             <h2 class="text-2xl md:text-3xl font-bold orbitron country-name-text">${country.name}</h2>
-                            <p class="text-slate-400 text-sm md:text-base">Rank #${country.rank} • FPS: ${country.fps}</p>
+                            <p class="text-slate-400 text-sm md:text-base">Rank #${country.rank}</p>
                         </div>
                     </div>
                 </div>
