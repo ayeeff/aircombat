@@ -12,7 +12,7 @@ import requests
 import json
 import re
 from pathlib import Path
-from urllib.parse import urlparse, quote
+from urllib.parse import urlparse, quote, urlencode
 
 # Sites known to allow hotlinking
 HOTLINK_FRIENDLY_DOMAINS = [
@@ -59,7 +59,7 @@ def test_image_url(url, timeout=5):
     """Test if an image URL is accessible"""
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
         response = requests.head(url, timeout=timeout, allow_redirects=True, headers=headers)
         # Check if it's actually an image
@@ -70,29 +70,66 @@ def test_image_url(url, timeout=5):
 
 def search_duckduckgo_images(query, max_results=20):
     """
-    Search DuckDuckGo for images using their API
+    Search DuckDuckGo for images using their HTML page scraping
     Returns list of image URLs
     """
     try:
-        # DuckDuckGo uses a token-based system
+        # Use more realistic browser headers
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Cache-Control': 'max-age=0',
         }
         
-        # Step 1: Get the vqd token
-        params = {'q': query}
-        response = requests.get('https://duckduckgo.com/', params=params, headers=headers, timeout=10)
+        # Create a session to maintain cookies
+        session = requests.Session()
         
-        # Extract vqd token from response
-        vqd_match = re.search(r'vqd=["\'](\d+-\d+(?:-\d+)?)["\']', response.text)
-        if not vqd_match:
-            print(f"    ⚠ Could not extract vqd token")
+        # Step 1: Get the main page first to establish session
+        print(f"    🔧 Establishing session...")
+        session.get('https://duckduckgo.com/', headers=headers, timeout=10)
+        time.sleep(1)
+        
+        # Step 2: Search for images on the HTML page
+        search_url = f'https://duckduckgo.com/?q={quote(query)}&iax=images&ia=images'
+        print(f"    🔧 Fetching search page...")
+        response = session.get(search_url, headers=headers, timeout=10)
+        
+        if response.status_code != 200:
+            print(f"    ⚠ Search page returned status {response.status_code}")
             return []
         
-        vqd = vqd_match.group(1)
+        # Extract vqd token from the page
+        vqd_match = re.search(r'vqd="(\d+-\d+(?:-\d+)?)"', response.text)
+        if not vqd_match:
+            vqd_match = re.search(r'vqd=(\d+-\d+(?:-\d+)?)', response.text)
         
-        # Step 2: Query the image search API
+        if not vqd_match:
+            print(f"    ⚠ Could not extract vqd token from page")
+            # Try alternative regex patterns
+            vqd_match = re.search(r'"vqd":"(\d+-\d+(?:-\d+)?)"', response.text)
+            if not vqd_match:
+                print(f"    ⚠ Alternative vqd extraction also failed")
+                return []
+        
+        vqd = vqd_match.group(1)
+        print(f"    ✓ Got vqd token: {vqd}")
+        
+        # Step 3: Query the image API with proper headers
+        api_headers = headers.copy()
+        api_headers.update({
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Referer': search_url,
+            'X-Requested-With': 'XMLHttpRequest',
+        })
+        
         params = {
             'l': 'us-en',
             'o': 'json',
@@ -103,19 +140,29 @@ def search_duckduckgo_images(query, max_results=20):
             'v7exp': 'a',
         }
         
-        response = requests.get(
-            'https://duckduckgo.com/i.js',
-            params=params,
-            headers=headers,
-            timeout=10
-        )
+        api_url = 'https://duckduckgo.com/i.js'
+        print(f"    🔧 Querying image API...")
+        time.sleep(1)  # Be respectful
+        
+        response = session.get(api_url, params=params, headers=api_headers, timeout=10)
         
         if response.status_code != 200:
             print(f"    ⚠ API returned status {response.status_code}")
+            print(f"    ⚠ Response: {response.text[:200]}")
             return []
         
-        data = response.json()
+        try:
+            data = response.json()
+        except json.JSONDecodeError:
+            print(f"    ⚠ Failed to parse JSON response")
+            print(f"    ⚠ Response: {response.text[:200]}")
+            return []
+        
         results = data.get('results', [])
+        
+        if not results:
+            print(f"    ⚠ No results in API response")
+            return []
         
         # Extract image URLs
         image_urls = []
@@ -129,11 +176,10 @@ def search_duckduckgo_images(query, max_results=20):
     except requests.exceptions.RequestException as e:
         print(f"    ❌ Request failed: {e}")
         return []
-    except json.JSONDecodeError as e:
-        print(f"    ❌ Failed to parse JSON: {e}")
-        return []
     except Exception as e:
         print(f"    ❌ Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 def search_aircraft_image_duckduckgo(aircraft_name, origin):
@@ -227,7 +273,7 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
                     skipped += 1
                 
                 # Rate limiting to be respectful
-                time.sleep(2)  # 2 seconds between requests
+                time.sleep(3)  # 3 seconds between requests
                 
             elif current_photo and not is_hotlink_friendly(current_photo) and not is_wikimedia_url(current_photo):
                 domain = urlparse(current_photo).netloc
