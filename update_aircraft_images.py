@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Aircraft Image Updater - Wikimedia Commons Edition
+Aircraft Image Updater - Wikimedia Commons Edition (Enhanced)
 Scans CSV files in data directory and updates Photo URLs with hotlink-friendly alternatives
 Uses Wikimedia Commons API (100% free, automation-friendly)
+Enhanced to catch more dead links and reduce skipped images
 """
 import os
 import csv
@@ -151,7 +152,7 @@ def generate_filename_variations(filename):
             variations.append(underscored)
    
     # Try combinations: remove air force AND year
-    for af_pattern in air_force_patterns[:10]: # Just try first 10 to avoid too many variations
+    for af_pattern in air_force_patterns[:10]:
         for year_pattern in [r'\s*\(\d{4}\)', r'_\d{4}', r'-\d{4}']:
             cleaned = re.sub(af_pattern, '', base_name, flags=re.IGNORECASE)
             cleaned = re.sub(year_pattern, '', cleaned)
@@ -190,7 +191,6 @@ def get_wikimedia_direct_url(filename, preferred_width=1280):
         response = requests.get(api_url, params=params, headers=headers, timeout=10)
        
         if response.status_code != 200:
-            print(f" ⚠ API returned status {response.status_code}")
             return None
        
         data = response.json()
@@ -200,12 +200,11 @@ def get_wikimedia_direct_url(filename, preferred_width=1280):
        
         for page_id, page_data in pages.items():
             if page_id == '-1':
-                # File not found
                 return None
            
             imageinfo = page_data.get('imageinfo', [])
             if imageinfo:
-                # Try to get the thumbnailed URL (which is direct and hotlink-friendly)
+                # Try to get the thumbnailed URL (direct and hotlink-friendly)
                 thumb_url = imageinfo[0].get('thumburl')
                 if thumb_url:
                     return thumb_url
@@ -216,11 +215,7 @@ def get_wikimedia_direct_url(filename, preferred_width=1280):
        
         return None
        
-    except requests.exceptions.RequestException as e:
-        print(f" ❌ Request failed: {e}")
-        return None
-    except Exception as e:
-        print(f" ❌ Unexpected error: {e}")
+    except Exception:
         return None
 
 def get_wikimedia_direct_url_with_fallback(filename, preferred_width=1280):
@@ -241,7 +236,7 @@ def get_wikimedia_direct_url_with_fallback(filename, preferred_width=1280):
     if len(variations) > 1:
         print(f" 🔄 Trying {len(variations)-1} filename variation(s)...")
    
-    for idx, variation in enumerate(variations[1:], 1): # Skip first one (already tried)
+    for idx, variation in enumerate(variations[1:], 1):
         print(f" [{idx}] Trying: {variation[:60]}...")
         result = get_wikimedia_direct_url(variation, preferred_width)
         if result:
@@ -311,7 +306,7 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
                 'srnamespace': 6,
                 'format': 'json',
                 'srprop': 'size',
-                'srlimit': 20,  # Increased limit
+                'srlimit': 20,
             }
            
             headers = {
@@ -321,7 +316,6 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
             response = requests.get(api_url, params=params, headers=headers, timeout=10)
            
             if response.status_code != 200:
-                print(f" ⚠ Search API returned status {response.status_code} for '{query}'")
                 continue
            
             data = response.json()
@@ -342,33 +336,73 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
                 if direct_url:
                     print(f" ✅ Found via search!")
                     return direct_url
-               
-            if search_results:
-                print(f" ⚠ No suitable image found in search results for '{query}'")
            
-        print(f" ⚠ No suitable image found across all queries")
         return None
        
-    except requests.exceptions.RequestException as e:
-        print(f" ❌ Search request failed: {e}")
-        return None
-    except Exception as e:
-        print(f" ❌ Unexpected search error: {e}")
+    except Exception:
         return None
 
-def test_image_url(url, timeout=5):
-    """Test if an image URL is accessible"""
+def test_image_url_enhanced(url, timeout=10):
+    """
+    Enhanced test for image URL accessibility
+    Returns (is_accessible, reason) tuple
+    """
+    if not url:
+        return False, "Empty URL"
+    
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
+        
+        # First try HEAD request
         response = requests.head(url, timeout=timeout, allow_redirects=True, headers=headers)
+        
+        # Check status code
+        if response.status_code != 200:
+            return False, f"HTTP {response.status_code}"
+        
+        # Check content type
         content_type = response.headers.get('content-type', '').lower()
-        return response.status_code == 200 and 'image' in content_type
-    except:
-        return False
+        if 'image' not in content_type:
+            # Some servers don't return content-type in HEAD, try GET with range
+            try:
+                response = requests.get(url, timeout=timeout, headers={**headers, 'Range': 'bytes=0-1023'}, stream=True)
+                content_type = response.headers.get('content-type', '').lower()
+                
+                if 'image' not in content_type:
+                    # Check if it's an HTML error page
+                    if 'text/html' in content_type or 'text/plain' in content_type:
+                        return False, "Returns HTML/text instead of image"
+                    return False, f"Wrong content-type: {content_type}"
+                
+                # Check content length - if too small, likely an error page
+                content_length = response.headers.get('content-length')
+                if content_length and int(content_length) < 1000:
+                    return False, "File too small (likely error page)"
+                    
+            except Exception as e:
+                return False, f"GET request failed: {str(e)}"
+        
+        # Additional check: verify Content-Length exists and is reasonable
+        content_length = response.headers.get('content-length')
+        if content_length:
+            size = int(content_length)
+            if size < 1000:  # Less than 1KB is suspicious for an image
+                return False, "File too small"
+            if size > 50_000_000:  # More than 50MB is suspicious
+                return False, "File too large"
+        
+        return True, "OK"
+        
+    except requests.exceptions.Timeout:
+        return False, "Timeout"
+    except requests.exceptions.ConnectionError:
+        return False, "Connection error"
+    except Exception as e:
+        return False, f"Error: {str(e)}"
 
-def update_csv_images(csv_path, dry_run=False, limit=None):
+def update_csv_images(csv_path, dry_run=False, limit=None, force_recheck=False):
     """
     Update image URLs in a CSV file
    
@@ -376,6 +410,7 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
         csv_path: Path to CSV file
         dry_run: If True, only report changes without modifying file
         limit: Maximum number of rows to process (for testing)
+        force_recheck: If True, recheck all URLs even if they seem accessible
     """
     print(f"\n{'='*70}")
     print(f"Processing: {csv_path}")
@@ -399,7 +434,6 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
            
             # Check limit
             if limit and processed >= limit:
-                print(f"\n⚠️ Reached limit of {limit} updates, stopping...")
                 rows.append(row)
                 continue
            
@@ -408,18 +442,25 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
                 print(f"\n[Row {idx}] {aircraft} ({origin})")
                 print(f" Current: {current_photo}")
                
-                # First, check if current URL is still accessible
-                if test_image_url(current_photo):
+                # Enhanced URL accessibility check
+                is_accessible, reason = test_image_url_enhanced(current_photo)
+                
+                if is_accessible and not force_recheck:
                     print(f" ℹ️ Current URL is accessible, skipping.")
                     skipped += 1
                 else:
-                    print(f" ❌ Current URL is dead, attempting to replace...")
+                    if not is_accessible:
+                        print(f" ❌ Current URL is dead ({reason}), attempting to replace...")
+                    else:
+                        print(f" 🔄 Force rechecking URL...")
                    
                     # Try to convert/fix the existing URL
                     new_url = convert_wikimedia_url(current_photo)
                     found = False
-                    if new_url:
-                        if test_image_url(new_url):
+                    
+                    if new_url and new_url != current_photo:
+                        is_new_accessible, new_reason = test_image_url_enhanced(new_url)
+                        if is_new_accessible:
                             print(f" ✅ Fixed via conversion: {new_url}")
                             if not dry_run:
                                 row['Photo'] = new_url
@@ -427,23 +468,31 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
                             found = True
                             processed += 1
                         else:
-                            print(f" ⚠ Converted URL not accessible.")
+                            print(f" ⚠ Converted URL not accessible ({new_reason}).")
+                    
                     if not found:
                         # Fallback to search
                         print(f" 🔍 Searching for replacement image...")
                         search_url = find_image_by_aircraft(aircraft, origin)
-                        if search_url and test_image_url(search_url):
-                            print(f" ✅ Found via search: {search_url}")
-                            if not dry_run:
-                                row['Photo'] = search_url
-                            updates += 1
-                            processed += 1
-                        else:
-                            print(f" ❌ No replacement found, keeping original (dead).")
-                            skipped += 1
+                        
+                        if search_url:
+                            is_search_accessible, search_reason = test_image_url_enhanced(search_url)
+                            if is_search_accessible:
+                                print(f" ✅ Found via search: {search_url}")
+                                if not dry_run:
+                                    row['Photo'] = search_url
+                                updates += 1
+                                processed += 1
+                                found = True
+                            else:
+                                print(f" ⚠ Search URL not accessible ({search_reason}).")
+                        
+                        if not found:
+                            print(f" ❌ No valid replacement found.")
+                            errors += 1
                
                 # Rate limiting to be respectful
-                time.sleep(1)  # 1 second between requests
+                time.sleep(1)
            
             rows.append(row)
    
@@ -481,49 +530,28 @@ def main():
                        help='Directory containing CSV files (default: data)')
     parser.add_argument('--limit', type=int, default=None,
                        help='Limit number of images to update per CSV (for testing)')
+    parser.add_argument('--force-recheck', action='store_true',
+                       help='Recheck all URLs even if they seem accessible')
     parser.add_argument('--test', action='store_true',
                        help='Test Wikimedia API and exit')
     args = parser.parse_args()
    
     # Test API if requested
     if args.test:
-        print("🔍 Testing Wikimedia Commons API...")
-        print("\nTest 1: Regular file")
-        test_url = "https://upload.wikimedia.org/wikipedia/commons/4/43/First_F-35_headed_for_USAF_service.jpg"
-        filename = extract_filename_from_wikimedia_url(test_url)
-        if filename:
-            print(f"✓ Extracted filename: {filename}")
-            result = get_wikimedia_direct_url_with_fallback(filename)
-            if result:
-                print(f"✅ Test 1 successful! Got URL: {result}")
-            else:
-                print("❌ Test 1 failed")
-       
-        print("\nTest 2: File with year suffix (should try variations)")
-        test_url2 = "https://upload.wikimedia.org/wikipedia/commons/9/9e/Boeing_E-7_Wedgetail_RAAF_(2020).jpg"
-        filename2 = extract_filename_from_wikimedia_url(test_url2)
-        if filename2:
-            print(f"✓ Extracted filename: {filename2}")
-            result2 = get_wikimedia_direct_url_with_fallback(filename2)
-            if result2:
-                print(f"✅ Test 2 successful! Got URL: {result2}")
-            else:
-                print("❌ Test 2 failed (will keep original URL)")
-       
-        print("\nTest 3: Search fallback")
-        search_result = find_image_by_aircraft("Chengdu J-20", "China")
-        if search_result:
-            print(f"✅ Test 3 successful! Search URL: {search_result}")
-        else:
-            print("❌ Test 3 failed")
-       
-        print("\nTest 4: Obscure aircraft search")
-        obscure_result = find_image_by_aircraft("Beechcraft CE-145C Vigilance", "United States")
-        if obscure_result:
-            print(f"✅ Test 4 successful! Obscure URL: {obscure_result}")
-        else:
-            print("❌ Test 4 failed")
-       
+        print("🔍 Testing Enhanced URL Checking...")
+        
+        test_urls = [
+            ("https://upload.wikimedia.org/wikipedia/commons/4/43/First_F-35_headed_for_USAF_service.jpg", "Working URL"),
+            ("https://upload.wikimedia.org/wikipedia/commons/9/9e/Boeing_E-7_Wedgetail_RAAF_%282020%29.jpg", "Dead URL (year suffix)"),
+            ("https://upload.wikimedia.org/wikipedia/commons/invalid/path/test.jpg", "Invalid URL"),
+        ]
+        
+        for url, description in test_urls:
+            print(f"\nTesting: {description}")
+            print(f"URL: {url}")
+            is_accessible, reason = test_image_url_enhanced(url)
+            print(f"Result: {'✅ Accessible' if is_accessible else f'❌ Dead ({reason})'}")
+        
         return 0
    
     data_dir = Path(args.data_dir)
@@ -540,13 +568,15 @@ def main():
         return 1
    
     print(f"{'='*70}")
-    print(f"🖼️ Aircraft Image Updater - Wikimedia Commons Edition")
+    print(f"🖼️ Aircraft Image Updater - Enhanced Version")
     print(f"{'='*70}")
     print(f"Found {len(csv_files)} CSV files")
     print(f"Mode: {'DRY RUN (no changes will be saved)' if args.dry_run else 'LIVE UPDATE'}")
     if args.limit:
         print(f"Limit: {args.limit} updates per file")
-    print(f"Source: Wikimedia Commons API (100% free, automation-friendly)")
+    if args.force_recheck:
+        print(f"Force recheck: ENABLED (will recheck all URLs)")
+    print(f"Source: Wikimedia Commons API with enhanced validation")
     print(f"{'='*70}\n")
    
     total_updates = 0
@@ -555,7 +585,12 @@ def main():
    
     # Process each CSV
     for csv_path in sorted(csv_files):
-        updates, skipped, errors = update_csv_images(csv_path, dry_run=args.dry_run, limit=args.limit)
+        updates, skipped, errors = update_csv_images(
+            csv_path, 
+            dry_run=args.dry_run, 
+            limit=args.limit,
+            force_recheck=args.force_recheck
+        )
         total_updates += updates
         total_skipped += skipped
         total_errors += errors
