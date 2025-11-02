@@ -629,7 +629,7 @@ def main():
     print(f"🖼️ Aircraft Image Updater - Enhanced Version")
     print(f"{'='*70}")
     print(f"Found {len(csv_files)} CSV files")
-    print(f"Mode: {'DRY RUN (no changes will be saved)' if args.dry_run else 'LIVE UPDATE'}")
+    print(f"Mode: LIVE UPDATE - Files will be modified!")
     if args.limit:
         print(f"Limit: {args.limit} UPDATES per file (will skip accessible URLs)")
     if args.force_recheck:
@@ -637,6 +637,8 @@ def main():
     if args.debug:
         print(f"Debug: ENABLED")
     print(f"Source: Wikimedia Commons API with enhanced validation")
+    print(f"{'='*70}")
+    print(f"⚠️  WARNING: This will modify your CSV files!")
     print(f"{'='*70}\n")
    
     total_updates = 0
