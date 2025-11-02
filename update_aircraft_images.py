@@ -287,53 +287,66 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
     if not aircraft:
         return None
 
-    search_query = f'"{aircraft}"'
+    # Generate possible search queries: with origin, without, and variations
+    queries = []
     if origin:
-        search_query += f' {origin}'
+        queries.append(f'"{aircraft}" {origin}')
+    queries.append(f'"{aircraft}"')
+    
+    # Simple variation: remove prefixes like CE-, CP-, etc.
+    base_aircraft = re.sub(r'^(C[CP]-|CE-)', '', aircraft)
+    if base_aircraft != aircraft:
+        if origin:
+            queries.append(f'"{base_aircraft}" {origin}')
+        queries.append(f'"{base_aircraft}"')
 
     try:
         api_url = "https://commons.wikimedia.org/w/api.php"
        
-        params = {
-            'action': 'query',
-            'list': 'search',
-            'srsearch': search_query,
-            'srnamespace': 6,
-            'format': 'json',
-            'srprop': 'size',
-            'srlimit': 5,
-        }
-       
-        headers = {
-            'User-Agent': 'AircraftImageUpdater/1.0 (Educational; GitHub Actions)'
-        }
-       
-        response = requests.get(api_url, params=params, headers=headers, timeout=10)
-       
-        if response.status_code != 200:
-            print(f" ⚠ Search API returned status {response.status_code}")
-            return None
-       
-        data = response.json()
-       
-        search_results = data.get('query', {}).get('search', [])
-       
-        print(f" 🔍 Found {len(search_results)} search results for '{aircraft}'")
-       
-        for idx, result in enumerate(search_results, 1):
-            if result.get('ns') != 6:
+        for query in queries:
+            params = {
+                'action': 'query',
+                'list': 'search',
+                'srsearch': query,
+                'srnamespace': 6,
+                'format': 'json',
+                'srprop': 'size',
+                'srlimit': 20,  # Increased limit
+            }
+           
+            headers = {
+                'User-Agent': 'AircraftImageUpdater/1.0 (Educational; GitHub Actions)'
+            }
+           
+            response = requests.get(api_url, params=params, headers=headers, timeout=10)
+           
+            if response.status_code != 200:
+                print(f" ⚠ Search API returned status {response.status_code} for '{query}'")
                 continue
            
-            title = result['title']
-            filename = title[5:]  # Remove 'File:'
+            data = response.json()
            
-            print(f" [{idx}] Trying search result: {filename[:60]}...")
-            direct_url = get_wikimedia_direct_url(filename, preferred_width)
-            if direct_url:
-                print(f" ✅ Found via search!")
-                return direct_url
+            search_results = data.get('query', {}).get('search', [])
            
-        print(f" ⚠ No suitable image found in search results")
+            print(f" 🔍 Found {len(search_results)} search results for '{query}'")
+           
+            for idx, result in enumerate(search_results, 1):
+                if result.get('ns') != 6:
+                    continue
+               
+                title = result['title']
+                filename = title[5:]  # Remove 'File:'
+               
+                print(f" [{idx}] Trying search result: {filename[:60]}...")
+                direct_url = get_wikimedia_direct_url(filename, preferred_width)
+                if direct_url:
+                    print(f" ✅ Found via search!")
+                    return direct_url
+               
+            if search_results:
+                print(f" ⚠ No suitable image found in search results for '{query}'")
+           
+        print(f" ⚠ No suitable image found across all queries")
         return None
        
     except requests.exceptions.RequestException as e:
@@ -503,6 +516,13 @@ def main():
             print(f"✅ Test 3 successful! Search URL: {search_result}")
         else:
             print("❌ Test 3 failed")
+       
+        print("\nTest 4: Obscure aircraft search")
+        obscure_result = find_image_by_aircraft("Beechcraft CE-145C Vigilance", "United States")
+        if obscure_result:
+            print(f"✅ Test 4 successful! Obscure URL: {obscure_result}")
+        else:
+            print("❌ Test 4 failed")
        
         return 0
    
