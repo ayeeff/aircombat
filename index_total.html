@@ -3,25 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BVR Fleet Dashboard</title>
+    <title>Air Combat Power Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/js/style.css">
-      <style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+        
         body {
+            font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, rgba(15, 23, 42, 1) 0%, rgba(30, 41, 59, 1) 50%, rgba(12, 30, 61, 1) 100%) !important;
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        .orbitron { 
+            font-family: 'Orbitron', sans-serif; 
+        }
+
+        .country-name-text {
+            color: #ffffff !important;
+        }
+
+        .cyber-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 0;
+            animation: gridScroll 20s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes gridScroll {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+        
+        .tab-button {
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            color: #94a3b8;
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+            border-bottom-color: #3b82f6;
+            color: #60a5fa;
+        }
+        
+        .tab-button:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+        }
+        
+        .aircraft-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .aircraft-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+        
+        .flag-badge {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        .loading-spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .speed-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .speed-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .speed-card:hover::before { 
+            left: 100%; 
+        }
+
+        .speed-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .shimmer-text { 
+            background: linear-gradient(90deg, #fff 0%, #60a5fa 50%, #fff 100%); 
+            background-size: 1000px 100%; 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .metric-display {
+            color: #ffffff;
+        }
+
+        .subsystem-item {
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .tab-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+        }
+
+        .tab-loading .loading-spinner {
+            width: 48px;
+            height: 48px;
         }
     </style>
 </head>
-<body class="p-8">
-    <div class="max-w-7xl mx-auto">
+<body class="p-4 md:p-8">
+    <div class="cyber-grid"></div>
+    
+    <div class="relative z-10 max-w-[1800px] mx-auto">
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-5xl md:text-6xl font-black mb-2 orbitron bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                BVR FLEET DASHBOARD
+            <h1 class="text-4xl md:text-6xl font-black mb-2 orbitron bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent shimmer-text">
+                AIR COMBAT POWER DASHBOARD
             </h1>
-            <p class="text-xl text-slate-300">Explore Each Nation's Beyond Visual Range Combat Fleet</p>
+            <p class="text-lg md:text-xl text-slate-300">Beyond Visual Range Fleet Analysis • 2025</p>
         </div>
 
         <!-- Loading State -->
@@ -30,30 +175,402 @@
             <p class="text-slate-400">Loading fleet data...</p>
         </div>
 
-        <!-- Tabs Container -->
-        <div id="tabsContainer" class="hidden">
+        <!-- Main Content Container -->
+        <div id="mainContent" class="hidden">
             <!-- Tab Buttons -->
-            <div id="tabButtons" class="flex flex-wrap gap-2 mb-6 bg-slate-800/50 p-4 rounded-xl backdrop-blur-lg overflow-x-auto">
+            <div id="tabButtons" class="flex flex-wrap gap-2 mb-6 speed-card p-4 rounded-xl overflow-x-auto">
                 <!-- Tabs will be inserted here -->
             </div>
 
-            <!-- Tab Content -->
-            <div class="fleet-container">
-                <!-- Aircraft List (65%) -->
-                <div id="tabContent" class="fleet-list">
-                    <!-- Content will be inserted here -->
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Fleet Details (65%) -->
+                <div class="lg:col-span-8" id="fleetContent">
+                    <div id="tabContent" class="min-h-screen">
+                        <!-- Fleet content will be inserted here -->
+                    </div>
                 </div>
 
-                <!-- Stats Sidebar (35%) -->
-                <div class="stats-sidebar">
-                    <div id="statsPanel" class="stats-card rounded-2xl p-6">
-                        <!-- Stats will be inserted here -->
+                <!-- Right Column: Performance Metrics (35%) -->
+                <div class="lg:col-span-4">
+                    <div class="sticky top-4">
+                        <!-- Country Performance Card -->
+                        <div class="speed-card rounded-2xl p-6 mb-6" id="countryPerformance">
+                            <div class="flex items-center gap-4 mb-6">
+                                <img id="perfFlag" src="" alt="" class="w-16 h-10 flag-badge rounded-lg">
+                                <div>
+                                    <h2 id="perfCountryName" class="text-2xl font-bold orbitron country-name-text">United States</h2>
+                                    <p id="perfRank" class="text-slate-400">Rank #1</p>
+                                </div>
+                            </div>
+
+                            <!-- Lethality Index -->
+                            <div class="mb-6 p-4 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500/30">
+                                <div class="text-sm text-yellow-400 mb-1 font-semibold">Lethality Index</div>
+                                <div id="perfLI" class="text-4xl font-black orbitron text-yellow-400">96.1</div>
+                            </div>
+
+                            <!-- Primary BVR Missile -->
+                            <div class="mb-6 p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg border border-blue-500/30">
+                                <div class="text-sm text-blue-400 mb-1 font-semibold">Primary BVR Missile</div>
+                                <div id="perfMissile" class="text-base font-bold orbitron text-blue-300">AIM-120D-3 / AIM-260</div>
+                            </div>
+
+                            <!-- Sub-Systems -->
+                            <div>
+                                <h3 class="text-xl font-bold orbitron mb-4 country-name-text flex items-center gap-2">
+                                    <span class="text-purple-400">⚡</span>
+                                    Sub-System Performance
+                                </h3>
+                                <div class="space-y-3">
+                                    <div class="subsystem-item">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-sm text-blue-400 font-semibold">A. Sensor Reach (22.5%)</span>
+                                            <span id="scoreA" class="text-lg font-bold orbitron metric-display">98</span>
+                                        </div>
+                                        <div class="w-full bg-slate-700 rounded-full h-2">
+                                            <div id="barA" class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: 98%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="subsystem-item">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-sm text-purple-400 font-semibold">B. Signature Control (15%)</span>
+                                            <span id="scoreB" class="text-lg font-bold orbitron metric-display">96</span>
+                                        </div>
+                                        <div class="w-full bg-slate-700 rounded-full h-2">
+                                            <div id="barB" class="bg-purple-500 h-2 rounded-full transition-all duration-500" style="width: 96%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="subsystem-item">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-sm text-red-400 font-semibold">C. Missile Reach (22.5%)</span>
+                                            <span id="scoreC" class="text-lg font-bold orbitron metric-display">92</span>
+                                        </div>
+                                        <div class="w-full bg-slate-700 rounded-full h-2">
+                                            <div id="barC" class="bg-red-500 h-2 rounded-full transition-all duration-500" style="width: 92%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="subsystem-item">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-sm text-green-400 font-semibold">D. Kill-Chain Network (15%)</span>
+                                            <span id="scoreD" class="text-lg font-bold orbitron metric-display">99</span>
+                                        </div>
+                                        <div class="w-full bg-slate-700 rounded-full h-2">
+                                            <div id="barD" class="bg-green-500 h-2 rounded-full transition-all duration-500" style="width: 99%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="subsystem-item">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-sm text-orange-400 font-semibold">E. ECM / Self-Protection (10%)</span>
+                                            <span id="scoreE" class="text-lg font-bold orbitron metric-display">97</span>
+                                        </div>
+                                        <div class="w-full bg-slate-700 rounded-full h-2">
+                                            <div id="barE" class="bg-orange-500 h-2 rounded-full transition-all duration-500" style="width: 97%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="subsystem-item">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-sm text-cyan-400 font-semibold">F. Sustained Sortie Rate (5%)</span>
+                                            <span id="scoreF" class="text-lg font-bold orbitron metric-display">93</span>
+                                        </div>
+                                        <div class="w-full bg-slate-700 rounded-full h-2">
+                                            <div id="barF" class="bg-cyan-500 h-2 rounded-full transition-all duration-500" style="width: 93%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="subsystem-item">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-sm text-pink-400 font-semibold">G. UCAV/Drone Production (10%)</span>
+                                            <span id="scoreG" class="text-lg font-bold orbitron metric-display">95</span>
+                                        </div>
+                                        <div class="w-full bg-slate-700 rounded-full h-2">
+                                            <div id="barG" class="bg-pink-500 h-2 rounded-full transition-all duration-500" style="width: 95%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/js/script.js"></script>
+    <script>
+        // Performance data
+        const performanceData = {
+            us: {rank: 1, country: "United States", aircraft: "F-22A (20) + F-35A Blk-4 (25) + F-15EX (15)", missile: "AIM-120D-3 (180) / AIM-260 (230)", A: 98, B: 96, C: 92, D: 99, E: 97, F: 93, G: 95, LI: 96.1, FPS: 5766},
+            ru: {rank: 2, country: "Russia", aircraft: "Su-57 (12) + Su-35S (28) + Su-30SM2 (20)", missile: "R-77M (200) / R-37M (400)", A: 95, B: 88, C: 100, D: 96, E: 94, F: 85, G: 92, LI: 94.8, FPS: 5688},
+            cn: {rank: 3, country: "China", aircraft: "J-20A (40) + J-35A (20)", missile: "PL-15 (200) / PL-21 (300)", A: 97, B: 90, C: 94, D: 97, E: 89, F: 88, G: 98, LI: 94.0, FPS: 5640},
+            il: {rank: 4, country: "Israel", aircraft: "F-35I (39) + F-15IA (21)", missile: "AIM-120D-3 (180) + Rampage ALBM (250)", A: 96, B: 95, C: 88, D: 97, E: 97, F: 90, G: 88, LI: 93.9, FPS: 5634},
+            gb: {rank: 5, country: "United Kingdom", aircraft: "F-35B (30) + Typhoon FGR4 (30)", missile: "Meteor (150) / AIM-120D-3 (180)", A: 94, B: 92, C: 88, D: 94, E: 94, F: 87, G: 85, LI: 91.8, FPS: 5508},
+            jp: {rank: 6, country: "Japan", aircraft: "F-35A (38) + F-15J MSIP (22)", missile: "AIM-120D-3 (180) / AAM-4B (120)", A: 95, B: 92, C: 85, D: 94, E: 93, F: 86, G: 82, LI: 91.2, FPS: 5472},
+            au: {rank: 7, country: "Australia", aircraft: "F-35A (44) + F/A-18F (16)", missile: "AIM-120D-3 (180) / AIM-120C-7 (120)", A: 96, B: 94, C: 85, D: 91, E: 91, F: 84, G: 78, LI: 90.8, FPS: 5448},
+            kr: {rank: 8, country: "South Korea", aircraft: "F-35A (40) + KF-21 Block-I (20)", missile: "AIM-120D-3 (180) / AIM-120C-7 (120)", A: 93, B: 90, C: 85, D: 92, E: 91, F: 85, G: 86, LI: 89.8, FPS: 5388},
+            it: {rank: 9, country: "Italy", aircraft: "F-35A/B (28) + Typhoon T4 (32)", missile: "AIM-120D-3 (180) / Meteor (150)", A: 92, B: 90, C: 86, D: 92, E: 90, F: 85, G: 80, LI: 89.7, FPS: 5382},
+            fr: {rank: 10, country: "France", aircraft: "Rafale F4 (36) + F3R (24)", missile: "Meteor (150) / MICA-NG (100)", A: 93, B: 89, C: 84, D: 93, E: 91, F: 86, G: 82, LI: 89.6, FPS: 5376},
+            ca: {rank: 11, country: "Canada", aircraft: "CF-18A/B (60)", missile: "AIM-120C-7 (120)", A: 92, B: 88, C: 85, D: 92, E: 90, F: 88, G: 75, LI: 89.3, FPS: 5358},
+            de: {rank: 12, country: "Germany", aircraft: "Eurofighter T4 (40) + Tornado ECR (20)", missile: "Meteor (150) / AIM-120C-5 (105)", A: 86, B: 78, C: 84, D: 88, E: 86, F: 83, G: 72, LI: 84.6, FPS: 5076},
+            pk: {rank: 13, country: "Pakistan", aircraft: "J-10C (20) + JF-17C (26) + F-16AM-52+ (14)", missile: "PL-15E (200) / AIM-120C-5 (105)", A: 88, B: 75, C: 84, D: 85, E: 78, F: 85, G: 68, LI: 83.3, FPS: 4998},
+            es: {rank: 14, country: "Spain", aircraft: "EF-18M (40) + Eurofighter T4 (20)", missile: "AIM-120C-7 (120) / Meteor (150)", A: 83, B: 76, C: 83, D: 85, E: 83, F: 80, G: 70, LI: 82.2, FPS: 4932},
+            sa: {rank: 15, country: "Saudi Arabia", aircraft: "F-15SA (40) + Typhoon T3 (20)", missile: "AIM-120C-7 (120) / Meteor (150)", A: 82, B: 78, C: 83, D: 79, E: 80, F: 82, G: 65, LI: 80.8, FPS: 4848},
+            tr: {rank: 16, country: "Turkey", aircraft: "F-16C/D Block-70 (35) + F-4E-2020 (25)", missile: "AIM-120C-7 (120)", A: 82, B: 76, C: 81, D: 78, E: 80, F: 82, G: 88, LI: 79.8, FPS: 4788},
+            tw: {rank: 17, country: "Taiwan", aircraft: "F-16V (42) + Mirage-2000-5 (18)", missile: "AIM-120C-7 (120) / MICA-EM (80)", A: 82, B: 74, C: 81, D: 78, E: 80, F: 81, G: 76, LI: 79.5, FPS: 4770},
+            in: {rank: 18, country: "India", aircraft: "Rafale F3R (36) + Su-30MKI Super-30 (24)", missile: "Meteor (150) / RVV-AE-PD (120)", A: 80, B: 80, C: 83, D: 73, E: 80, F: 80, G: 74, LI: 79.3, FPS: 4758},
+            gr: {rank: 19, country: "Greece", aircraft: "F-16V (40) + Mirage-2000-5 Mk2 (20)", missile: "AIM-120C-7 (120) / MICA-EM (80)", A: 81, B: 74, C: 81, D: 77, E: 79, F: 80, G: 72, LI: 78.9, FPS: 4734},
+            br: {rank: 20, country: "Brazil", aircraft: "JAS-39E (20) + F-5EM (40)", missile: "Meteor (150) / AIM-120C-5 (105)", A: 76, B: 74, C: 82, D: 75, E: 78, F: 78, G: 68, LI: 77.3, FPS: 4638}
+        };
+
+        const countries = [
+            {code: 'us', name: 'United States', rank: 1, fps: 5751, flag: 'https://flagcdn.com/w80/us.png'},
+            {code: 'ru', name: 'Russia', rank: 2, fps: 5678, flag: 'https://flagcdn.com/w80/ru.png'},
+            {code: 'cn', name: 'China', rank: 3, fps: 5660, flag: 'https://flagcdn.com/w80/cn.png'},
+            {code: 'il', name: 'Israel', rank: 4, fps: 5604, flag: 'https://flagcdn.com/w80/il.png'},
+            {code: 'gb', name: 'United Kingdom', rank: 5, fps: 5436, flag: 'https://flagcdn.com/w80/gb.png'},
+            {code: 'au', name: 'Australia', rank: 6, fps: 5386, flag: 'https://flagcdn.com/w80/au.png'},
+            {code: 'jp', name: 'Japan', rank: 7, fps: 5370, flag: 'https://flagcdn.com/w80/jp.png'},
+            {code: 'kr', name: 'South Korea', rank: 8, fps: 5322, flag: 'https://flagcdn.com/w80/kr.png'},
+            {code: 'se', name: 'Sweden', rank: 9, fps: 5319, flag: 'https://flagcdn.com/w80/se.png'},
+            {code: 'it', name: 'Italy', rank: 10, fps: 5316, flag: 'https://flagcdn.com/w80/it.png'},
+            {code: 'fr', name: 'France', rank: 11, fps: 5311, flag: 'https://flagcdn.com/w80/fr.png'},
+            {code: 'ca', name: 'Canada', rank: 12, fps: 5204, flag: 'https://flagcdn.com/w80/ca.png'},
+            {code: 'de', name: 'Germany', rank: 13, fps: 4901, flag: 'https://flagcdn.com/w80/de.png'},
+            {code: 'tr', name: 'Turkey', rank: 14, fps: 4770, flag: 'https://flagcdn.com/w80/tr.png'},
+            {code: 'pk', name: 'Pakistan', rank: 15, fps: 4743, flag: 'https://flagcdn.com/w80/pk.png'},
+            {code: 'th', name: 'Thailand', rank: 16, fps: 4707, flag: 'https://flagcdn.com/w80/th.png'},
+            {code: 'es', name: 'Spain', rank: 17, fps: 4698, flag: 'https://flagcdn.com/w80/es.png'},
+            {code: 'ir', name: 'Iran', rank: 18, fps: 4617, flag: 'https://flagcdn.com/w80/ir.png'},
+            {code: 'in', name: 'India', rank: 19, fps: 4617, flag: 'https://flagcdn.com/w80/in.png'},
+            {code: 'sa', name: 'Saudi Arabia', rank: 20, fps: 4548, flag: 'https://flagcdn.com/w80/sa.png'}
+        ];
+
+        const csvMap = {
+            'us': 'us.csv', 'ru': 'rus.csv', 'cn': 'chn.csv', 'il': 'isr.csv',
+            'gb': 'uk.csv', 'au': 'aus.csv', 'jp': 'jpn.csv', 'kr': 'kor.csv',
+            'se': 'swe.csv', 'it': 'ita.csv', 'fr': 'fra.csv', 'ca': 'can.csv',
+            'de': 'de.csv', 'tr': 'tuk.csv', 'pk': 'pk.csv', 'th': 'thai.csv',
+            'es': 'spa.csv', 'ir': 'iran.csv', 'in': 'in.csv', 'sa': 'sau.csv'
+        };
+
+        let fleetData = {};
+        let loadingStatus = {};
+        let activeTab = 'us';
+
+        async function loadCSV(countryCode) {
+            const csvFile = csvMap[countryCode];
+            const url = `https://raw.githubusercontent.com/ayeeff/aircombat/main/data/${csvFile}`;
+            
+            return new Promise((resolve, reject) => {
+                Papa.parse(url, {
+                    download: true,
+                    header: true,
+                    complete: (results) => resolve(results.data),
+                    error: (error) => reject(error)
+                });
+            });
+        }
+
+        async function loadCountryData(countryCode) {
+            if (fleetData[countryCode]) {
+                return fleetData[countryCode];
+            }
+            
+            if (loadingStatus[countryCode] === 'loading') {
+                // Wait for the ongoing load
+                return new Promise((resolve) => {
+                    const checkInterval = setInterval(() => {
+                        if (loadingStatus[countryCode] === 'loaded') {
+                            clearInterval(checkInterval);
+                            resolve(fleetData[countryCode]);
+                        }
+                    }, 100);
+                });
+            }
+
+            loadingStatus[countryCode] = 'loading';
+            try {
+                fleetData[countryCode] = await loadCSV(countryCode);
+                loadingStatus[countryCode] = 'loaded';
+                return fleetData[countryCode];
+            } catch (error) {
+                console.error(`Error loading ${countryCode}:`, error);
+                fleetData[countryCode] = [];
+                loadingStatus[countryCode] = 'error';
+                return [];
+            }
+        }
+
+        function createTabs() {
+            const tabButtons = document.getElementById('tabButtons');
+            
+            countries.forEach(country => {
+                const button = document.createElement('button');
+                button.className = `tab-button px-3 py-2 md:px-4 md:py-3 rounded-lg font-semibold flex items-center gap-2 ${country.code === 'us' ? 'active' : ''}`;
+                button.innerHTML = `
+                    <img src="${country.flag}" alt="${country.name}" class="w-5 h-3 md:w-6 md:h-4 flag-badge rounded">
+                    <span class="text-xs md:text-sm">#${country.rank} ${country.name}</span>
+                    <span class="text-xs text-slate-400 hidden md:inline">(${country.fps})</span>
+                `;
+                button.onclick = () => switchTab(country.code);
+                tabButtons.appendChild(button);
+            });
+        }
+
+        async function switchTab(countryCode) {
+            if (activeTab === countryCode) return;
+            
+            activeTab = countryCode;
+            
+            // Update button states
+            document.querySelectorAll('.tab-button').forEach((btn, idx) => {
+                btn.classList.toggle('active', countries[idx].code === countryCode);
+            });
+            
+            // Show loading if data not ready
+            if (!fleetData[countryCode]) {
+                const tabContent = document.getElementById('tabContent');
+                tabContent.innerHTML = `
+                    <div class="tab-loading">
+                        <div>
+                            <div class="loading-spinner rounded-full mx-auto mb-4"></div>
+                            <p class="text-slate-400 text-center">Loading ${countries.find(c => c.code === countryCode).name} data...</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Load and render
+            await loadCountryData(countryCode);
+            renderTabContent(countryCode);
+            updatePerformancePanel(countryCode);
+        }
+
+        function updatePerformancePanel(countryCode) {
+            const country = countries.find(c => c.code === countryCode);
+            const perf = performanceData[countryCode];
+            
+            if (!perf) return;
+
+            document.getElementById('perfFlag').src = country.flag;
+            document.getElementById('perfFlag').alt = country.name;
+            document.getElementById('perfCountryName').textContent = country.name;
+            document.getElementById('perfRank').textContent = `Rank #${perf.rank}`;
+            document.getElementById('perfLI').textContent = perf.LI;
+            document.getElementById('perfMissile').textContent = perf.missile;
+
+            // Update scores and bars
+            const scores = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+            scores.forEach(score => {
+                const value = perf[score];
+                document.getElementById(`score${score}`).textContent = value;
+                document.getElementById(`bar${score}`).style.width = `${value}%`;
+            });
+        }
+
+        function renderTabContent(countryCode) {
+            const country = countries.find(c => c.code === countryCode);
+            const aircraft = fleetData[countryCode] || [];
+            const tabContent = document.getElementById('tabContent');
+            
+            tabContent.innerHTML = `
+                <div class="aircraft-card rounded-2xl p-4 md:p-6 mb-6">
+                    <div class="flex items-center gap-4 mb-4">
+                        <img src="${country.flag}" alt="${country.name}" class="w-12 h-8 md:w-16 md:h-10 flag-badge rounded-lg">
+                        <div>
+                            <h2 class="text-2xl md:text-3xl font-bold orbitron country-name-text">${country.name}</h2>
+                            <p class="text-slate-400 text-sm md:text-base">Rank #${country.rank} • FPS: ${country.fps}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 md:gap-6">
+                    ${aircraft.map((ac, idx) => {
+                        if (!ac.Aircraft) return '';
+                        return `
+                            <div class="aircraft-card rounded-xl md:rounded-2xl overflow-hidden">
+                                <div class="grid md:grid-cols-3 gap-4 md:gap-6 p-4 md:p-6">
+                                    <div class="md:col-span-1">
+                                        <img src="${ac.Photo || 'https://via.placeholder.com/400x300?text=No+Image'}" 
+                                             alt="${ac.Aircraft}" 
+                                             class="w-full h-48 md:h-64 object-cover rounded-lg"
+                                             loading="lazy"
+                                             onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
+                                        <div class="mt-4 space-y-2 text-sm">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-blue-400 font-semibold">Type:</span>
+                                                <span class="text-slate-300">${ac.Type}</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-purple-400 font-semibold">Origin:</span>
+                                                <span class="text-slate-300">${ac.Origin}</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-green-400 font-semibold">Version:</span>
+                                                <span class="text-slate-300">${ac.Versions}</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-yellow-400 font-semibold">In Service:</span>
+                                                <span class="text-white font-bold text-base md:text-lg">${ac['In Service']}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <h3 class="text-xl md:text-2xl font-bold mb-3 orbitron country-name-text">${ac.Aircraft}</h3>
+                                        <p class="text-slate-300 leading-relaxed text-sm md:text-base">${ac.Notes}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // Background loading function
+        async function loadRemainingData() {
+            const priorityCountries = ['us', 'ru', 'cn', 'gb', 'au', 'fr', 'ca', 'de'];
+            
+            // Load priority countries first
+            for (const code of priorityCountries) {
+                if (!fleetData[code]) {
+                    await loadCountryData(code);
+                    await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between loads
+                }
+            }
+            
+            // Then load the rest
+            for (const country of countries) {
+                if (!fleetData[country.code]) {
+                    await loadCountryData(country.code);
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+        }
+
+        // Initialize
+        async function init() {
+            // Load US data first
+            await loadCountryData('us');
+            
+            // Show UI
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+            
+            // Create tabs and render US content
+            createTabs();
+            renderTabContent('us');
+            updatePerformancePanel('us');
+            
+            // Load other countries in background
+            loadRemainingData();
+        }
+
+        init();
+    </script>
 </body>
 </html>
