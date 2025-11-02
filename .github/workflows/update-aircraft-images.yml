@@ -1,0 +1,278 @@
+name: Update Aircraft Images (DuckDuckGo)
+
+on:
+  # Run on the 1st of every month at 3 AM UTC
+  schedule:
+    - cron: '0 3 1 * *'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (report changes without modifying files)'
+        required: false
+        type: boolean
+        default: true
+      limit:
+        description: 'Limit updates per CSV (leave empty for no limit)'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  update-images:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests>=2.31.0
+      
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      
+      - name: Test DuckDuckGo search
+        run: |
+          python update_aircraft_images.py --test
+        continue-on-error: true
+      
+      - name: Run image updater (dry run first)
+        id: dry_run
+        run: |
+          if [ -n "${{ github.event.inputs.limit }}" ]; then
+            python update_aircraft_images.py --dry-run --limit ${{ github.event.inputs.limit }} | tee dry_run_output.txt
+          else
+            python update_aircraft_images.py --dry-run | tee dry_run_output.txt
+          fi
+        continue-on-error: true
+      
+      - name: Upload dry run results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dry-run-results
+          path: dry_run_output.txt
+          retention-days: 30
+      
+      - name: Run image updater (actual update)
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)
+        run: |
+          if [ -n "${{ github.event.inputs.limit }}" ]; then
+            python update_aircraft_images.py --limit ${{ github.event.inputs.limit }} | tee update_output.txt
+          else
+            python update_aircraft_images.py | tee update_output.txt
+          fi
+      
+      - name: Upload update results
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)
+        uses: actions/upload-artifact@v4
+        with:
+          name: update-results
+          path: update_output.txt
+          retention-days: 90
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [[ -n $(git status --porcelain data/*.csv) ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Changes detected in CSV files"
+            git status --porcelain data/*.csv
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  No changes detected"
+          fi
+      
+      - name: Commit changes
+        if: steps.check_changes.outputs.changes == 'true'
+        id: commit
+        run: |
+          BRANCH_NAME="update-aircraft-images-$(date +%Y-%m-%d-%H%M)"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          
+          git checkout -b "$BRANCH_NAME"
+          git add data/*.csv
+          
+          # Count changes
+          UPDATED_FILES=$(git diff --cached --name-only | wc -l)
+          TOTAL_CHANGES=$(git diff --cached --numstat | awk '{sum+=$1+$2} END {print sum}')
+          
+          echo "updated_files=$UPDATED_FILES" >> $GITHUB_OUTPUT
+          echo "total_changes=$TOTAL_CHANGES" >> $GITHUB_OUTPUT
+          
+          git commit -m "🖼️ Update aircraft images via DuckDuckGo
+
+- Replaced Wikimedia URLs with hotlink-friendly alternatives
+- Updated $UPDATED_FILES file(s) with $TOTAL_CHANGES line change(s)
+- Automated update via GitHub Actions on $(date +%Y-%m-%d)
+- Using DuckDuckGo image search (free, no API key)
+
+Files modified:
+$(git diff --cached --name-only | sed 's/^/  - /')
+
+Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          
+          git push origin "$BRANCH_NAME"
+      
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.commit.outputs.branch_name }}
+          title: '🖼️ 🦆 Update aircraft images - ${{ steps.commit.outputs.updated_files }} file(s)'
+          body: |
+            ## 🖼️ Aircraft Image Updates via DuckDuckGo 🦆
+            
+            This PR updates aircraft photo URLs from Wikimedia to hotlink-friendly sources using DuckDuckGo image search.
+            
+            ### 📊 Changes Summary
+            - **Files modified**: ${{ steps.commit.outputs.updated_files }}
+            - **Total changes**: ${{ steps.commit.outputs.total_changes }} lines
+            - **Date**: $(date +%Y-%m-%d)
+            - **Triggered by**: ${{ github.event_name }}
+            - **Search engine**: DuckDuckGo (100% free, no API key needed)
+            
+            ### ✅ What Changed
+            - Replaced Wikimedia URLs with hotlink-friendly alternatives
+            - Used DuckDuckGo to find high-quality replacement images
+            - Verified new URLs are accessible and from approved domains
+            - No API costs or rate limits! 🎉
+            
+            ### 🎯 Approved Hotlink-Friendly Domains
+            - **Imgur**: imgur.com, i.imgur.com
+            - **Flickr**: flickr.com, staticflickr.com (farm1-9)
+            - **Twitter/X**: pbs.twimg.com
+            - **Reddit**: i.redd.it, preview.redd.it
+            - **Unsplash**: unsplash.com, images.unsplash.com, source.unsplash.com
+            - **Pexels**: pexels.com, images.pexels.com
+            - **Pixabay**: pixabay.com, cdn.pixabay.com
+            
+            ### 📝 Review Checklist
+            Before merging, please verify:
+            - [ ] All new image URLs load correctly in browser
+            - [ ] Images match the correct aircraft and origin
+            - [ ] Image quality is acceptable (no low-res thumbnails)
+            - [ ] No inappropriate or watermarked content
+            - [ ] URLs are from trusted, hotlink-friendly domains
+            - [ ] No broken links or 404 errors
+            
+            ### 🦆 About DuckDuckGo
+            - **Pros**: Completely free, no API key needed, privacy-focused
+            - **Rate limiting**: 2 seconds between searches (respectful)
+            - **Results**: Good quality images from diverse sources
+            
+            ### 🔍 Files Changed
+            ```
+            ${{ steps.commit.outputs.updated_files }} CSV file(s) in data/ directory
+            ```
+            
+            ### 🤖 Automation Details
+            - **Run ID**: ${{ github.run_id }}
+            - **Workflow**: [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - **Branch**: ${{ steps.commit.outputs.branch_name }}
+            
+            ---
+            
+            <details>
+            <summary>📋 View dry run output</summary>
+            
+            Check the [dry-run-results artifact](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed search results.
+            
+            </details>
+            
+            ---
+            
+            *🤖 Automated PR created by GitHub Actions using DuckDuckGo*
+            *💡 To re-run: Go to Actions → Update Aircraft Images → Run workflow*
+            *🦆 100% free and open source!*
+          labels: |
+            automated
+            images
+            maintenance
+            duckduckgo
+            free
+          assignees: ${{ github.repository_owner }}
+          draft: false
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 📊 Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date**: $(date +%Y-%m-%d\ %H:%M\ UTC)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changes detected**: ${{ steps.check_changes.outputs.changes }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Search engine**: DuckDuckGo 🦆 (free, no API key)" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ steps.check_changes.outputs.changes }}" == "true" ]]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### ✅ Pull Request Created" >> $GITHUB_STEP_SUMMARY
+            echo "- **Branch**: \`${{ steps.commit.outputs.branch_name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Files changed**: ${{ steps.commit.outputs.updated_files }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Total changes**: ${{ steps.commit.outputs.total_changes }} lines" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📁 Modified Files" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            git diff --name-only origin/main...HEAD >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Unable to show diff" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### ℹ️  No Changes" >> $GITHUB_STEP_SUMMARY
+            echo "All images are already using hotlink-friendly URLs or no suitable alternatives were found." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "🦆 **DuckDuckGo**: 100% free, no API limits, no costs!" >> $GITHUB_STEP_SUMMARY
+
+  # Notify on failure
+  notify-failure:
+    needs: update-images
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Create issue on failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Aircraft Image Update Failed (DuckDuckGo)',
+              body: `The automated aircraft image update workflow failed.
+              
+              **Run Details:**
+              - Run ID: ${context.runId}
+              - Triggered by: ${context.eventName}
+              - [View logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+              
+              **Possible Issues:**
+              1. DuckDuckGo API changes (check token extraction)
+              2. Network connectivity problems
+              3. CSV file format issues
+              4. Rate limiting (too many requests)
+              
+              **This workflow uses:**
+              - 🦆 DuckDuckGo (free, no API key)
+              - No API costs or limits
+              
+              This issue was automatically created by the workflow.`,
+              labels: ['bug', 'automated', 'workflow-failure', 'duckduckgo']
+            });
