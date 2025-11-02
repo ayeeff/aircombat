@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Aircraft Image Updater - DuckDuckGo Edition
-Scans CSV files in data directory and updates Photo URLs with hotlink-friendly alternatives
-Uses DuckDuckGo HTML scraping (100% free, no API keys needed)
+Aircraft Image Updater - Wikimedia Commons Edition
+Scans CSV files in data directory and converts Wikimedia URLs to direct image URLs
+Uses Wikimedia Commons API (100% free, automation-friendly)
 """
 
 import os
@@ -12,212 +12,135 @@ import requests
 import json
 import re
 from pathlib import Path
-from urllib.parse import urlparse, quote, urlencode
-
-# Sites known to allow hotlinking
-HOTLINK_FRIENDLY_DOMAINS = [
-    'imgur.com',
-    'i.imgur.com',
-    'flickr.com',
-    'live.staticflickr.com',
-    'farm1.staticflickr.com',
-    'farm2.staticflickr.com',
-    'farm3.staticflickr.com',
-    'farm4.staticflickr.com',
-    'farm5.staticflickr.com',
-    'farm6.staticflickr.com',
-    'farm7.staticflickr.com',
-    'farm8.staticflickr.com',
-    'farm9.staticflickr.com',
-    'pbs.twimg.com',
-    'i.redd.it',
-    'preview.redd.it',
-    # Unsplash
-    'unsplash.com',
-    'images.unsplash.com',
-    'source.unsplash.com',
-    # Pexels
-    'pexels.com',
-    'images.pexels.com',
-    # Pixabay
-    'pixabay.com',
-    'cdn.pixabay.com',
-]
+from urllib.parse import urlparse, quote, unquote
 
 def is_wikimedia_url(url):
     """Check if URL is from Wikimedia"""
     return 'wikimedia.org' in url or 'wikipedia.org' in url
 
-def is_hotlink_friendly(url):
-    """Check if URL is from a hotlink-friendly domain"""
+def extract_filename_from_wikimedia_url(url):
+    """Extract the filename from a Wikimedia URL"""
     if not url:
-        return False
-    domain = urlparse(url).netloc.lower()
-    return any(friendly in domain for friendly in HOTLINK_FRIENDLY_DOMAINS)
+        return None
+    
+    # Handle different Wikimedia URL formats
+    # Format 1: https://upload.wikimedia.org/wikipedia/commons/4/43/Filename.jpg
+    match = re.search(r'/wikipedia/commons/(?:\w+/)+([^/]+)$', url)
+    if match:
+        return unquote(match.group(1))
+    
+    # Format 2: https://en.wikipedia.org/wiki/File:Filename.jpg
+    match = re.search(r'/wiki/File:(.+)$', url)
+    if match:
+        return unquote(match.group(1))
+    
+    # Format 3: Direct filename in URL
+    match = re.search(r'/([^/]+\.(jpg|jpeg|png|gif|svg))(\?.*)?$', url, re.IGNORECASE)
+    if match:
+        return unquote(match.group(1))
+    
+    return None
+
+def get_wikimedia_direct_url(filename, preferred_width=1280):
+    """
+    Get direct URL for a Wikimedia Commons file using the API
+    Returns a direct hotlink-friendly URL
+    """
+    if not filename:
+        return None
+    
+    try:
+        # Use Wikimedia Commons API
+        api_url = "https://commons.wikimedia.org/w/api.php"
+        
+        params = {
+            'action': 'query',
+            'titles': f'File:{filename}',
+            'prop': 'imageinfo',
+            'iiprop': 'url|size',
+            'iiurlwidth': preferred_width,
+            'format': 'json',
+        }
+        
+        headers = {
+            'User-Agent': 'AircraftImageUpdater/1.0 (Educational; GitHub Actions)'
+        }
+        
+        response = requests.get(api_url, params=params, headers=headers, timeout=10)
+        
+        if response.status_code != 200:
+            print(f"    ⚠ API returned status {response.status_code}")
+            return None
+        
+        data = response.json()
+        
+        # Extract the image URL from the response
+        pages = data.get('query', {}).get('pages', {})
+        
+        for page_id, page_data in pages.items():
+            if page_id == '-1':
+                print(f"    ⚠ File not found on Wikimedia Commons")
+                return None
+            
+            imageinfo = page_data.get('imageinfo', [])
+            if imageinfo:
+                # Try to get the thumbnailed URL (which is direct and hotlink-friendly)
+                thumb_url = imageinfo[0].get('thumburl')
+                if thumb_url:
+                    return thumb_url
+                
+                # Fallback to original URL
+                url = imageinfo[0].get('url')
+                return url
+        
+        return None
+        
+    except requests.exceptions.RequestException as e:
+        print(f"    ❌ Request failed: {e}")
+        return None
+    except Exception as e:
+        print(f"    ❌ Unexpected error: {e}")
+        return None
+
+def convert_wikimedia_url(current_url):
+    """
+    Convert a Wikimedia URL to a direct hotlink-friendly URL
+    """
+    if not current_url or not is_wikimedia_url(current_url):
+        return None
+    
+    print(f"  🔍 Converting Wikimedia URL...")
+    
+    # Extract filename
+    filename = extract_filename_from_wikimedia_url(current_url)
+    
+    if not filename:
+        print(f"    ⚠ Could not extract filename from URL")
+        return None
+    
+    print(f"    📄 Extracted filename: {filename}")
+    
+    # Get direct URL from Commons API
+    direct_url = get_wikimedia_direct_url(filename)
+    
+    if direct_url:
+        print(f"    ✅ Found direct URL")
+        return direct_url
+    else:
+        print(f"    ❌ Could not get direct URL")
+        return None
 
 def test_image_url(url, timeout=5):
     """Test if an image URL is accessible"""
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         response = requests.head(url, timeout=timeout, allow_redirects=True, headers=headers)
-        # Check if it's actually an image
         content_type = response.headers.get('content-type', '').lower()
         return response.status_code == 200 and 'image' in content_type
     except:
         return False
-
-def search_duckduckgo_images(query, max_results=20):
-    """
-    Search DuckDuckGo for images using their HTML page scraping
-    Returns list of image URLs
-    """
-    try:
-        # Use more realistic browser headers
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Cache-Control': 'max-age=0',
-        }
-        
-        # Create a session to maintain cookies
-        session = requests.Session()
-        
-        # Step 1: Get the main page first to establish session
-        print(f"    🔧 Establishing session...")
-        session.get('https://duckduckgo.com/', headers=headers, timeout=10)
-        time.sleep(1)
-        
-        # Step 2: Search for images on the HTML page
-        search_url = f'https://duckduckgo.com/?q={quote(query)}&iax=images&ia=images'
-        print(f"    🔧 Fetching search page...")
-        response = session.get(search_url, headers=headers, timeout=10)
-        
-        if response.status_code != 200:
-            print(f"    ⚠ Search page returned status {response.status_code}")
-            return []
-        
-        # Extract vqd token from the page
-        vqd_match = re.search(r'vqd="(\d+-\d+(?:-\d+)?)"', response.text)
-        if not vqd_match:
-            vqd_match = re.search(r'vqd=(\d+-\d+(?:-\d+)?)', response.text)
-        
-        if not vqd_match:
-            print(f"    ⚠ Could not extract vqd token from page")
-            # Try alternative regex patterns
-            vqd_match = re.search(r'"vqd":"(\d+-\d+(?:-\d+)?)"', response.text)
-            if not vqd_match:
-                print(f"    ⚠ Alternative vqd extraction also failed")
-                return []
-        
-        vqd = vqd_match.group(1)
-        print(f"    ✓ Got vqd token: {vqd}")
-        
-        # Step 3: Query the image API with proper headers
-        api_headers = headers.copy()
-        api_headers.update({
-            'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'Referer': search_url,
-            'X-Requested-With': 'XMLHttpRequest',
-        })
-        
-        params = {
-            'l': 'us-en',
-            'o': 'json',
-            'q': query,
-            'vqd': vqd,
-            'f': ',,,',
-            'p': '1',
-            'v7exp': 'a',
-        }
-        
-        api_url = 'https://duckduckgo.com/i.js'
-        print(f"    🔧 Querying image API...")
-        time.sleep(1)  # Be respectful
-        
-        response = session.get(api_url, params=params, headers=api_headers, timeout=10)
-        
-        if response.status_code != 200:
-            print(f"    ⚠ API returned status {response.status_code}")
-            print(f"    ⚠ Response: {response.text[:200]}")
-            return []
-        
-        try:
-            data = response.json()
-        except json.JSONDecodeError:
-            print(f"    ⚠ Failed to parse JSON response")
-            print(f"    ⚠ Response: {response.text[:200]}")
-            return []
-        
-        results = data.get('results', [])
-        
-        if not results:
-            print(f"    ⚠ No results in API response")
-            return []
-        
-        # Extract image URLs
-        image_urls = []
-        for result in results[:max_results]:
-            image_url = result.get('image')
-            if image_url:
-                image_urls.append(image_url)
-        
-        return image_urls
-        
-    except requests.exceptions.RequestException as e:
-        print(f"    ❌ Request failed: {e}")
-        return []
-    except Exception as e:
-        print(f"    ❌ Unexpected error: {e}")
-        import traceback
-        traceback.print_exc()
-        return []
-
-def search_aircraft_image_duckduckgo(aircraft_name, origin):
-    """
-    Search for aircraft images using DuckDuckGo
-    Returns a hotlink-friendly image URL or None
-    """
-    # Construct search query
-    query = f"{aircraft_name} {origin} aircraft photo"
-    
-    print(f"  🔍 Searching DuckDuckGo for: {query}")
-    
-    # Get image results
-    image_urls = search_duckduckgo_images(query)
-    
-    if not image_urls:
-        print(f"    ⚠ No images found")
-        return None
-    
-    print(f"    📸 Found {len(image_urls)} images")
-    
-    # Filter for hotlink-friendly sources
-    for idx, url in enumerate(image_urls, 1):
-        if is_hotlink_friendly(url):
-            domain = urlparse(url).netloc
-            print(f"    [{idx}/{len(image_urls)}] Testing {domain}: {url[:60]}...")
-            
-            if test_image_url(url):
-                print(f"    ✅ Valid image found!")
-                return url
-            else:
-                print(f"    ⚠ URL not accessible, trying next...")
-        else:
-            domain = urlparse(url).netloc
-            print(f"    [{idx}/{len(image_urls)}] Skipping non-hotlink domain: {domain}")
-    
-    print(f"    ❌ No hotlink-friendly images found")
-    return None
 
 def update_csv_images(csv_path, dry_run=False, limit=None):
     """
@@ -259,26 +182,29 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
                 print(f"\n[Row {idx}] {aircraft} ({origin})")
                 print(f"  Current: {current_photo[:80]}...")
                 
-                # Search for alternative
-                new_url = search_aircraft_image_duckduckgo(aircraft, origin)
+                # Convert to direct URL
+                new_url = convert_wikimedia_url(current_photo)
                 
-                if new_url and is_hotlink_friendly(new_url):
-                    print(f"  ✅ Found alternative: {new_url[:80]}...")
-                    if not dry_run:
-                        row['Photo'] = new_url
-                    updates += 1
-                    processed += 1
+                if new_url and new_url != current_photo:
+                    # Verify the new URL works
+                    if test_image_url(new_url):
+                        print(f"  ✅ Converted to: {new_url[:80]}...")
+                        if not dry_run:
+                            row['Photo'] = new_url
+                        updates += 1
+                        processed += 1
+                    else:
+                        print(f"  ⚠ New URL not accessible")
+                        skipped += 1
                 else:
-                    print(f"  ❌ No suitable alternative found")
+                    if new_url == current_photo:
+                        print(f"  ℹ️  Already using direct URL")
+                    else:
+                        print(f"  ❌ Could not convert URL")
                     skipped += 1
                 
                 # Rate limiting to be respectful
-                time.sleep(3)  # 3 seconds between requests
-                
-            elif current_photo and not is_hotlink_friendly(current_photo) and not is_wikimedia_url(current_photo):
-                domain = urlparse(current_photo).netloc
-                print(f"\n[Row {idx}] {aircraft}: Non-hotlink-friendly domain: {domain}")
-                errors += 1
+                time.sleep(1)  # 1 second between requests
             
             rows.append(row)
     
@@ -309,7 +235,7 @@ def main():
     """Main execution function"""
     import argparse
     
-    parser = argparse.ArgumentParser(description='Update aircraft images using DuckDuckGo')
+    parser = argparse.ArgumentParser(description='Update aircraft images using Wikimedia Commons API')
     parser.add_argument('--dry-run', action='store_true', 
                        help='Report changes without modifying files')
     parser.add_argument('--data-dir', default='data',
@@ -317,19 +243,22 @@ def main():
     parser.add_argument('--limit', type=int, default=None,
                        help='Limit number of images to update per CSV (for testing)')
     parser.add_argument('--test', action='store_true',
-                       help='Test DuckDuckGo search and exit')
+                       help='Test Wikimedia API and exit')
     args = parser.parse_args()
     
-    # Test search if requested
+    # Test API if requested
     if args.test:
-        print("🔍 Testing DuckDuckGo image search...")
-        result = search_aircraft_image_duckduckgo("F-35", "United States")
-        if result:
-            print(f"✅ Test successful! Found: {result}")
-            return 0
-        else:
-            print("❌ Test failed - no results returned")
-            return 1
+        print("🔍 Testing Wikimedia Commons API...")
+        test_url = "https://upload.wikimedia.org/wikipedia/commons/4/43/First_F-35_headed_for_USAF_service.jpg"
+        filename = extract_filename_from_wikimedia_url(test_url)
+        if filename:
+            print(f"✓ Extracted filename: {filename}")
+            result = get_wikimedia_direct_url(filename)
+            if result:
+                print(f"✅ Test successful! Got URL: {result}")
+                return 0
+        print("❌ Test failed")
+        return 1
     
     data_dir = Path(args.data_dir)
     
@@ -345,13 +274,13 @@ def main():
         return 1
     
     print(f"{'='*70}")
-    print(f"🖼️  Aircraft Image Updater - DuckDuckGo Edition")
+    print(f"🖼️  Aircraft Image Updater - Wikimedia Commons Edition")
     print(f"{'='*70}")
     print(f"Found {len(csv_files)} CSV files")
     print(f"Mode: {'DRY RUN (no changes will be saved)' if args.dry_run else 'LIVE UPDATE'}")
     if args.limit:
         print(f"Limit: {args.limit} updates per file")
-    print(f"Source: DuckDuckGo (100% free, no API key needed) 🦆")
+    print(f"Source: Wikimedia Commons API (100% free, automation-friendly)")
     print(f"{'='*70}\n")
     
     total_updates = 0
