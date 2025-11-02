@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Aircraft Image Updater - Wikimedia Commons Edition (Enhanced)
+Aircraft Image Updater - Wikimedia Commons Edition (Enhanced & Fixed)
 Scans CSV files in data directory and updates Photo URLs with hotlink-friendly alternatives
 Uses Wikimedia Commons API (100% free, automation-friendly)
-Enhanced to catch more dead links and reduce skipped images
+Enhanced validation to catch dead links that return 200 OK
 """
 import os
 import csv
@@ -218,7 +218,7 @@ def get_wikimedia_direct_url(filename, preferred_width=1280):
     except Exception:
         return None
 
-def get_wikimedia_direct_url_with_fallback(filename, preferred_width=1280):
+def get_wikimedia_direct_url_with_fallback(filename, preferred_width=1280, verbose=True):
     """
     Try to get direct URL with filename variations as fallback
     """
@@ -233,19 +233,21 @@ def get_wikimedia_direct_url_with_fallback(filename, preferred_width=1280):
     # Try variations
     variations = generate_filename_variations(filename)
    
-    if len(variations) > 1:
+    if len(variations) > 1 and verbose:
         print(f" 🔄 Trying {len(variations)-1} filename variation(s)...")
    
     for idx, variation in enumerate(variations[1:], 1):
-        print(f" [{idx}] Trying: {variation[:60]}...")
+        if verbose:
+            print(f" [{idx}] Trying: {variation[:60]}...")
         result = get_wikimedia_direct_url(variation, preferred_width)
         if result:
-            print(f" ✅ Found with variation!")
+            if verbose:
+                print(f" ✅ Found with variation!")
             return result
    
     return None
 
-def convert_wikimedia_url(current_url):
+def convert_wikimedia_url(current_url, verbose=True):
     """
     Convert a Wikimedia URL to a direct hotlink-friendly URL
     Returns None if file not found
@@ -253,28 +255,33 @@ def convert_wikimedia_url(current_url):
     if not current_url or not is_wikimedia_url(current_url):
         return None
    
-    print(f" 🔍 Converting Wikimedia URL...")
+    if verbose:
+        print(f" 🔍 Converting Wikimedia URL...")
    
     # Extract filename
     filename = extract_filename_from_wikimedia_url(current_url)
    
     if not filename:
-        print(f" ⚠ Could not extract filename from URL")
+        if verbose:
+            print(f" ⚠ Could not extract filename from URL")
         return None
    
-    print(f" 📄 Extracted filename: {filename}")
+    if verbose:
+        print(f" 📄 Extracted filename: {filename}")
    
     # Get direct URL from Commons API (with fallback variations)
-    direct_url = get_wikimedia_direct_url_with_fallback(filename)
+    direct_url = get_wikimedia_direct_url_with_fallback(filename, verbose=verbose)
    
     if direct_url:
-        print(f" ✅ Found direct URL")
+        if verbose:
+            print(f" ✅ Found direct URL")
         return direct_url
     else:
-        print(f" ⚠ Could not find file on Wikimedia Commons (tried variations)")
+        if verbose:
+            print(f" ⚠ Could not find file on Wikimedia Commons (tried variations)")
         return None
 
-def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
+def find_image_by_aircraft(aircraft, origin='', preferred_width=1280, verbose=True):
     """
     Search for an image on Wikimedia Commons using the aircraft name
     Returns the first suitable direct URL found
@@ -282,23 +289,53 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
     if not aircraft:
         return None
 
-    # Generate possible search queries: with origin, without, and variations
+    # Generate possible search queries with progressive fallbacks
     queries = []
-    if origin:
-        queries.append(f'"{aircraft}" {origin}')
-    queries.append(f'"{aircraft}"')
     
-    # Simple variation: remove prefixes like CE-, CP-, etc.
-    base_aircraft = re.sub(r'^(C[CP]-|CE-)', '', aircraft)
-    if base_aircraft != aircraft:
+    # Clean up aircraft name for better searches
+    clean_aircraft = aircraft
+    
+    # Remove common prefixes that might confuse search
+    clean_aircraft = re.sub(r'^(C[CP]-|CE-)', '', clean_aircraft)
+    
+    # Extract base aircraft name (e.g., "F-16" from "F-16I Sufa")
+    base_match = re.match(r'^([A-Z]+-?\d+[A-Z]*)', clean_aircraft)
+    base_aircraft = base_match.group(1) if base_match else None
+    
+    # Strategy 1: Try exact name with origin
+    if origin:
+        queries.append(f'"{clean_aircraft}" {origin}')
+    queries.append(f'"{clean_aircraft}"')
+    
+    # Strategy 2: Try without quotes for broader search
+    if origin:
+        queries.append(f'{clean_aircraft} {origin}')
+    
+    # Strategy 3: Try base aircraft model if we have one (e.g., "F-15" instead of "F-15SA Eagle II")
+    if base_aircraft and base_aircraft != clean_aircraft:
         if origin:
             queries.append(f'"{base_aircraft}" {origin}')
         queries.append(f'"{base_aircraft}"')
+    
+    # Strategy 4: Try manufacturer + base model (e.g., "Boeing F-15")
+    manufacturer_match = re.match(r'^([A-Za-z]+(?:\s+[A-Za-z]+)?)\s+([A-Z]+-?\d+)', clean_aircraft)
+    if manufacturer_match:
+        manufacturer = manufacturer_match.group(1)
+        model = manufacturer_match.group(2)
+        queries.append(f'{manufacturer} {model}')
+    
+    # Strategy 5: For very specific variants, try the generic version
+    # E.g., "JF-17" instead of "JF-17B Thunder"
+    generic_match = re.match(r'^([A-Z]+-?\d+)[A-Z]?\b', clean_aircraft)
+    if generic_match:
+        generic = generic_match.group(1)
+        if generic != base_aircraft:
+            queries.append(f'"{generic}"')
 
     try:
         api_url = "https://commons.wikimedia.org/w/api.php"
        
-        for query in queries:
+        for query_idx, query in enumerate(queries, 1):
             params = {
                 'action': 'query',
                 'list': 'search',
@@ -322,7 +359,8 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
            
             search_results = data.get('query', {}).get('search', [])
            
-            print(f" 🔍 Found {len(search_results)} search results for '{query}'")
+            if verbose:
+                print(f" 🔍 Found {len(search_results)} search results for '{query}' (strategy {query_idx}/{len(queries)})")
            
             for idx, result in enumerate(search_results, 1):
                 if result.get('ns') != 6:
@@ -331,11 +369,16 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
                 title = result['title']
                 filename = title[5:]  # Remove 'File:'
                
-                print(f" [{idx}] Trying search result: {filename[:60]}...")
+                if verbose:
+                    print(f" [{idx}] Trying search result: {filename[:60]}...")
                 direct_url = get_wikimedia_direct_url(filename, preferred_width)
                 if direct_url:
-                    print(f" ✅ Found via search!")
+                    if verbose:
+                        print(f" ✅ Found via search (strategy {query_idx})!")
                     return direct_url
+            
+            # If we found results but none worked, try next strategy
+            # If no results at all, also try next strategy
            
         return None
        
@@ -359,7 +402,9 @@ def test_image_url_enhanced(url, timeout=10):
         response = requests.head(url, timeout=timeout, allow_redirects=True, headers=headers)
         
         # Check status code
-        if response.status_code != 200:
+        if response.status_code == 404:
+            return False, "HTTP 404"
+        elif response.status_code != 200:
             return False, f"HTTP {response.status_code}"
         
         # Check content type
@@ -402,15 +447,16 @@ def test_image_url_enhanced(url, timeout=10):
     except Exception as e:
         return False, f"Error: {str(e)}"
 
-def update_csv_images(csv_path, dry_run=False, limit=None, force_recheck=False):
+def update_csv_images(csv_path, dry_run=False, limit=None, force_recheck=False, debug=False):
     """
     Update image URLs in a CSV file
    
     Args:
         csv_path: Path to CSV file
         dry_run: If True, only report changes without modifying file
-        limit: Maximum number of rows to process (for testing)
+        limit: Maximum number of updates to process (for testing)
         force_recheck: If True, recheck all URLs even if they seem accessible
+        debug: If True, print detailed debug info
     """
     print(f"\n{'='*70}")
     print(f"Processing: {csv_path}")
@@ -420,7 +466,7 @@ def update_csv_images(csv_path, dry_run=False, limit=None, force_recheck=False):
     updates = 0
     skipped = 0
     errors = 0
-    processed = 0
+    updates_made = 0
    
     # Read CSV
     with open(csv_path, 'r', encoding='utf-8') as f:
@@ -428,12 +474,19 @@ def update_csv_images(csv_path, dry_run=False, limit=None, force_recheck=False):
         fieldnames = reader.fieldnames
        
         for idx, row in enumerate(reader, start=1):
-            aircraft = row.get('Aircraft', '')
-            origin = row.get('Origin', '')
-            current_photo = row.get('Photo', '')
+            aircraft = row.get('Aircraft', '').strip()
+            origin = row.get('Origin', '').strip()
+            current_photo = row.get('Photo', '').strip()
            
-            # Check limit
-            if limit and processed >= limit:
+            if debug:
+                print(f"\n[DEBUG Row {idx}] Aircraft: {aircraft}")
+                print(f"[DEBUG Row {idx}] Origin: {origin}")
+                print(f"[DEBUG Row {idx}] Photo: {current_photo}")
+           
+            # Check if we've hit the update limit
+            if limit and updates_made >= limit:
+                if debug:
+                    print(f"[DEBUG] Hit limit of {limit} updates, skipping remaining rows")
                 rows.append(row)
                 continue
            
@@ -448,48 +501,51 @@ def update_csv_images(csv_path, dry_run=False, limit=None, force_recheck=False):
                 if is_accessible and not force_recheck:
                     print(f" ℹ️ Current URL is accessible, skipping.")
                     skipped += 1
+                    rows.append(row)
+                    continue
+                
+                # URL is dead or we're force rechecking
+                if not is_accessible:
+                    print(f" ❌ Current URL is dead ({reason}), attempting to replace...")
                 else:
-                    if not is_accessible:
-                        print(f" ❌ Current URL is dead ({reason}), attempting to replace...")
+                    print(f" 🔄 Force rechecking URL...")
+               
+                # Try to convert/fix the existing URL
+                new_url = convert_wikimedia_url(current_photo, verbose=True)
+                found = False
+                
+                if new_url and new_url != current_photo:
+                    is_new_accessible, new_reason = test_image_url_enhanced(new_url)
+                    if is_new_accessible:
+                        print(f" ✅ Fixed via conversion: {new_url}")
+                        if not dry_run:
+                            row['Photo'] = new_url
+                        updates += 1
+                        updates_made += 1
+                        found = True
                     else:
-                        print(f" 🔄 Force rechecking URL...")
-                   
-                    # Try to convert/fix the existing URL
-                    new_url = convert_wikimedia_url(current_photo)
-                    found = False
+                        print(f" ⚠ Converted URL not accessible ({new_reason}).")
+                
+                if not found:
+                    # Fallback to search
+                    print(f" 🔍 Searching for replacement image...")
+                    search_url = find_image_by_aircraft(aircraft, origin, verbose=True)
                     
-                    if new_url and new_url != current_photo:
-                        is_new_accessible, new_reason = test_image_url_enhanced(new_url)
-                        if is_new_accessible:
-                            print(f" ✅ Fixed via conversion: {new_url}")
+                    if search_url:
+                        is_search_accessible, search_reason = test_image_url_enhanced(search_url)
+                        if is_search_accessible:
+                            print(f" ✅ Found via search: {search_url}")
                             if not dry_run:
-                                row['Photo'] = new_url
+                                row['Photo'] = search_url
                             updates += 1
+                            updates_made += 1
                             found = True
-                            processed += 1
                         else:
-                            print(f" ⚠ Converted URL not accessible ({new_reason}).")
+                            print(f" ⚠ Search URL not accessible ({search_reason}).")
                     
                     if not found:
-                        # Fallback to search
-                        print(f" 🔍 Searching for replacement image...")
-                        search_url = find_image_by_aircraft(aircraft, origin)
-                        
-                        if search_url:
-                            is_search_accessible, search_reason = test_image_url_enhanced(search_url)
-                            if is_search_accessible:
-                                print(f" ✅ Found via search: {search_url}")
-                                if not dry_run:
-                                    row['Photo'] = search_url
-                                updates += 1
-                                processed += 1
-                                found = True
-                            else:
-                                print(f" ⚠ Search URL not accessible ({search_reason}).")
-                        
-                        if not found:
-                            print(f" ❌ No valid replacement found.")
-                            errors += 1
+                        print(f" ❌ No valid replacement found.")
+                        errors += 1
                
                 # Rate limiting to be respectful
                 time.sleep(1)
@@ -529,9 +585,11 @@ def main():
     parser.add_argument('--data-dir', default='data',
                        help='Directory containing CSV files (default: data)')
     parser.add_argument('--limit', type=int, default=None,
-                       help='Limit number of images to update per CSV (for testing)')
+                       help='Limit number of images to UPDATE per CSV (for testing)')
     parser.add_argument('--force-recheck', action='store_true',
                        help='Recheck all URLs even if they seem accessible')
+    parser.add_argument('--debug', action='store_true',
+                       help='Print debug information')
     parser.add_argument('--test', action='store_true',
                        help='Test Wikimedia API and exit')
     args = parser.parse_args()
@@ -573,9 +631,11 @@ def main():
     print(f"Found {len(csv_files)} CSV files")
     print(f"Mode: {'DRY RUN (no changes will be saved)' if args.dry_run else 'LIVE UPDATE'}")
     if args.limit:
-        print(f"Limit: {args.limit} updates per file")
+        print(f"Limit: {args.limit} UPDATES per file (will skip accessible URLs)")
     if args.force_recheck:
         print(f"Force recheck: ENABLED (will recheck all URLs)")
+    if args.debug:
+        print(f"Debug: ENABLED")
     print(f"Source: Wikimedia Commons API with enhanced validation")
     print(f"{'='*70}\n")
    
@@ -589,7 +649,8 @@ def main():
             csv_path, 
             dry_run=args.dry_run, 
             limit=args.limit,
-            force_recheck=args.force_recheck
+            force_recheck=args.force_recheck,
+            debug=args.debug
         )
         total_updates += updates
         total_skipped += skipped
@@ -610,7 +671,8 @@ def main():
    
     if args.limit:
         print(f"\n 💡 Limit was set to {args.limit} updates per file")
-        print(f" 💡 Remove --limit to process all rows")
+        print(f" 💡 This limits UPDATES, not total rows processed")
+        print(f" 💡 Remove --limit to process all dead links")
    
     print(f"{'='*70}")
    
