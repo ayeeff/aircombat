@@ -292,13 +292,28 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
     if origin:
         queries.append(f'"{aircraft}" {origin}')
     queries.append(f'"{aircraft}"')
+    if origin:
+        queries.append(f'{aircraft} {origin}')
+    queries.append(f'{aircraft}')
     
-    # Simple variation: remove prefixes like CE-, CP-, etc.
-    base_aircraft = re.sub(r'^(C[CP]-|CE-)', '', aircraft)
-    if base_aircraft != aircraft:
+    # Simple variation: remove prefixes like CE-, CP-, C-, etc.
+    base_aircraft = re.sub(r'^(Beechcraft|Lockheed|Boeing|Airbus|Shenyang|Chengdu|Sukhoi|McDonnell Douglas|General Atomics|Raytheon|CASA/IPTN|Eurofighter|Shaanxi|[\w-]+\s)?([A-Z]{1,2}-\d{3,}[A-Z]?\s)?', '', aircraft).strip()
+    if base_aircraft != aircraft and base_aircraft:
         if origin:
             queries.append(f'"{base_aircraft}" {origin}')
+            queries.append(f'{base_aircraft} {origin}')
         queries.append(f'"{base_aircraft}"')
+        queries.append(f'{base_aircraft}')
+    
+    # Add "aircraft" or "fighter" if appropriate
+    type_keywords = ['aircraft', 'fighter', 'jet', 'plane', 'military aircraft']
+    for keyword in type_keywords:
+        queries.append(f'{aircraft} {keyword}')
+        if base_aircraft != aircraft:
+            queries.append(f'{base_aircraft} {keyword}')
+    
+    # Dedup queries
+    queries = list(set(queries))
 
     try:
         api_url = "https://commons.wikimedia.org/w/api.php"
@@ -311,7 +326,7 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
                 'srnamespace': 6,
                 'format': 'json',
                 'srprop': 'size',
-                'srlimit': 20,  # Increased limit
+                'srlimit': 50,
             }
            
             headers = {
@@ -336,6 +351,11 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
                
                 title = result['title']
                 filename = title[5:]  # Remove 'File:'
+               
+                # Skip if likely not relevant (e.g., small size or icons)
+                if result.get('size', 0) < 50000:
+                    print(f" [{idx}] Skipping small image: {filename[:60]}...")
+                    continue
                
                 print(f" [{idx}] Trying search result: {filename[:60]}...")
                 direct_url = get_wikimedia_direct_url(filename, preferred_width)
