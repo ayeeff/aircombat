@@ -393,7 +393,7 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
             # Only process if there's a photo URL from Wikimedia
             if current_photo and is_wikimedia_url(current_photo):
                 print(f"\n[Row {idx}] {aircraft} ({origin})")
-                print(f" Current: {current_photo[:80]}...")
+                print(f" Current: {current_photo}")
                
                 # First, check if current URL is still accessible
                 if test_image_url(current_photo):
@@ -407,7 +407,7 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
                     found = False
                     if new_url:
                         if test_image_url(new_url):
-                            print(f" ✅ Fixed via conversion: {new_url[:80]}...")
+                            print(f" ✅ Fixed via conversion: {new_url}")
                             if not dry_run:
                                 row['Photo'] = new_url
                             updates += 1
@@ -420,7 +420,7 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
                         print(f" 🔍 Searching for replacement image...")
                         search_url = find_image_by_aircraft(aircraft, origin)
                         if search_url and test_image_url(search_url):
-                            print(f" ✅ Found via search: {search_url[:80]}...")
+                            print(f" ✅ Found via search: {search_url}")
                             if not dry_run:
                                 row['Photo'] = search_url
                             updates += 1
@@ -482,7 +482,7 @@ def main():
             print(f"✓ Extracted filename: {filename}")
             result = get_wikimedia_direct_url_with_fallback(filename)
             if result:
-                print(f"✅ Test 1 successful! Got URL: {result[:80]}...")
+                print(f"✅ Test 1 successful! Got URL: {result}")
             else:
                 print("❌ Test 1 failed")
        
@@ -493,14 +493,14 @@ def main():
             print(f"✓ Extracted filename: {filename2}")
             result2 = get_wikimedia_direct_url_with_fallback(filename2)
             if result2:
-                print(f"✅ Test 2 successful! Got URL: {result2[:80]}...")
+                print(f"✅ Test 2 successful! Got URL: {result2}")
             else:
                 print("❌ Test 2 failed (will keep original URL)")
        
         print("\nTest 3: Search fallback")
         search_result = find_image_by_aircraft("Chengdu J-20", "China")
         if search_result:
-            print(f"✅ Test 3 successful! Search URL: {search_result[:80]}...")
+            print(f"✅ Test 3 successful! Search URL: {search_result}")
         else:
             print("❌ Test 3 failed")
        
