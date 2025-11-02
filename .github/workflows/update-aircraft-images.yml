@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: main  # 👈 Always operate on the main branch
+          ref: main  # Always operate on main
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,16 +36,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add data/*.csv || true
+          # Add updated CSVs and backups
+          git add data/*.csv data/*.csv.backup || true
 
+          # Commit and push if changes exist
           if ! git diff --cached --quiet; then
             git commit -m "Auto-update aircraft image URLs ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
             git push origin main
           else
             echo "No CSV updates to commit."
           fi
-
-      - name: Clean up temporary files
-        if: always()
-        run: |
-          find data -name "*.csv.backup" -delete || true
