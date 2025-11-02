@@ -117,16 +117,16 @@ jobs:
           echo "total_changes=$TOTAL_CHANGES" >> $GITHUB_OUTPUT
           
           git commit -m "🖼️ Update aircraft images via DuckDuckGo
-
-- Replaced Wikimedia URLs with hotlink-friendly alternatives
-- Updated $UPDATED_FILES file(s) with $TOTAL_CHANGES line change(s)
-- Automated update via GitHub Actions on $(date +%Y-%m-%d)
-- Using DuckDuckGo image search (free, no API key)
-
-Files modified:
-$(git diff --cached --name-only | sed 's/^/  - /')
-
-Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          
+          - Replaced Wikimedia URLs with hotlink-friendly alternatives
+          - Updated $UPDATED_FILES file(s) with $TOTAL_CHANGES line change(s)
+          - Automated update via GitHub Actions on $(date +%Y-%m-%d)
+          - Using DuckDuckGo image search (free, no API key)
+          
+          Files modified:
+          $(git diff --cached --name-only | sed 's/^/  - /')
+          
+          Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
           
           git push origin "$BRANCH_NAME"
       
