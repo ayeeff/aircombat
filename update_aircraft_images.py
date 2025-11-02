@@ -253,6 +253,7 @@ def get_wikimedia_direct_url_with_fallback(filename, preferred_width=1280):
 def convert_wikimedia_url(current_url):
     """
     Convert a Wikimedia URL to a direct hotlink-friendly URL
+    Returns None if file not found
     """
     if not current_url or not is_wikimedia_url(current_url):
         return None
@@ -276,8 +277,76 @@ def convert_wikimedia_url(current_url):
         return direct_url
     else:
         print(f" ⚠ Could not find file on Wikimedia Commons (tried variations)")
-        print(f" ℹ️ Keeping original URL")
-        return current_url # Return original URL as fallback
+        return None
+
+def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
+    """
+    Search for an image on Wikimedia Commons using the aircraft name
+    Returns the first suitable direct URL found
+    """
+    if not aircraft:
+        return None
+
+    search_query = f'"{aircraft}"'
+    if origin:
+        search_query += f' {origin}'
+
+    try:
+        api_url = "https://commons.wikimedia.org/w/api.php"
+       
+        params = {
+            'action': 'query',
+            'list': 'search',
+            'srsearch': search_query,
+            'srnamespace': 6,
+            'format': 'json',
+            'srprop': 'size',
+            'srlimit': 5,
+        }
+       
+        headers = {
+            'User-Agent': 'AircraftImageUpdater/1.0 (Educational; GitHub Actions)'
+        }
+       
+        response = requests.get(api_url, params=params, headers=headers, timeout=10)
+       
+        if response.status_code != 200:
+            print(f" ⚠ Search API returned status {response.status_code}")
+            return None
+       
+        data = response.json()
+       
+        search_results = data.get('query', {}).get('search', [])
+       
+        print(f" 🔍 Found {len(search_results)} search results for '{aircraft}'")
+       
+        for idx, result in enumerate(search_results, 1):
+            if result.get('ns') != 6:
+                continue
+           
+            title = result['title']
+            filename = title[5:]  # Remove 'File:'
+           
+            # Skip if too small (e.g., icons)
+            if result.get('size', 0) < 50000:
+                print(f" [{idx}] Skipping small image: {filename[:40]}...")
+                continue
+           
+            print(f" [{idx}] Trying search result: {filename[:60]}...")
+            direct_url = get_wikimedia_direct_url(filename, preferred_width)
+            if direct_url:
+                print(f" ✅ Found via search!")
+                return direct_url
+           
+        print(f" ⚠ No suitable image found in search results")
+        return None
+       
+    except requests.exceptions.RequestException as e:
+        print(f" ❌ Search request failed: {e}")
+        return None
+    except Exception as e:
+        print(f" ❌ Unexpected search error: {e}")
+        return None
 
 def test_image_url(url, timeout=5):
     """Test if an image URL is accessible"""
@@ -317,6 +386,7 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
        
         for idx, row in enumerate(reader, start=1):
             aircraft = row.get('Aircraft', '')
+            origin = row.get('Origin', '')
             current_photo = row.get('Photo', '')
            
             # Check limit
@@ -325,34 +395,47 @@ def update_csv_images(csv_path, dry_run=False, limit=None):
                 rows.append(row)
                 continue
            
-            # Check if current photo needs updating
+            # Only process if there's a photo URL from Wikimedia
             if current_photo and is_wikimedia_url(current_photo):
-                print(f"\n[Row {idx}] {aircraft}")
+                print(f"\n[Row {idx}] {aircraft} ({origin})")
                 print(f" Current: {current_photo[:80]}...")
                
-                # Convert to direct URL
-                new_url = convert_wikimedia_url(current_photo)
-               
-                if new_url and new_url != current_photo:
-                    # Verify the new URL works
-                    if test_image_url(new_url):
-                        print(f" ✅ Converted to: {new_url[:80]}...")
-                        if not dry_run:
-                            row['Photo'] = new_url
-                        updates += 1
-                        processed += 1
-                    else:
-                        print(f" ⚠ New URL not accessible, keeping original")
-                        skipped += 1
-                elif new_url == current_photo:
-                    print(f" ℹ️ Already using direct URL or kept original (no better alternative)")
+                # First, check if current URL is still accessible
+                if test_image_url(current_photo):
+                    print(f" ℹ️ Current URL is accessible, skipping.")
                     skipped += 1
                 else:
-                    print(f" ❌ Could not convert URL, keeping original")
-                    skipped += 1
+                    print(f" ❌ Current URL is dead, attempting to replace...")
+                   
+                    # Try to convert/fix the existing URL
+                    new_url = convert_wikimedia_url(current_photo)
+                    found = False
+                    if new_url:
+                        if test_image_url(new_url):
+                            print(f" ✅ Fixed via conversion: {new_url[:80]}...")
+                            if not dry_run:
+                                row['Photo'] = new_url
+                            updates += 1
+                            found = True
+                            processed += 1
+                        else:
+                            print(f" ⚠ Converted URL not accessible.")
+                    if not found:
+                        # Fallback to search
+                        print(f" 🔍 Searching for replacement image...")
+                        search_url = find_image_by_aircraft(aircraft, origin)
+                        if search_url and test_image_url(search_url):
+                            print(f" ✅ Found via search: {search_url[:80]}...")
+                            if not dry_run:
+                                row['Photo'] = search_url
+                            updates += 1
+                            processed += 1
+                        else:
+                            print(f" ❌ No replacement found, keeping original (dead).")
+                            skipped += 1
                
                 # Rate limiting to be respectful
-                time.sleep(1) # 1 second between requests
+                time.sleep(1)  # 1 second between requests
            
             rows.append(row)
    
@@ -418,6 +501,13 @@ def main():
                 print(f"✅ Test 2 successful! Got URL: {result2[:80]}...")
             else:
                 print("❌ Test 2 failed (will keep original URL)")
+       
+        print("\nTest 3: Search fallback")
+        search_result = find_image_by_aircraft("Chengdu J-20", "China")
+        if search_result:
+            print(f"✅ Test 3 successful! Search URL: {search_result[:80]}...")
+        else:
+            print("❌ Test 3 failed")
        
         return 0
    
