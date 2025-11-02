@@ -292,35 +292,13 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
     if origin:
         queries.append(f'"{aircraft}" {origin}')
     queries.append(f'"{aircraft}"')
-    if origin:
-        queries.append(f'{aircraft} {origin}')
-    queries.append(f'{aircraft}')
     
     # Simple variation: remove prefixes like CE-, CP-, etc.
-    base_aircraft = re.sub(r'^(Beechcraft|Lockheed|Boeing|Airbus|Shenyang|Chengdu|Sukhoi|McDonnell Douglas|General Atomics|Raytheon|CASA/IPTN|Eurofighter|Shaanxi|[\w-]+\s)?([A-Z]{1,2}-\d{3,}[A-Z]?\s)?', '', aircraft).strip()
-    if base_aircraft != aircraft and base_aircraft:
+    base_aircraft = re.sub(r'^(C[CP]-|CE-)', '', aircraft)
+    if base_aircraft != aircraft:
         if origin:
             queries.append(f'"{base_aircraft}" {origin}')
-            queries.append(f'{base_aircraft} {origin}')
         queries.append(f'"{base_aircraft}"')
-        queries.append(f'{base_aircraft}')
-    
-    # Add "aircraft" or "fighter" if appropriate
-    type_keywords = ['aircraft', 'fighter', 'jet', 'plane', 'military aircraft', 'Zhuhai', 'airshow']
-    for keyword in type_keywords:
-        queries.append(f'{aircraft} {keyword}')
-        if base_aircraft != aircraft:
-            queries.append(f'{base_aircraft} {keyword}')
-    
-    # For J-35, add FC-31 queries
-    if 'J-35' in aircraft:
-        queries.append('"FC-31"')
-        queries.append('FC-31')
-        queries.append('"Shenyang FC-31"')
-        queries.append('Shenyang FC-31')
-    
-    # Dedup queries
-    queries = list(set(queries))
 
     try:
         api_url = "https://commons.wikimedia.org/w/api.php"
@@ -333,7 +311,7 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
                 'srnamespace': 6,
                 'format': 'json',
                 'srprop': 'size',
-                'srlimit': 50,
+                'srlimit': 20,  # Increased limit
             }
            
             headers = {
@@ -358,17 +336,6 @@ def find_image_by_aircraft(aircraft, origin='', preferred_width=1280):
                
                 title = result['title']
                 filename = title[5:]  # Remove 'File:'
-               
-                # Filter for image extensions only
-                if not re.match(r'\.(jpg|jpeg|png|gif|svg|bmp|tif|tiff)$', filename, re.IGNORECASE):
-                    print(f" [{idx}] Skipping non-image file: {filename[:60]}...")
-                    continue
-                
-                # Skip obvious non-aircraft like sports matches
-                lower_filename = filename.lower()
-                if re.search(r'\b(fc|football|soccer|match|game|vs)\b', lower_filename) and not re.search(r'\b(air|fighter|jet|plane|aircraft|aviation|zhuhai)\b', lower_filename):
-                    print(f" [{idx}] Skipping sports-related: {filename[:60]}...")
-                    continue
                
                 print(f" [{idx}] Trying search result: {filename[:60]}...")
                 direct_url = get_wikimedia_direct_url(filename, preferred_width)
