@@ -1,0 +1,36 @@
+Company,Country,Flag,Main BVR Role (precise product)
+Anduril Industries,United States,🇺🇸,"“Fury” CCA / “Altius-600M” loyal-wingman; BVR datalink relay, AI-piloted missile-truck with AIM-120D-3 / AIM-260 internally; “Roadrunner-M” supersonic CCA; AIM-120D-3 / AIM-260 internal rotary bay; BVR launch & return"
+General Atomics Aeronautical,United States,🇺🇸,"MQ-20 Avenger CCA; AESA nose for AIM-120D-3 carriage; “Gambit” loyal-wingman series (CCA-A, -B, -C, -D)"
+Kratos Defense & Security,United States,🇺🇸,XQ-58A Valkyrie CCA; XQ-58B maritime strike variant; internal bay for AIM-120D-3 / small-diameter BVR weapons
+Boeing Defense,United States / Australia,🇺🇸🇦🇺,"F-15EX Eagle II (BVR platform); AN/APG-82(V)1 AESA radar; EPAWSS EW system; AIM-120D-3 integration; MQ-28A Ghost Bat loyal-wingman; BVR datalink relay, future internal AIM-120D-3 / Meteor pallet"
+BAE Systems,United Kingdom,🇬🇧,“LANCA” loyal-wingman demonstrator; BVR weapons bay for Meteor / SPEAR-3; integrated EW payload; Eurofighter Typhoon Captor-E AESA radar; EW suite for F-35; Meteor missile guidance & warhead
+Dassault Aviation / Airbus (FCAS),France / Germany / Spain,🇫🇷🇩🇪🇪🇸,“Remote Carrier” CCA family; BVR Meteor / FC/ASW internal bay; networked to Rafale F5 & New-Gen Fighter; Rafale F4 (BVR platform); RBE2-AA AESA radar; integration of Meteor & MICA-NG
+Saab AB,Sweden,🇸🇪,“FSAS” loyal-wingman concept; AESA nose; Meteor / AIM-120D-3 carriage on Gripen-E wing-stations; JAS-39E/F Gripen (BVR platform); PS-05/A Mk 4 AESA radar; integration of Meteor & AIM-120C-7
+AVIC (CAIG / parent),China,🇨🇳,Wing Loong-10 (Cloud-Shadow) HALE UCAV; PL-15E external carry; future internal bay variant; PL-15 / PL-21 long-range BVR missiles; integrated fire-control bus for J-20/J-35
+CASC (China Aerospace),China,🇨🇳,CH-7 stealth UCAV; internal bay for PL-15E / PL-21; BVR datalink to KJ-3000 AEW
+Shenyang Aircraft (AVIC),China,🇨🇳,FH-97A loyal-wingman; AESA nose; 4 × PL-15E internal bay; AI swarm controller for J-35; J-35 carrier-based stealth fighter; onboard KLJ-7A AESA radar
+Chengdu Aircraft (AVIC),China,🇨🇳,Cloud-Sword CCA; internal bay for PL-15E; wing-man to J-20; J-20 Mighty Dragon stealth fighter; onboard KLJ-5 AESA radar
+Sukhoi (UAC),Russia,🇷🇺,S-70 Okhotnik-B stealth UCAV; internal bay for R-77M / R-37M; BVR datalink to Su-57
+Mikoyan (UAC),Russia,🇷🇺,Skat UCAV follow-on; low-observable BVR missile bay; integrated with Su-35S/Su-30SM2
+IAI (Israel Aerospace Industries),Israel,🇮🇱,"“Neon” loyal-wingman; AESA nose; Derby-ER external / future internal bay; BVR relay for F-35I; ELM-2052 AESA radar (Gripen E, Tejas Mk1A); Barak-8 LR-SAM seeker tech transferred to air-launched BVR"
+Korea Aerospace Industries (KAI),South Korea,🇰🇷,“Low-Observable UCAV” (LO-UCAV) CCA; internal bay for Meteor / AIM-120D-3; wing-man to KF-21; KF-21 Block-I/II BVR platform; local AESA radar & missile pylons
+LIG Nex1,South Korea,🇰🇷,BVR seeker heads for K-SAAM & future air-launched Meteor-K; CCA datalink modem; KF-21 Boramae AESA radar (licence-built); K-SAAM seeker tech; AIM-120C-7 & Meteor integration
+Mitsubishi Heavy Industries,Japan,🇯🇵,“Combat Support Drone” CCA; BVR datalink to F-35A; future AAM-4B internal bay; F-35A Final Assembly & Check-Out (FACO); AAM-4B active radar BVR missile; J/APG-2 AESA (F-2)
+Northrop Grumman,United States,🇺🇸,“Model 437” loyal-wingman; BVR AIM-120D-3 internal bay; low-cost attritable AESA nose; AN/APG-85 AESA (F-35); AN/APG-77(V)1 (F-22); software-defined radio for JATM datalink
+Shield AI,United States,🇺🇸,“V-BAT Teams” & “Fury” CCA; Hivemind AI pilot; AIM-120D-3 carriage; BVR swarm coordination
+Lockheed Martin,United States,🇺🇸,"F-22 Raptor, F-35 Lightning II (stealth jets); AN/APG-77(V)1 AESA radar; AIM-260 JATM (next-gen BVR missile)"
+RTX Corporation (Raytheon),United States,🇺🇸,"AIM-120D/D-3 AMRAAM, AIM-260 JATM (BVR missiles); AN/APG-79(V)4 AESA (Super Hornet); AN/ALR-94 EW suite (F-22)"
+MBDA,United Kingdom / France / Italy / Germany,🇬🇧🇫🇷🇮🇹🇩🇪,Meteor (long-range BVR missile); MICA-NG (medium-range); active seeker heads & ramjet propulsion
+Leonardo,Italy,🇮🇹,Typhoon Captor-E AESA radar; EW/ESM systems; Meteor seeker head assembly
+Vympel NPO (Tactical Missiles Corp.),Russia,🇷🇺,R-77M (RVV-AE-PD) & R-37M hypersonic BVR missiles; active radar seekers
+Almaz-Antey,Russia,🇷🇺,Su-57 / Su-35S fire-control radars (N036 Byelka AESA); S-111 BVR seeker for R-77M
+KRET (Concern Radio-Electronic Technologies),Russia,🇷🇺,Su-57 L402 Himalayas EW suite; BVR missile seekers; active radar homing heads
+Elbit Systems,Israel,🇮🇱,EW & AESA sub-systems for F-16I & F-35I; helmet-mounted cueing for BVR shots
+Thales Group,France,🇫🇷,RBE2-AA AESA radar; SPECTRA EW suite; Meteor seeker front-end
+Hindustan Aeronautics Ltd. (HAL),India,🇮🇳,Tejas Mk1A with ELM-2052 AESA; local integration of Astra Mk1/2 BVR missiles
+Defence Research & Development Organisation (DRDO),India,🇮🇳,Astra Mk1 (110 km) / Astra Mk2 (160 km) indigenous BVR missiles; active radar seeker
+NEC Corporation,Japan,🇯🇵,J/APG-2 AESA radar backend; signal processing for AAM-4B seeker
+Safran Electronics & Defense,France,🇫🇷,Inertial navigation & active seeker for Meteor; IR seekers for MICA
+General Electric Aviation,United States,🇺🇸,F-22/F-35 engines (F119/F135) – enables super-cruise for longer BVR reach
+Rolls-Royce,United Kingdom,🇬🇧,EJ200 engine (Eurofighter) – super-cruise for Meteor launch envelope
+Safran Aircraft Engines,France,🇫🇷,M88 engine (Rafale) – super-cruise for Meteor optimal launch
