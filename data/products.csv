@@ -1,0 +1,80 @@
+Product,Company,Country,Country Code
+Fury CCA,Anduril Industries,United States,US
+Altius-600M loyal-wingman,Anduril Industries,United States,US
+Roadrunner-M supersonic CCA,Anduril Industries,United States,US
+MQ-20 Avenger CCA,General Atomics Aeronautical,United States,US
+Gambit CCA-A,General Atomics Aeronautical,United States,US
+Gambit CCA-B,General Atomics Aeronautical,United States,US
+Gambit CCA-C,General Atomics Aeronautical,United States,US
+Gambit CCA-D,General Atomics Aeronautical,United States,US
+XQ-58A Valkyrie CCA,Kratos Defense & Security,United States,US
+XQ-58B maritime strike variant,Kratos Defense & Security,United States,US
+F-15EX Eagle II,Boeing Defense,United States,US
+MQ-28A Ghost Bat loyal-wingman,Boeing Defense,Australia,AU
+LANCA loyal-wingman demonstrator,BAE Systems,United Kingdom,GB
+Eurofighter Typhoon Captor-E AESA radar,BAE Systems,United Kingdom,GB
+Remote Carrier CCA family,Dassault Aviation / Airbus (FCAS),France / Germany / Spain,FR/DE/ES
+Rafale F4,Dassault Aviation / Airbus (FCAS),France / Germany / Spain,FR/DE/ES
+FSAS loyal-wingman concept,Saab AB,Sweden,SE
+JAS-39E/F Gripen,Saab AB,Sweden,SE
+Wing Loong-10 HALE UCAV,AVIC (CAIG / parent),China,CN
+Cloud-Shadow HALE UCAV,AVIC (CAIG / parent),China,CN
+PL-15 long-range BVR missile,AVIC (CAIG / parent),China,CN
+PL-21 long-range BVR missile,AVIC (CAIG / parent),China,CN
+CH-7 stealth UCAV,CASC (China Aerospace),China,CN
+FH-97A loyal-wingman,Shenyang Aircraft (AVIC),China,CN
+J-35 carrier-based stealth fighter,Shenyang Aircraft (AVIC),China,CN
+Cloud-Sword CCA,Chengdu Aircraft (AVIC),China,CN
+J-20 Mighty Dragon stealth fighter,Chengdu Aircraft (AVIC),China,CN
+S-70 Okhotnik-B stealth UCAV,Sukhoi (UAC),Russia,RU
+Skat UCAV follow-on,Mikoyan (UAC),Russia,RU
+Neon loyal-wingman,IAI (Israel Aerospace Industries),Israel,IL
+ELM-2052 AESA radar,IAI (Israel Aerospace Industries),Israel,IL
+Low-Observable UCAV (LO-UCAV) CCA,Korea Aerospace Industries (KAI),South Korea,KR
+KF-21 Block-I BVR platform,Korea Aerospace Industries (KAI),South Korea,KR
+KF-21 Block-II BVR platform,Korea Aerospace Industries (KAI),South Korea,KR
+KF-21 Boramae AESA radar,LIG Nex1,South Korea,KR
+K-SAAM,LIG Nex1,South Korea,KR
+Meteor-K,LIG Nex1,South Korea,KR
+Combat Support Drone CCA,Mitsubishi Heavy Industries,Japan,JP
+F-35A,Mitsubishi Heavy Industries,Japan,JP
+AAM-4B active radar BVR missile,Mitsubishi Heavy Industries,Japan,JP
+J/APG-2 AESA,Mitsubishi Heavy Industries,Japan,JP
+Model 437 loyal-wingman,Northrop Grumman,United States,US
+AN/APG-85 AESA,Northrop Grumman,United States,US
+AN/APG-77(V)1,Northrop Grumman,United States,US
+V-BAT Teams CCA,Shield AI,United States,US
+Fury CCA,Shield AI,United States,US
+F-22 Raptor,Lockheed Martin,United States,US
+F-35 Lightning II,Lockheed Martin,United States,US
+AN/APG-77(V)1 AESA radar,Lockheed Martin,United States,US
+AIM-260 JATM,Lockheed Martin,United States,US
+AIM-120D AMRAAM,RTX Corporation (Raytheon),United States,US
+AIM-120D-3 AMRAAM,RTX Corporation (Raytheon),United States,US
+AIM-260 JATM,RTX Corporation (Raytheon),United States,US
+AN/APG-79(V)4 AESA,RTX Corporation (Raytheon),United States,US
+AN/ALR-94 EW suite,RTX Corporation (Raytheon),United States,US
+Meteor long-range BVR missile,MBDA,United Kingdom / France / Italy / Germany,GB/FR/IT/DE
+MICA-NG,MBDA,United Kingdom / France / Italy / Germany,GB/FR/IT/DE
+Typhoon Captor-E AESA radar,Leonardo,Italy,IT
+R-77M hypersonic BVR missile,Vympel NPO (Tactical Missiles Corp.),Russia,RU
+RVV-AE-PD,Vympel NPO (Tactical Missiles Corp.),Russia,RU
+R-37M hypersonic BVR missile,Vympel NPO (Tactical Missiles Corp.),Russia,RU
+N036 Byelka AESA,Almaz-Antey,Russia,RU
+S-111 BVR seeker,Almaz-Antey,Russia,RU
+L402 Himalayas EW suite,KRET (Concern Radio-Electronic Technologies),Russia,RU
+EW & AESA sub-systems,Elbit Systems,Israel,IL
+RBE2-AA AESA radar,Thales Group,France,FR
+SPECTRA EW suite,Thales Group,France,FR
+Meteor seeker front-end,Thales Group,France,FR
+Tejas Mk1A,Hindustan Aeronautics Ltd. (HAL),India,IN
+Astra Mk1,Defence Research & Development Organisation (DRDO),India,IN
+Astra Mk2,Defence Research & Development Organisation (DRDO),India,IN
+J/APG-2 AESA radar backend,NEC Corporation,Japan,JP
+Inertial navigation for Meteor,Safran Electronics & Defense,France,FR
+Active seeker for Meteor,Safran Electronics & Defense,France,FR
+IR seekers for MICA,Safran Electronics & Defense,France,FR
+F119 engine,General Electric Aviation,United States,US
+F135 engine,General Electric Aviation,United States,US
+EJ200 engine,Rolls-Royce,United Kingdom,GB
+M88 engine,Safran Aircraft Engines,France,FR
