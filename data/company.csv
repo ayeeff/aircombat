@@ -1,5 +1,5 @@
 Company,Country,Flag,Main BVR Role (precise product)
-Anduril Industries,United States,🇺🇸,“Fury CCA / Altius-600M” loyal-wingman; BVR datalink relay, AI-piloted missile-truck with AIM-120D-3 / AIM-260 internally; “Roadrunner-M” supersonic CCA; AIM-120D-3 / AIM-260 internal rotary bay; BVR launch & return”
+Anduril Industries,United States,🇺🇸,““Fury” CCA / “Altius-600M” loyal-wingman; BVR datalink relay, AI-piloted missile-truck with AIM-120D-3 / AIM-260 internally; “Roadrunner-M” supersonic CCA; AIM-120D-3 / AIM-260 internal rotary bay; BVR launch & return”
 General Atomics Aeronautical,United States,🇺🇸,“MQ-20 Avenger CCA; AESA nose for AIM-120D-3 carriage; “Gambit” loyal-wingman series (CCA-A, -B, -C, -D)”
 Kratos Defense & Security,United States,🇺🇸,“XQ-58A Valkyrie CCA; XQ-58B maritime strike variant; internal bay for AIM-120D-3 / small-diameter BVR weapons”
 Boeing Defense,United States,🇺🇸,“F-15EX Eagle II (BVR platform); AN/APG-82(V)1 AESA radar; EPAWSS EW system; AIM-120D-3 integration; MQ-28A Ghost Bat loyal-wingman; BVR datalink relay, future internal AIM-120D-3 / Meteor pallet”
@@ -9,8 +9,8 @@ Dassault Aviation,France,🇫🇷,““Remote Carrier” CCA family; BVR Meteor
 Airbus,France,🇫🇷,“Tanker / Multi-role Transport enabling extended BVR engagement legs (e.g., boom/probe refueling for stealth jets and BVR platforms)”
 Airbus,Germany,🇩🇪,“Tanker / Multi-role Transport enabling extended BVR engagement legs (e.g., boom/probe refueling for stealth jets and BVR platforms)”
 Airbus,Spain,🇪🇸,“Tanker / Multi-role Transport enabling extended BVR engagement legs (e.g., boom/probe refueling for stealth jets and BVR platforms)”
-SAB Rafael Advanced Defense Systems,Israel,🇮🇱,““Neon” loyal-wingman; AESA nose; Derby-ER external / future internal bay; BVR relay for F-35I; ELM-2052 AESA radar (Gripen E, Tejas Mk1A); Barak-8 LR-SAM seeker tech transferred to air-launched BVR”
-Saab AB,Sweden,🇸🇪,““FSAS” loyal-wingman concept; AESA nose; Meteor / AIM-120D-3 carriage on Gripen-E wing-stations; JAS-39E/F Gripen (BVR platform); PS-05/A Mk 4 AESA radar; integration of Meteor & AIM-120C-7”
+Rafael Advanced Defense Systems,Israel,🇮🇱,““Neon” loyal-wingman; AESA nose; Derby-ER external / future internal bay; BVR relay for F-35I; ELM-2052 AESA radar (Gripen E, Tejas Mk1A); Barak-8 LR-SAM seeker tech transferred to air-launched BVR”
+Saab AB,Sweden,🇸🇪,““FSAS” loyal-wingman concept; AESA nose; Meteor / AIM-120D-3 carriage on Gripen–E wing-stations; JAS-39 E/F Gripen (BVR platform); PS-05/A Mk 4 AESA radar; integration of Meteor & AIM-120C-7”
 AVIC (CAIG / parent),China,🇨🇳,“Wing Loong-10 (Cloud-Shadow) HALE UCAV; PL-15E external carry; future internal bay variant; PL-15 / PL-21 long-range BVR missiles; integrated fire-control bus for J-20/J-35”
 CASC (China Aerospace),China,🇨🇳,“CH-7 stealth UCAV; internal bay for PL-15E / PL-21; BVR datalink to KJ-3000 AEW”
 Shenyang Aircraft (AVIC),China,🇨🇳,“FH-97A loyal-wingman; AESA nose; 4 × PL-15E internal bay; AI swarm controller for J-35; J-35 carrier-based stealth fighter; onboard KLJ-7A AESA radar”
