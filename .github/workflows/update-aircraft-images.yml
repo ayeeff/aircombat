@@ -36,13 +36,41 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Add updated CSVs and backups
-          git add data/*.csv data/*.csv.backup || true
+          # Add only the updated CSVs (not the backup files)
+          git add data/*.csv || true
 
-          # Commit and push if changes exist
+          # Commit if changes exist
           if ! git diff --cached --quiet; then
             git commit -m "Auto-update aircraft image URLs ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
-            git push origin main
+            
+            # Try to push, with retry logic for conflicts
+            max_retries=3
+            retry_count=0
+            
+            while [ $retry_count -lt $max_retries ]; do
+              if git push origin main; then
+                echo "✅ Successfully pushed changes"
+                exit 0
+              else
+                retry_count=$((retry_count + 1))
+                echo "⚠️ Push failed, attempt $retry_count of $max_retries"
+                
+                if [ $retry_count -lt $max_retries ]; then
+                  echo "Pulling latest changes and rebasing..."
+                  git pull --rebase origin main
+                  
+                  # Check if there are conflicts
+                  if [ $? -ne 0 ]; then
+                    echo "❌ Rebase conflict detected, aborting"
+                    git rebase --abort
+                    exit 1
+                  fi
+                else
+                  echo "❌ Max retries reached, giving up"
+                  exit 1
+                fi
+              fi
+            done
           else
             echo "No CSV updates to commit."
           fi
