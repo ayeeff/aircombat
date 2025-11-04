@@ -1,0 +1,3 @@
+# Backup files
+data/*.csv.backup
+data/*_*.csv.backup
