@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,7 +101,7 @@ const subsystemLabels={A:{name:'Sensor Reach',weight:'22.5%',color:'blue',toolti
 let fleetData={},calcsData={},productsData={},companiesData={},loadingStatus={},activeTab='us';
 async function loadCalcsCSV(){const url='https://raw.githubusercontent.com/ayeeff/aircombat/main/data/calcs.csv';return new Promise((resolve,reject)=>{Papa.parse(url,{download:true,header:true,skipEmptyLines:true,complete:(results)=>{const dataMap={};results.data.forEach(row=>{const countryName=row.Country?.trim();if(countryName){const countryObj=countries.find(c=>c.name===countryName);if(countryObj){dataMap[countryObj.code]=row;}}});resolve(dataMap);},error:(error)=>reject(error)});})}
 async function loadProductsCSV(){const url='https://raw.githubusercontent.com/ayeeff/aircombat/main/data/products.csv';return new Promise((resolve,reject)=>{Papa.parse(url,{download:true,header:true,skipEmptyLines:true,complete:(results)=>{const dataMap={};results.data.forEach(row=>{if(row.Product){dataMap[row.Product.trim()]=row;}});resolve(dataMap);},error:(error)=>reject(error)});});}
-async function loadCompaniesCSV(){const url='https://raw.githubusercontent.com/ayeeff/aircombat/main/data/companies.csv';return new Promise((resolve,reject)=>{Papa.parse(url,{download:true,header:true,skipEmptyLines:true,complete:(results)=>{const dataMap={};results.data.forEach(row=>{if(row.Company){dataMap[row.Company.trim()]=row;}});resolve(dataMap);},error:(error)=>reject(error)});});}
+async function loadCompaniesCSV(){const url='https://raw.githubusercontent.com/ayeeff/aircombat/main/data/company.csv';return new Promise((resolve,reject)=>{Papa.parse(url,{download:true,header:true,skipEmptyLines:true,complete:(results)=>{const dataMap={};results.data.forEach(row=>{if(row.Company){dataMap[row.Company.trim()]=row;}});resolve(dataMap);},error:(error)=>reject(error)});});}
 async function loadCSV(cc){const csvFile=csvMap[cc];return new Promise((resolve,reject)=>{Papa.parse(csvFile,{download:true,header:true,complete:(results)=>resolve(results.data),error:(error)=>reject(error)});});}
 async function loadCountryData(cc){if(fleetData[cc]){return fleetData[cc];}if(loadingStatus[cc]==='loading'){return new Promise((resolve)=>{const checkInterval=setInterval(()=>{if(loadingStatus[cc]==='loaded'){clearInterval(checkInterval);resolve(fleetData[cc]);}},100);});}loadingStatus[cc]='loading';try{fleetData[cc]=await loadCSV(cc);loadingStatus[cc]='loaded';return fleetData[cc];}catch(error){console.error(`Error loading ${cc}:`,error);fleetData[cc]=[];loadingStatus[cc]='error';return [];}}
 function createTabs(){const tabButtons=document.getElementById('tabButtons');countries.forEach((country, index)=>{const button=document.createElement('button');let rankClass='';if(index===0)rankClass='rank-1';else if(index===1)rankClass='rank-2';else if(index===2)rankClass='rank-3';button.className=`tab-button ${rankClass} px-3 py-2 md:px-4 md:py-3 rounded-lg font-semibold flex items-center gap-2 ${country.code===activeTab?'active':''}`;button.innerHTML=`<img src="${country.flag}" alt="${country.name}" class="w-5 h-3 md:w-6 md:h-4 flag-badge rounded"><span class="text-xs md:text-sm">#${index+1} ${country.name}</span>`;button.onclick=()=>switchTab(country.code);button.dataset.countryCode=country.code;button.onmouseenter=()=>highlightSystemButtons(country.code);button.onmouseleave=()=>clearSystemHighlight();tabButtons.appendChild(button);});}
@@ -187,3 +188,4 @@ init();
     </script>
 </body>
 </html>
+```
