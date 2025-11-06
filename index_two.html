@@ -108,12 +108,16 @@ function normalizeProductName(name) {
     return name.trim().replace(/[\u2010-\u2015\u2212\u2E3A\u2E3B\uFE58\uFE63\uFF0D]/g, '-').replace(/\s+/g, ' ').toLowerCase();
 }
 
+function normalizeCompanyName(name) {
+    return name.trim().replace(/[\u2010-\u2015\u2212\u2E3A\u2E3B\uFE58\uFE63\uFF0D]/g, '-').replace(/\s+/g, ' ').toLowerCase();
+}
+
 async function loadCalcsCSV(){const url='https://raw.githubusercontent.com/ayeeff/aircombat/main/data/calcs.csv';return new Promise((resolve,reject)=>{Papa.parse(url,{download:true,header:true,skipEmptyLines:true,complete:(results)=>{const dataMap={};results.data.forEach(row=>{const countryName=row.Country?.trim();if(countryName){const countryObj=countries.find(c=>c.name===countryName);if(countryObj){dataMap[countryObj.code]=row;}}});resolve(dataMap);},error:(error)=>reject(error)});})}
 async function loadProductsCSV(){const url='https://raw.githubusercontent.com/ayeeff/aircombat/main/data/products.csv';return new Promise((resolve,reject)=>{Papa.parse(url,{download:true,header:true,skipEmptyLines:true,complete:(results)=>{const dataMap={};results.data.forEach(row=>{if(row.Product){dataMap[row.Product.trim()]=row;}});resolve(dataMap);},error:(error)=>reject(error)});});}
 async function loadCompaniesCSV(){const url='https://raw.githubusercontent.com/ayeeff/aircombat/main/data/company.csv';return new Promise((resolve,reject)=>{Papa.parse(url,{download:true,header:true,skipEmptyLines:true,complete:(results)=>{const dataMap={};results.data.forEach(row=>{if(row.Company){dataMap[row.Company.trim()]=row;}});resolve(dataMap);},error:(error)=>reject(error)});});}
 async function loadCountryData(cc){if(fleetData[cc]||loadingStatus[cc])return;loadingStatus[cc]=true;const url=csvMap[cc];return new Promise((resolve,reject)=>{Papa.parse(url,{download:true,header:true,skipEmptyLines:true,complete:(results)=>{fleetData[cc]=results.data.filter(row=>row.Aircraft&&row['In Service']);loadingStatus[cc]=false;resolve();},error:(error)=>{loadingStatus[cc]=false;reject(error);}});});}
 
-function createTabs(){const container=document.getElementById('tabButtons');let html='';countries.forEach((country,i)=>{const calcData=calcsData[country.code]||{};const liScore=calcData.LI||0;const rankClass=i<3?`rank-${i+1}`:'';html+=`<button class="tab-button ${rankClass} px-6 py-3 rounded-lg text-sm font-semibold ${country.code===activeTab?'active':''}" data-country-code="${country.code}" onclick="switchToTab('${country.code}')"><img src="${country.flag}" alt="${country.code}" class="w-5 h-4 inline-block mr-2 rounded"><span class="country-name-text">${country.name}</span><span class="ml-2 text-xs opacity-75">#${country.rank}</span><span class="ml-2 text-xs bg-gradient-to-r from-yellow-500/30 to-orange-500/30 text-yellow-300 px-2 py-1 rounded-full">${liScore}</span></button>`;});container.innerHTML=html;}
+function createTabs(){const container=document.getElementById('tabButtons');let html='';countries.forEach((country,i)=>{const calcData=calcsData[country.code]||{};const liScore=calcData.LI||0;const rankClass=i<3?`rank-${i+1}`:'';html+=`<button class="tab-button ${rankClass} px-6 py-3 rounded-lg text-sm font-semibold ${country.code===activeTab?'active':''}" data-country-code="${country.code}" onclick="switchToTab('${country.code}')"><img src="${country.flag}" alt="${country.code}" class="w-5 h-4 inline-block mr-2 rounded"><span class="country-name-text">${country.code.toUpperCase()}</span><span class="ml-2 text-xs opacity-75">#${country.rank}</span><span class="ml-2 text-xs bg-gradient-to-r from-yellow-500/30 to-orange-500/30 text-yellow-300 px-2 py-1 rounded-full">${liScore}</span></button>`;});container.innerHTML=html;}
 
 function switchToTab(cc){activeTab=cc;document.querySelectorAll('.tab-button').forEach(btn=>{btn.classList.remove('active','system-glow');if(btn.dataset.countryCode===cc){btn.classList.add('active');}});clearSystemHighlight();renderTabContent(cc);updatePerformancePanel(cc);highlightSystemButtons(cc);}
 
@@ -192,9 +196,20 @@ function closeProductModal() {
 }
 
 function showCompanyModal(companyName) {
-    const company = companiesData[companyName];
+    const normalizedInput = normalizeCompanyName(companyName);
+    let company = companiesData[companyName];
     if (!company) {
-        document.getElementById('companyModalContent').innerHTML = '<p class="text-red-400">Company details not found.</p>';
+        const companyKeys = Object.keys(companiesData);
+        const foundKey = companyKeys.find(key => normalizeCompanyName(key) === normalizedInput);
+        if (foundKey) company = companiesData[foundKey];
+    }
+    if (!company) {
+        const companyKeys = Object.keys(companiesData);
+        const foundKey = companyKeys.find(key => normalizeCompanyName(key).includes(normalizedInput) || normalizedInput.includes(normalizeCompanyName(key)));
+        if (foundKey) company = companiesData[foundKey];
+    }
+    if (!company) {
+        document.getElementById('companyModalContent').innerHTML = `<p class="text-red-400">Company details not found for "${companyName}".</p><p class="text-slate-400 text-sm mt-2">Available companies: ${Object.keys(companiesData).slice(0, 10).join(', ')}...</p>`;
     } else {
         let html = `<h3 class="text-lg font-bold text-white mb-2">${company.Company || companyName}</h3>`;
         Object.keys(company).forEach(key => {
