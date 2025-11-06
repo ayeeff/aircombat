@@ -3,7 +3,7 @@ Anduril Industries,United States,🇺🇸,"""Fury"" CCA / ""Altius-600M"" loyal-
 General Atomics Aeronautical,United States,🇺🇸,"MQ-20 Avenger CCA; AESA nose for AIM-120D-3 carriage; ""Gambit"" loyal-wingman series (CCA-A, -B, -C, -D)"
 Kratos Defense & Security,United States,🇺🇸,"XQ-58A Valkyrie CCA; XQ-58B maritime strike variant; internal bay for AIM-120D-3 / small-diameter BVR weapons"
 Boeing Defense,United States,🇺🇸,"F-15EX Eagle II (BVR platform); AN/APG-82(V)1 AESA radar; EPAWSS EW system; AIM-120D-3 integration; MQ-28A Ghost Bat loyal-wingman; BVR datalink relay, future internal AIM-120D-3 / Meteor pallet"
-Boeing Australia,Australia,🇦🇺,"F-15EX Eagle II (BVR platform); AN/APG-82(V)1 AESA radar; EPAWSS EW system; AIM-120D-3 integration; MQ-28A Ghost Bat loyal-wingman; BVR datalink relay, future internal AIM-120D-3 / Meteor pallet"
+Boeing Defense,Australia,🇦🇺,"F-15EX Eagle II (BVR platform); AN/APG-82(V)1 AESA radar; EPAWSS EW system; AIM-120D-3 integration; MQ-28A Ghost Bat loyal-wingman; BVR datalink relay, future internal AIM-120D-3 / Meteor pallet"
 BAE Systems,United Kingdom,🇬🇧,"""LANCA"" loyal-wingman demonstrator; BVR weapons bay for Meteor / SPEAR-3; integrated EW payload; Eurofighter Typhoon Captor-E AESA radar; EW suite for F-35; Meteor missile guidance & warhead"
 Dassault Aviation,France,🇫🇷,"""Remote Carrier"" CCA family; BVR Meteor / FC/ASW internal bay; networked to Rafale F5 & New-Gen Fighter; Rafale F4 (BVR platform); RBE2-AA AESA radar; integration of Meteor & MICA-NG"
 Airbus,France,🇫🇷,"Tanker / Multi-role Transport enabling extended BVR engagement legs (e.g., boom/probe refueling for stealth jets and BVR platforms)"
@@ -39,3 +39,4 @@ Safran Electronics & Defense,France,🇫🇷,"Inertial navigation & active seeke
 General Electric Aviation,United States,🇺🇸,"F-22/F-35 engines (F119/F135) – enables super-cruise for longer BVR reach"
 Rolls-Royce,United Kingdom,🇬🇧,"EJ200 engine (Eurofighter) – super-cruise for Meteor launch envelope"
 Safran Aircraft Engines,France,🇫🇷,"M88 engine (Rafale) – super-cruise for Meteor optimal launch"
+McDonnell Douglas,United States,🇺🇸,"F-15 Eagle (legacy BVR platform); AN/APG-63 radar; AIM-7 Sparrow / AIM-120 AMRAAM integration; F/A-18 Hornet; AN/APG-73 radar; early BVR missile carriage"
