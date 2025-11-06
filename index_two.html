@@ -61,97 +61,305 @@
                     </div>
                 </div>
             </div>
-      ...(truncated 17367 characters)... integration.";tabContent.innerHTML=`<div class="aircraft-card rounded-2xl p-4 md:p-6 mb-6"><h3 class="text-xl font-bold orbitron mb-4 country-name-text">Sub-System Performance</h3><div class="grid grid-cols-4 md:grid-cols-8 gap-2">${subsystemHTML}<div class="p-3 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500/30"><div class="flex items-center gap-1 mb-1"><span class="text-xs text-yellow-400 font-semibold flex items-center gap-1">Lethality Index<span class="tooltip tooltip-left"><span class="info-icon info-icon-wide">?</span><span class="tooltip-text">${liTooltip}</span></span></span></div><div class="text-2xl font-black orbitron text-yellow-400">${calcData.LI||'0'}</div></div></div></div><div class="grid grid-cols-1 gap-4 md:gap-6">${aircraft.map((ac,idx)=>{if(!ac.Aircraft)return '';const bvrKillChain = ac['BVR kill chain'] || '';const associatedProducts = (ac['Associated products'] || '').split(',').map(p => p.trim()).filter(p => p);const company = ac.Company || ac.Origin || 'Unknown';const origin = ac.Origin || 'Unknown';const originCountry = countries.find(c => c.name.toLowerCase() === origin.toLowerCase());const flag = originCountry ? originCountry.flag : '';const mannedClass = ac.Manned === 'Yes' ? 'manned-card' : 'unmanned-card';const productsHtml = associatedProducts.length > 0 ? `<div class="mt-3"><span class="text-xs text-green-400 font-semibold mb-1 block">Associated Products:</span><div class="flex flex-wrap gap-1">${associatedProducts.map(product => `<span class="product-button text-white" onclick="showProductModal('${product}')">${product}</span>`).join('')}</div></div>` : '';const companyHtml = `<div class="mt-3"><span class="text-xs text-yellow-400 font-semibold mb-1 block">Company:</span><span class="company-button" onclick="showCompanyModal('${company}')"><img src="${flag}" class="w-4 h-3 inline-block mr-1 rounded">${company}</span></div>`;return `<div class="aircraft-card ${mannedClass} rounded-xl md:rounded-2xl overflow-hidden p-4 md:p-6"><div class="grid grid-cols-1 md:grid-cols-10 gap-4"><div class="md:col-span-3 flex flex-col"><img src="${ac.Photo||'https://via.placeholder.com/400x300?text=No+Image'}" alt="${ac.Aircraft}" class="w-full h-48 md:h-64 object-cover rounded-lg" loading="lazy" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'"><h3 class="text-xl md:text-2xl font-bold mt-3 orbitron country-name-text">${ac.Aircraft}</h3></div><div class="md:col-span-5"><div class="text-sm text-blue-400 font-semibold mb-1">BVR F2T2EA Kill Chain</div><p class="text-slate-300 leading-relaxed text-sm md:text-base">${bvrKillChain}</p>${companyHtml}${productsHtml}</div><div class="md:col-span-2 space-y-2"><div class="p-2 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-lg border border-blue-500/30"><div class="text-xs text-blue-400 font-semibold mb-1">Type</div><div class="text-xs text-white">${ac.Type}</div></div><div class="p-2 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-lg border border-purple-500/30"><div class="text-xs text-purple-400 font-semibold mb-1">Origin</div><div class="text-xs text-white">${ac.Origin}</div></div><div class="p-2 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-lg border border-green-500/30"><div class="text-xs text-green-400 font-semibold mb-1">Version</div><div class="text-xs text-white">${ac.Versions}</div></div><div class="p-2 bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 rounded-lg border border-yellow-500/30"><div class="text-xs text-yellow-400 font-semibold mb-1">In Service</div><div class="text-sm text-white font-bold">${ac['In Service']}</div></div></div></div></div>`;}).join('')}</div>`;}
-function highlightSystemButtons(cc){const calcData=calcsData[cc];if(!calcData||!calcData.Core)return;const coreSystem=calcData.Core.toLowerCase();const coreKeywords=coreSystem.split('-');const hasNATO=coreKeywords.includes('nato');const primarySystem=coreKeywords[0];document.querySelectorAll('.tab-button').forEach(btn=>{const btnCode=btn.dataset.countryCode;const btnCalcData=calcsData[btnCode];if(btnCalcData&&btnCalcData.Core){const btnCore=btnCalcData.Core.toLowerCase();const btnKeywords=btnCore.split('-');const btnHasNATO=btnKeywords.includes('nato');const btnPrimarySystem=btnKeywords[0];if(btnCore===coreSystem||btnKeywords.includes(primarySystem)||coreKeywords.includes(btnPrimarySystem)||(hasNATO&&btnHasNATO)){btn.classList.add('system-glow');}}});}
-function clearSystemHighlight(){document.querySelectorAll('.tab-button').forEach(btn=>{btn.classList.remove('system-glow');});}
-function renderLIRow(matchingCountries) {
-  const sortedCountries = [...matchingCountries].sort((a, b) => parseFloat(calcsData[b.code]?.LI || 0) - parseFloat(calcsData[a.code]?.LI || 0));
-  const liTooltip = "The Lethality Index represents the system lethality of this nation's air force in Beyond Visual Range combat, factoring in the best available aircraft mix, missile capability, sensor reach, and network integration.";
-  let html = `
-    <div class="li-header">
-      <h3>Lethality Index Ranking <span class="tooltip tooltip-left"><span class="info-icon info-icon-wide">?</span><span class="tooltip-text">${liTooltip}</span></span></h3>
-    </div>
-    <div class="li-row">
-  `;
-  sortedCountries.forEach(country => {
-    const li = calcsData[country.code]?.LI || '0';
-    html += `
-      <div class="li-card">
-        <div class="li-score-card">
-          <div class="li-score">${li}</div>
-          <img src="${country.flag}" alt="${country.name}" class="li-flag">
+            <!-- Core Modal -->
+            <div id="coreModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4 modal-overlay" onclick="closeModal()">
+                <div class="bg-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+                    <div class="sticky top-0 bg-slate-900/80 backdrop-blur-sm p-4 border-b border-slate-700 rounded-t-2xl">
+                        <div class="flex items-center justify-between">
+                            <h2 id="modalTitle" class="text-2xl font-bold orbitron text-white"></h2>
+                            <button id="closeModalBtn" onclick="closeModal()">&times;</button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <div id="liRow"></div>
+                        <div id="modalContent"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Product Modal -->
+            <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4" onclick="closeProductModal()">
+                <div class="bg-slate-800 rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+                    <div class="sticky top-0 bg-slate-900/80 backdrop-blur-sm p-4 border-b border-slate-700 rounded-t-xl flex justify-between items-center">
+                        <h3 id="productModalTitle" class="text-xl font-bold text-white"></h3>
+                        <button onclick="closeProductModal()" class="text-slate-400 hover:text-white">&times;</button>
+                    </div>
+                    <div id="productModalContent" class="p-4 text-slate-300"></div>
+                </div>
+            </div>
+            <!-- Company Modal -->
+            <div id="companyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4" onclick="closeCompanyModal()">
+                <div class="bg-slate-800 rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+                    <div class="sticky top-0 bg-slate-900/80 backdrop-blur-sm p-4 border-b border-slate-700 rounded-t-xl flex justify-between items-center">
+                        <h3 id="companyModalTitle" class="text-xl font-bold text-white"></h3>
+                        <button onclick="closeCompanyModal()" class="text-slate-400 hover:text-white">&times;</button>
+                    </div>
+                    <div id="companyModalContent" class="p-4 text-slate-300"></div>
+                </div>
+            </div>
         </div>
-      </div>
-    `;
-  });
-  html += '</div>';
-  return html;
-}
-function showCoreModal(system){const matchingCountries=countries.filter(c=>{const calc=calcsData[c.code];return calc&&calc.Core&&calc.Core.toLowerCase().includes(system.toLowerCase());}).sort((a,b)=>a.rank-b.rank);document.getElementById('modalTitle').textContent=`${system.toUpperCase()} Core System`;const liRow=document.getElementById('liRow');liRow.innerHTML=renderLIRow(matchingCountries);const content=document.getElementById('modalContent');let html='';matchingCountries.forEach(country=>{const calc=calcsData[country.code];const li=calc?.LI||'0';const aircraft=fleetData[country.code]||[];let total=0;const typeMap={};aircraft.forEach(ac=>{if(ac['In Service']){const ins=parseInt(ac['In Service'])||0;total+=ins;const type=ac.Type||'Unknown';if(!typeMap[type]){typeMap[type]={total:0,variants:new Set()};}typeMap[type].total+=ins;if(ac.Versions)typeMap[type].variants.add(ac.Versions);}});const metricSquares=`<div class="flex flex-wrap gap-1 mb-4"><span class="li-country-li"><strong>BVR Missile (km):</strong><br>${calc.BVR||'N/A'}</span><span class="li-country-li"><strong>AEW / Ground Cue (km):</strong><br>${calc.AEW||'N/A'}</span><span class="li-country-li"><strong>BVR System (km):</strong><br>${calc['BVR limit km']||'N/A'}</span></div>`;html+=`<div class="p-4 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30"><div class="flex items-center justify-between mb-4"><div class="flex items-center gap-4"><img src="${country.flag}" alt="${country.name}" class="w-12 h-8 rounded-lg flag-badge"><div class="flex items-center gap-2"><div><h3 class="text-xl font-bold text-white">${country.name}</h3><p class="text-sm text-slate-400">#${country.rank}</p></div><span class="country-li-badge">Lethality Index Score: ${li}</span></div></div><div class="text-right"><div class="text-2xl font-black orbitron text-cyan-300">${total}</div><p class="text-xs text-slate-400">Total Aircraft</p></div></div>${metricSquares}<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.keys(typeMap).map(type=>`<div class="p-3 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-lg border border-blue-500/20"><div class="text-sm font-semibold text-blue-300 mb-2">${type}</div><div class="text-xs text-slate-300 mb-2">Variants: ${Array.from(typeMap[type].variants).join(', ')}</div><div class="text-lg font-bold text-white">${typeMap[type].total}</div></div>`).join('')}</div></div>`;});content.innerHTML=html;const modal=document.getElementById('coreModal');modal.classList.remove('hidden');setTimeout(()=>{modal.classList.add('show');},10);}
-function showGuidanceModal(system){const matchingCountries=countries.filter(c=>{const calc=calcsData[c.code];return calc&&calc.Guidance&&calc.Guidance.toLowerCase()===system.toLowerCase();}).sort((a,b)=>a.rank-b.rank);document.getElementById('modalTitle').textContent=`${system.toUpperCase()} Guidance System`;const liRow=document.getElementById('liRow');liRow.innerHTML=renderLIRow(matchingCountries);const content=document.getElementById('modalContent');let html='';matchingCountries.forEach(country=>{const calc=calcsData[country.code];const li=calc?.LI||'0';const aircraft=fleetData[country.code]||[];let total=0;const typeMap={};aircraft.forEach(ac=>{if(ac['In Service']){const ins=parseInt(ac['In Service'])||0;total+=ins;const type=ac.Type||'Unknown';if(!typeMap[type]){typeMap[type]={total:0,variants:new Set()};}typeMap[type].total+=ins;if(ac.Versions)typeMap[type].variants.add(ac.Versions);}});const metricSquares=`<div class="flex flex-wrap gap-1 mb-4"><span class="li-country-li"><strong>BVR Missile (km):</strong><br>${calc.BVR||'N/A'}</span><span class="li-country-li"><strong>AEW / Ground Cue (km):</strong><br>${calc.AEW||'N/A'}</span><span class="li-country-li"><strong>BVR System (km):</strong><br>${calc['BVR limit km']||'N/A'}</span></div>`;html+=`<div class="p-4 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30"><div class="flex items-center justify-between mb-4"><div class="flex items-center gap-4"><img src="${country.flag}" alt="${country.name}" class="w-12 h-8 rounded-lg flag-badge"><div class="flex items-center gap-2"><div><h3 class="text-xl font-bold text-white">${country.name}</h3><p class="text-sm text-slate-400">#${country.rank}</p></div><span class="country-li-badge">Lethality Index Score: ${li}</span></div></div><div class="text-right"><div class="text-2xl font-black orbitron text-cyan-300">${total}</div><p class="text-xs text-slate-400">Total Aircraft</p></div></div>${metricSquares}<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.keys(typeMap).map(type=>`<div class="p-3 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-lg border border-blue-500/20"><div class="text-sm font-semibold text-blue-300 mb-2">${type}</div><div class="text-xs text-slate-300 mb-2">Variants: ${Array.from(typeMap[type].variants).join(', ')}</div><div class="text-lg font-bold text-white">${typeMap[type].total}</div></div>`).join('')}</div></div>`;});content.innerHTML=html;const modal=document.getElementById('coreModal');modal.classList.remove('hidden');setTimeout(()=>{modal.classList.add('show');},10);}
-function closeModal(){const modal=document.getElementById('coreModal');modal.classList.remove('show');setTimeout(()=>{modal.classList.add('hidden');},300);}
-function showProductModal(productName) {
-    console.log('Looking for:', productName, 'Available keys:', Object.keys(productsData)); // Debug log
-    let product = productsData[productName];
-    if (!product) {
-        // Fuzzy fallback: find closest match
-        const keys = Object.keys(productsData);
-        const matchingKey = keys.find(key => 
-            key.toLowerCase().includes(productName.toLowerCase()) || 
-            productName.toLowerCase().includes(key.toLowerCase())
-        );
-        product = matchingKey ? productsData[matchingKey] : null;
-        if (product) {
-            console.log('Fuzzy match found:', matchingKey); // Debug log
+    </div>
+    <script>
+        let calcsData = {};
+        let productsData = {};
+        let companiesData = {};
+        let fleetData = {};
+        let countries = [];
+        let currentTab = 'us';
+
+        async function loadCalcsCSV() {
+            return new Promise((resolve, reject) => {
+                Papa.parse('https://raw.githubusercontent.com/ayeeff/aircombat/main/data/calcs.csv', {
+                    download: true,
+                    header: true,
+                    complete: (results) => {
+                        const data = {};
+                        results.data.forEach(row => {
+                            if (row['Country Code']) {
+                                const code = row['Country Code'].trim().toLowerCase();
+                                data[code] = row;
+                            }
+                        });
+                        resolve(data);
+                    },
+                    error: reject
+                });
+            });
         }
-    }
-    if (!product) {
-        document.getElementById('productModalContent').innerHTML = '<p class="text-red-400">Product details not found.</p>';
-    } else {
-        let html = `<h3 class="text-lg font-bold text-white mb-2">${product.Product || productName}</h3>`;
-        Object.keys(product).forEach(key => {
-            if (key !== 'Product' && product[key]) {
-                html += `<p class="text-sm"><strong>${key}:</strong> ${product[key]}</p>`;
+
+        async function loadProductsCSV() {
+            return new Promise((resolve, reject) => {
+                Papa.parse('https://raw.githubusercontent.com/ayeeff/aircombat/main/data/products.csv', {
+                    download: true,
+                    header: true,
+                    complete: (results) => {
+                        const data = {};
+                        results.data.forEach(row => {
+                            const key = row.Product ? row.Product.trim() : '';
+                            if (key) {
+                                data[key] = row;
+                            }
+                        });
+                        resolve(data);
+                    },
+                    error: reject
+                });
+            });
+        }
+
+        async function loadCompaniesCSV() {
+            return new Promise((resolve, reject) => {
+                Papa.parse('https://raw.githubusercontent.com/ayeeff/aircombat/main/data/company.csv', {
+                    download: true,
+                    header: true,
+                    complete: (results) => {
+                        const data = {};
+                        results.data.forEach(row => {
+                            const key = row.Company ? row.Company.trim() : '';
+                            if (key) {
+                                data[key] = row;
+                            }
+                        });
+                        resolve(data);
+                    },
+                    error: reject
+                });
+            });
+        }
+
+        async function loadCountryData(code) {
+            const url = `https://raw.githubusercontent.com/ayeeff/aircombat/main/data/${code}.csv`;
+            return new Promise((resolve, reject) => {
+                Papa.parse(url, {
+                    download: true,
+                    header: true,
+                    complete: (results) => {
+                        fleetData[code] = results.data.filter(row => row.Aircraft && row.Aircraft.trim());
+                        resolve(fleetData[code]);
+                    },
+                    error: reject
+                });
+            });
+        }
+
+        function createTabs() {
+            const tabButtons = document.getElementById('tabButtons');
+            let html = '';
+            countries.forEach((country, index) => {
+                const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+                const li = calcsData[country.code]?.LI || 0;
+                const activeClass = country.code === currentTab ? 'active' : '';
+                html += `<button class="tab-button ${rankClass} ${activeClass} px-4 py-2 rounded-t-lg flex items-center gap-2" data-country-code="${country.code}" onclick="switchTab('${country.code}')">
+                    <img src="${country.flag}" alt="${country.name}" class="w-5 h-4 rounded">
+                    <span>${country.name}</span>
+                    <span class="text-xs bg-slate-700 px-2 py-1 rounded-full">${li}</span>
+                </button>`;
+            });
+            tabButtons.innerHTML = html;
+        }
+
+        function switchTab(cc) {
+            currentTab = cc;
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-country-code="${cc}"]`).classList.add('active');
+            clearSystemHighlight();
+            renderTabContent(cc);
+            updatePerformancePanel(cc);
+            highlightSystemButtons(cc);
+        }
+
+        function renderTabContent(cc) {
+            const tabContent = document.getElementById('tabContent');
+            const calcData = calcsData[cc];
+            if (!calcData || !fleetData[cc]) {
+                tabContent.innerHTML = '<div class="tab-loading"><div class="loading-spinner"></div><p class="text-slate-400 mt-4">Loading data...</p></div>';
+                return;
             }
-        });
-        document.getElementById('productModalContent').innerHTML = html;
-    }
-    document.getElementById('productModalTitle').textContent = productName;
-    const modal = document.getElementById('productModal');
-    modal.classList.remove('hidden');
-    setTimeout(() => { modal.classList.add('show'); }, 10);
-}
-function closeProductModal() {
-    const modal = document.getElementById('productModal');
-    modal.classList.remove('show');
-    setTimeout(() => { modal.classList.add('hidden'); }, 300);
-}
-function showCompanyModal(companyName) {
-    const company = companiesData[companyName];
-    if (!company) {
-        document.getElementById('companyModalContent').innerHTML = '<p class="text-red-400">Company details not found.</p>';
-    } else {
-        let html = `<h3 class="text-lg font-bold text-white mb-2">${company.Company || companyName}</h3>`;
-        Object.keys(company).forEach(key => {
-            if (key !== 'Company' && company[key]) {
-                html += `<p class="text-sm"><strong>${key}:</strong> ${company[key]}</p>`;
+            const aircraft = fleetData[cc];
+            const liTooltip = "The Lethality Index represents the system lethality of this nation's air force in Beyond Visual Range combat, factoring in the best available aircraft mix, missile capability, sensor reach, and network integration.";
+            let subsystemHTML = '';
+            // Assuming subsystems from calcData, adjust keys as needed
+            const subsystemKeys = ['Core', 'Guidance', 'BVR', 'AEW']; // Example keys
+            subsystemKeys.forEach(key => {
+                const value = calcData[key] || 'N/A';
+                subsystemHTML += `<div class="p-3 bg-gradient-to-r from-purple-500/20 to-purple-600/20 rounded-lg border border-purple-500/30"><div class="text-xs text-purple-400 font-semibold mb-1">${key}</div><div class="text-sm text-white">${value}</div></div>`;
+            });
+            tabContent.innerHTML = `<div class="aircraft-card rounded-2xl p-4 md:p-6 mb-6"><h3 class="text-xl font-bold orbitron mb-4 country-name-text">Sub-System Performance</h3><div class="grid grid-cols-4 md:grid-cols-8 gap-2">${subsystemHTML}<div class="p-3 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500/30"><div class="flex items-center gap-1 mb-1"><span class="text-xs text-yellow-400 font-semibold flex items-center gap-1">Lethality Index<span class="tooltip tooltip-left"><span class="info-icon info-icon-wide">?</span><span class="tooltip-text">${liTooltip}</span></span></span></div><div class="text-2xl font-black orbitron text-yellow-400">${calcData.LI||'0'}</div></div></div></div><div class="grid grid-cols-1 gap-4 md:gap-6">${aircraft.map((ac,idx)=>{if(!ac.Aircraft)return '';const bvrKillChain = ac['BVR kill chain'] || '';const associatedProducts = (ac['Associated products'] || '').split(',').map(p => p.trim()).filter(p => p);const company = ac.Company || ac.Origin || 'Unknown';const origin = ac.Origin || 'Unknown';const originCountry = countries.find(c => c.name.toLowerCase() === origin.toLowerCase());const flag = originCountry ? originCountry.flag : '';const mannedClass = ac.Manned === 'Yes' ? 'manned-card' : 'unmanned-card';const productsHtml = associatedProducts.length > 0 ? `<div class="mt-3"><span class="text-xs text-green-400 font-semibold mb-1 block">Associated Products:</span><div class="flex flex-wrap gap-1">${associatedProducts.map(product => `<span class="product-button text-white" onclick="showProductModal('${product}')">${product}</span>`).join('')}</div></div>` : '';const companyHtml = `<div class="mt-3"><span class="text-xs text-yellow-400 font-semibold mb-1 block">Company:</span><span class="company-button" onclick="showCompanyModal('${company}')"><img src="${flag}" class="w-4 h-3 inline-block mr-1 rounded">${company}</span></div>`;return `<div class="aircraft-card ${mannedClass} rounded-xl md:rounded-2xl overflow-hidden p-4 md:p-6"><div class="grid grid-cols-1 md:grid-cols-10 gap-4"><div class="md:col-span-3 flex flex-col"><img src="${ac.Photo||'https://via.placeholder.com/400x300?text=No+Image'}" alt="${ac.Aircraft}" class="w-full h-48 md:h-64 object-cover rounded-lg" loading="lazy" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'"><h3 class="text-xl md:text-2xl font-bold mt-3 orbitron country-name-text">${ac.Aircraft}</h3></div><div class="md:col-span-5"><div class="text-sm text-blue-400 font-semibold mb-1">BVR F2T2EA Kill Chain</div><p class="text-slate-300 leading-relaxed text-sm md:text-base">${bvrKillChain}</p>${companyHtml}${productsHtml}</div><div class="md:col-span-2 space-y-2"><div class="p-2 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-lg border border-blue-500/30"><div class="text-xs text-blue-400 font-semibold mb-1">Type</div><div class="text-xs text-white">${ac.Type}</div></div><div class="p-2 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-lg border border-purple-500/30"><div class="text-xs text-purple-400 font-semibold mb-1">Origin</div><div class="text-xs text-white">${ac.Origin}</div></div><div class="p-2 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-lg border border-green-500/30"><div class="text-xs text-green-400 font-semibold mb-1">Version</div><div class="text-xs text-white">${ac.Versions}</div></div><div class="p-2 bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 rounded-lg border border-yellow-500/30"><div class="text-xs text-yellow-400 font-semibold mb-1">In Service</div><div class="text-sm text-white font-bold">${ac['In Service']}</div></div></div></div></div>`;}).join('')}</div>`;
+        }
+
+        function updatePerformancePanel(cc) {
+            const calcData = calcsData[cc];
+            const country = countries.find(c => c.code === cc);
+            if (!calcData || !country) return;
+            document.getElementById('perfFlag').src = country.flag;
+            document.getElementById('perfCountryName').textContent = country.name;
+            document.getElementById('perfRank').textContent = `Rank #${country.rank}`;
+            // Core
+            const coreContainer = document.getElementById('perfCoreContainer');
+            if (calcData.Core) {
+                coreContainer.innerHTML = `<span class="core-badge" onclick="showCoreModal('${calcData.Core}')">${calcData.Core}</span>`;
             }
-        });
-        document.getElementById('companyModalContent').innerHTML = html;
-    }
-    document.getElementById('companyModalTitle').textContent = companyName;
-    const modal = document.getElementById('companyModal');
-    modal.classList.remove('hidden');
-    setTimeout(() => { modal.classList.add('show'); }, 10);
-}
-function closeCompanyModal() {
-    const modal = document.getElementById('companyModal');
-    modal.classList.remove('show');
-    setTimeout(() => { modal.classList.add('hidden'); }, 300);
-}
-async function loadRemainingData(){const priorityCountries=['us','ru','cn','gb','au','fr','ca','de'];for(const code of priorityCountries){if(!fleetData[code]){await loadCountryData(code);await new Promise(resolve=>setTimeout(resolve,100));}}for(const country of countries){if(!fleetData[country.code]){await loadCountryData(country.code);await new Promise(resolve=>setTimeout(resolve,100));}}}
-async function init(){try{calcsData=await loadCalcsCSV();productsData=await loadProductsCSV();companiesData=await loadCompaniesCSV();countries.sort((a,b)=>parseFloat(calcsData[b.code]?.LI||0)-parseFloat(calcsData[a.code]?.LI||0));countries.forEach((c,i)=>c.rank=i+1);await loadCountryData('us');document.getElementById('loading').classList.add('hidden');document.getElementById('mainContent').classList.remove('hidden');createTabs();renderTabContent('us');updatePerformancePanel('us');loadRemainingData();}catch(error){console.error('Error initializing dashboard:',error);document.getElementById('loading').innerHTML=`<div class="text-center"><p class="text-red-400 mb-4">Error loading data</p><p class="text-slate-400 text-sm">${error.message}</p></div>`;}}
-init();
+            // Guidance
+            const guidanceContainer = document.getElementById('perfGuidanceContainer');
+            if (calcData.Guidance) {
+                guidanceContainer.innerHTML = `<span class="core-badge" onclick="showGuidanceModal('${calcData.Guidance}')">${calcData.Guidance}</span>`;
+            }
+            // Metrics - adjust as needed
+            const sidebarMetrics = document.getElementById('sidebarMetrics');
+            sidebarMetrics.innerHTML = `
+                <div class="space-y-2">
+                    <div class="p-3 bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 rounded-lg border border-cyan-500/30">
+                        <div class="text-xs text-cyan-400 font-semibold">BVR Missile Range</div>
+                        <div class="text-lg font-bold text-white">${calcData.BVR || 'N/A'} km</div>
+                    </div>
+                    <div class="p-3 bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 rounded-lg border border-emerald-500/30">
+                        <div class="text-xs text-emerald-400 font-semibold">AEW Cue Range</div>
+                        <div class="text-lg font-bold text-white">${calcData.AEW || 'N/A'} km</div>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div class="p-3 bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-lg border border-orange-500/30">
+                        <div class="text-xs text-orange-400 font-semibold">BVR Limit</div>
+                        <div class="text-lg font-bold text-white">${calcData['BVR limit km'] || 'N/A'} km</div>
+                    </div>
+                    <div class="p-3 bg-gradient-to-br from-violet-500/20 to-violet-600/20 rounded-lg border border-violet-500/30">
+                        <div class="text-xs text-violet-400 font-semibold">Multi-Vendor Penalty</div>
+                        <div class="text-lg font-bold text-white">${calcData['Multi-vendor penalty'] || '0'}%</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function highlightSystemButtons(cc){
+            const calcData=calcsData[cc];if(!calcData||!calcData.Core)return;const coreSystem=calcData.Core.toLowerCase();const coreKeywords=coreSystem.split('-');const hasNATO=coreKeywords.includes('nato');const primarySystem=coreKeywords[0];document.querySelectorAll('.tab-button').forEach(btn=>{const btnCode=btn.dataset.countryCode;const btnCalcData=calcsData[btnCode];if(btnCalcData&&btnCalcData.Core){const btnCore=btnCalcData.Core.toLowerCase();const btnKeywords=btnCore.split('-');const btnHasNATO=btnKeywords.includes('nato');const btnPrimarySystem=btnKeywords[0];if(btnCore===coreSystem||btnKeywords.includes(primarySystem)||coreKeywords.includes(btnPrimarySystem)||(hasNATO&&btnHasNATO)){btn.classList.add('system-glow');}}});}
+        function clearSystemHighlight(){document.querySelectorAll('.tab-button').forEach(btn=>{btn.classList.remove('system-glow');});}
+        function renderLIRow(matchingCountries) {
+          const sortedCountries = [...matchingCountries].sort((a, b) => parseFloat(calcsData[b.code]?.LI || 0) - parseFloat(calcsData[a.code]?.LI || 0));
+          const liTooltip = "The Lethality Index represents the system lethality of this nation's air force in Beyond Visual Range combat, factoring in the best available aircraft mix, missile capability, sensor reach, and network integration.";
+          let html = `
+            <div class="li-header">
+              <h3>Lethality Index Ranking <span class="tooltip tooltip-left"><span class="info-icon info-icon-wide">?</span><span class="tooltip-text">${liTooltip}</span></span></h3>
+            </div>
+            <div class="li-row">
+          `;
+          sortedCountries.forEach(country => {
+            const li = calcsData[country.code]?.LI || '0';
+            html += `
+              <div class="li-card">
+                <div class="li-score-card">
+                  <div class="li-score">${li}</div>
+                  <img src="${country.flag}" alt="${country.name}" class="li-flag">
+                </div>
+              </div>
+            `;
+          });
+          html += '</div>';
+          return html;
+        }
+        function showCoreModal(system){const matchingCountries=countries.filter(c=>{const calc=calcsData[c.code];return calc&&calc.Core&&calc.Core.toLowerCase().includes(system.toLowerCase());}).sort((a,b)=>a.rank-b.rank);document.getElementById('modalTitle').textContent=`${system.toUpperCase()} Core System`;const liRow=document.getElementById('liRow');liRow.innerHTML=renderLIRow(matchingCountries);const content=document.getElementById('modalContent');let html='';matchingCountries.forEach(country=>{const calc=calcsData[country.code];const li=calc?.LI||'0';const aircraft=fleetData[country.code]||[];let total=0;const typeMap={};aircraft.forEach(ac=>{if(ac['In Service']){const ins=parseInt(ac['In Service'])||0;total+=ins;const type=ac.Type||'Unknown';if(!typeMap[type]){typeMap[type]={total:0,variants:new Set()};}typeMap[type].total+=ins;if(ac.Versions)typeMap[type].variants.add(ac.Versions);}});const metricSquares=`<div class="flex flex-wrap gap-1 mb-4"><span class="li-country-li"><strong>BVR Missile (km):</strong><br>${calc.BVR||'N/A'}</span><span class="li-country-li"><strong>AEW / Ground Cue (km):</strong><br>${calc.AEW||'N/A'}</span><span class="li-country-li"><strong>BVR System (km):</strong><br>${calc['BVR limit km']||'N/A'}</span></div>`;html+=`<div class="p-4 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30"><div class="flex items-center justify-between mb-4"><div class="flex items-center gap-4"><img src="${country.flag}" alt="${country.name}" class="w-12 h-8 rounded-lg flag-badge"><div class="flex items-center gap-2"><div><h3 class="text-xl font-bold text-white">${country.name}</h3><p class="text-sm text-slate-400">#${country.rank}</p></div><span class="country-li-badge">Lethality Index Score: ${li}</span></div></div><div class="text-right"><div class="text-2xl font-black orbitron text-cyan-300">${total}</div><p class="text-xs text-slate-400">Total Aircraft</p></div></div>${metricSquares}<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.keys(typeMap).map(type=>`<div class="p-3 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-lg border border-blue-500/20"><div class="text-sm font-semibold text-blue-300 mb-2">${type}</div><div class="text-xs text-slate-300 mb-2">Variants: ${Array.from(typeMap[type].variants).join(', ')}</div><div class="text-lg font-bold text-white">${typeMap[type].total}</div></div>`).join('')}</div></div>`;});content.innerHTML=html;const modal=document.getElementById('coreModal');modal.classList.remove('hidden');setTimeout(()=>{modal.classList.add('show');},10);}
+        function showGuidanceModal(system){const matchingCountries=countries.filter(c=>{const calc=calcsData[c.code];return calc&&calc.Guidance&&calc.Guidance.toLowerCase()===system.toLowerCase();}).sort((a,b)=>a.rank-b.rank);document.getElementById('modalTitle').textContent=`${system.toUpperCase()} Guidance System`;const liRow=document.getElementById('liRow');liRow.innerHTML=renderLIRow(matchingCountries);const content=document.getElementById('modalContent');let html='';matchingCountries.forEach(country=>{const calc=calcsData[country.code];const li=calc?.LI||'0';const aircraft=fleetData[country.code]||[];let total=0;const typeMap={};aircraft.forEach(ac=>{if(ac['In Service']){const ins=parseInt(ac['In Service'])||0;total+=ins;const type=ac.Type||'Unknown';if(!typeMap[type]){typeMap[type]={total:0,variants:new Set()};}typeMap[type].total+=ins;if(ac.Versions)typeMap[type].variants.add(ac.Versions);}});const metricSquares=`<div class="flex flex-wrap gap-1 mb-4"><span class="li-country-li"><strong>BVR Missile (km):</strong><br>${calc.BVR||'N/A'}</span><span class="li-country-li"><strong>AEW / Ground Cue (km):</strong><br>${calc.AEW||'N/A'}</span><span class="li-country-li"><strong>BVR System (km):</strong><br>${calc['BVR limit km']||'N/A'}</span></div>`;html+=`<div class="p-4 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30"><div class="flex items-center justify-between mb-4"><div class="flex items-center gap-4"><img src="${country.flag}" alt="${country.name}" class="w-12 h-8 rounded-lg flag-badge"><div class="flex items-center gap-2"><div><h3 class="text-xl font-bold text-white">${country.name}</h3><p class="text-sm text-slate-400">#${country.rank}</p></div><span class="country-li-badge">Lethality Index Score: ${li}</span></div></div><div class="text-right"><div class="text-2xl font-black orbitron text-cyan-300">${total}</div><p class="text-xs text-slate-400">Total Aircraft</p></div></div>${metricSquares}<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.keys(typeMap).map(type=>`<div class="p-3 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-lg border border-blue-500/20"><div class="text-sm font-semibold text-blue-300 mb-2">${type}</div><div class="text-xs text-slate-300 mb-2">Variants: ${Array.from(typeMap[type].variants).join(', ')}</div><div class="text-lg font-bold text-white">${typeMap[type].total}</div></div>`).join('')}</div></div>`;});content.innerHTML=html;const modal=document.getElementById('coreModal');modal.classList.remove('hidden');setTimeout(()=>{modal.classList.add('show');},10);}
+        function closeModal(){const modal=document.getElementById('coreModal');modal.classList.remove('show');setTimeout(()=>{modal.classList.add('hidden');},300);}
+        function showProductModal(productName) {
+            console.log('Looking for:', productName, 'Available keys:', Object.keys(productsData)); // Debug log
+            let product = productsData[productName];
+            if (!product) {
+                // Fuzzy fallback: find closest match
+                const keys = Object.keys(productsData);
+                const matchingKey = keys.find(key => 
+                    key.toLowerCase().includes(productName.toLowerCase()) || 
+                    productName.toLowerCase().includes(key.toLowerCase())
+                );
+                product = matchingKey ? productsData[matchingKey] : null;
+                if (product) {
+                    console.log('Fuzzy match found:', matchingKey); // Debug log
+                }
+            }
+            if (!product) {
+                document.getElementById('productModalContent').innerHTML = '<p class="text-red-400">Product details not found.</p>';
+            } else {
+                let html = `<h3 class="text-lg font-bold text-white mb-2">${product.Product || productName}</h3>`;
+                Object.keys(product).forEach(key => {
+                    if (key !== 'Product' && product[key]) {
+                        html += `<p class="text-sm"><strong>${key}:</strong> ${product[key]}</p>`;
+                    }
+                });
+                document.getElementById('productModalContent').innerHTML = html;
+            }
+            document.getElementById('productModalTitle').textContent = productName;
+            const modal = document.getElementById('productModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.add('show'); }, 10);
+        }
+        function closeProductModal() {
+            const modal = document.getElementById('productModal');
+            modal.classList.remove('show');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+        function showCompanyModal(companyName) {
+            const company = companiesData[companyName];
+            if (!company) {
+                document.getElementById('companyModalContent').innerHTML = '<p class="text-red-400">Company details not found.</p>';
+            } else {
+                let html = `<h3 class="text-lg font-bold text-white mb-2">${company.Company || companyName}</h3>`;
+                Object.keys(company).forEach(key => {
+                    if (key !== 'Company' && company[key]) {
+                        html += `<p class="text-sm"><strong>${key}:</strong> ${company[key]}</p>`;
+                    }
+                });
+                document.getElementById('companyModalContent').innerHTML = html;
+            }
+            document.getElementById('companyModalTitle').textContent = companyName;
+            const modal = document.getElementById('companyModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.add('show'); }, 10);
+        }
+        function closeCompanyModal() {
+            const modal = document.getElementById('companyModal');
+            modal.classList.remove('show');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+        async function loadRemainingData(){const priorityCountries=['us','ru','cn','gb','au','fr','ca','de'];for(const code of priorityCountries){if(!fleetData[code]){await loadCountryData(code);await new Promise(resolve=>setTimeout(resolve,100));}}for(const country of countries){if(!fleetData[country.code]){await loadCountryData(country.code);await new Promise(resolve=>setTimeout(resolve,100));}}}
+        async function init(){try{calcsData=await loadCalcsCSV();productsData=await loadProductsCSV();companiesData=await loadCompaniesCSV();countries = Object.entries(calcsData).map(([code, row]) => {const isoCode = code === 'uk' ? 'gb' : code === 'chn' ? 'cn' : code === 'rus' ? 'ru' : code; return {code: code, name: row.Country || code.toUpperCase(), flag: `https://flagcdn.com/w20/${isoCode}.png`, rank: 0};});countries.sort((a,b)=>parseFloat(calcsData[b.code]?.LI||0)-parseFloat(calcsData[a.code]?.LI||0));countries.forEach((c,i)=>c.rank=i+1);await loadCountryData('us');document.getElementById('loading').classList.add('hidden');document.getElementById('mainContent').classList.remove('hidden');createTabs();renderTabContent('us');updatePerformancePanel('us');loadRemainingData();}catch(error){console.error('Error initializing dashboard:',error);document.getElementById('loading').innerHTML=`<div class="text-center"><p class="text-red-400 mb-4">Error loading data</p><p class="text-slate-400 text-sm">${error.message}</p></div>`;}}
+        init();
     </script>
 </body>
 </html>
