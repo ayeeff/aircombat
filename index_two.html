@@ -6,759 +6,152 @@
     <title>Air Combat Power Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, rgba(15,23,42,1) 0%, rgba(30,41,59,1) 50%, rgba(12,30,61,1) 100%) !important;
-            min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
-        }
-        .orbitron { font-family: 'Orbitron', sans-serif; }
-        .country-name-text { color: #fff !important; }
-        .cyber-grid {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, rgba(59,130,246,.03) 1px, transparent 1px),
-                        linear-gradient(180deg, rgba(59,130,246,.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            z-index: 0;
-            animation: gridScroll 20s linear infinite;
-            pointer-events: none;
-        }
-        @keyframes gridScroll {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(50px); }
-        }
-        .tab-button {
-            transition: all .3s ease;
-            border-bottom: 3px solid transparent;
-            color: #94a3b8;
-        }
-        .tab-button.active {
-            background: linear-gradient(135deg, rgba(59,130,246,.2), rgba(139,92,246,.2));
-            border-bottom-color: #3b82f6;
-            color: #60a5fa;
-        }
-        .tab-button:hover:not(.active) {
-            background: rgba(255,255,255,.05);
-            color: #cbd5e1;
-        }
-        .tab-button.rank-1 {
-            background: linear-gradient(135deg, rgba(255,215,0,.3), rgba(218,165,32,.2));
-            border-color: rgba(255,215,0,.5);
-        }
-        .tab-button.rank-1.active {
-            background: linear-gradient(135deg, rgba(255,215,0,.4), rgba(218,165,32,.3));
-            border-bottom-color: #FFD700;
-        }
-        .tab-button.rank-2 {
-            background: linear-gradient(135deg, rgba(192,192,192,.3), rgba(169,169,169,.2));
-            border-color: rgba(192,192,192,.5);
-        }
-        .tab-button.rank-2.active {
-            background: linear-gradient(135deg, rgba(192,192,192,.4), rgba(169,169,169,.3));
-            border-bottom-color: #C0C0C0;
-        }
-        .tab-button.rank-3 {
-            background: linear-gradient(135deg, rgba(205,127,50,.3), rgba(184,115,51,.2));
-            border-color: rgba(205,127,50,.5);
-        }
-        .tab-button.rank-3.active {
-            background: linear-gradient(135deg, rgba(205,127,50,.4), rgba(184,115,51,.3));
-            border-bottom-color: #CD7F32;
-        }
-        .tab-button.system-glow {
-            background: rgba(59,130,246,.35) !important;
-            box-shadow: 0 0 30px rgba(59,130,246,.6);
-            border-color: rgba(59,130,246,.8) !important;
-        }
-        .aircraft-card {
-            background: linear-gradient(135deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,.02) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,.1);
-            transition: all .3s ease;
-        }
-        .manned-card {
-            background: linear-gradient(135deg, rgba(0,31,63,.2) 0%, rgba(0,31,63,.1) 100%) !important;
-        }
-        .unmanned-card {
-            background: linear-gradient(135deg, rgba(135,206,235,.2) 0%, rgba(135,206,235,.1) 100%) !important;
-        }
-        .aircraft-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0,0,0,.3);
-            border-color: rgba(59,130,246,.5);
-        }
-        .flag-badge { box-shadow: 0 4px 6px rgba(0,0,0,.3); }
-        .loading-spinner {
-            border: 3px solid rgba(255,255,255,.1);
-            border-top-color: #3b82f6;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .speed-card {
-            background: linear-gradient(135deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,.02) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,.1);
-            transition: all .4s cubic-bezier(.4,0,.2,1);
-            position: relative;
-            overflow: hidden;
-        }
-        .speed-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
-            transition: left .6s;
-        }
-        .speed-card:hover::before { left: 100%; }
-        .speed-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 25px 50px rgba(0,0,0,.4);
-            border-color: rgba(255,255,255,.3);
-        }
-        .shimmer-text {
-            background: linear-gradient(90deg, #fff 0%, #60a5fa 50%, #fff 100%);
-            background-size: 1000px 100%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: shimmer 3s linear infinite;
-        }
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
-        }
-        .metric-display { color: #fff; }
-        .subsystem-item {
-            padding: 8px;
-            border-radius: 8px;
-            background: rgba(255,255,255,.02);
-            border: 1px solid rgba(255,255,255,.05);
-        }
-        .tab-loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 400px;
-        }
-        .tab-loading .loading-spinner { width: 48px; height: 48px; }
-        .info-icon {
-            cursor: help;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: rgba(59,130,246,.2);
-            border: 1px solid rgba(59,130,246,.4);
-            font-size: 10px;
-            font-weight: 700;
-            color: #60a5fa;
-            transition: all .2s ease;
-        }
-        .info-icon:hover {
-            background: rgba(59,130,246,.3);
-            border-color: rgba(59,130,246,.6);
-            transform: scale(1.1);
-        }
-        .info-icon-wide { width: 18px; height: 18px; font-size: 12px; }
-        .tooltip { position: relative; z-index: 99999 !important; }
-        .tooltip-text {
-            visibility: hidden;
-            opacity: 0;
-            position: absolute;
-            left: calc(100% + 10px);
-            top: 50%;
-            transform: translateY(-50%);
-            background: linear-gradient(135deg, rgba(30,41,59,.98), rgba(15,23,42,.98));
-            color: #e2e8f0;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 12px;
-            width: 140px;
-            max-width: 140px;
-            z-index: 99999 !important;
-            border: 1px solid rgba(59,130,246,.3);
-            box-shadow: 0 10px 25px rgba(0,0,0,.5);
-            transition: all .3s ease;
-            pointer-events: none;
-            line-height: 1.4;
-            white-space: normal;
-        }
-        .tooltip:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
-        .tooltip-text::before {
-            content: '';
-            position: absolute;
-            left: -6px;
-            top: 50%;
-            transform: translateY(-50%);
-            border: 6px solid transparent;
-            border-right-color: rgba(30,41,59,.98);
-        }
-        .tooltip-left .tooltip-text {
-            left: auto;
-            right: calc(100% + 10px);
-        }
-        .tooltip-left .tooltip-text::before {
-            left: auto;
-            right: -6px;
-            border-right-color: transparent;
-            border-left-color: rgba(30,41,59,.98);
-        }
-        .core-badge {
-            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2));
-            border: 1px solid rgba(59,130,246,0.4);
-            color: #60a5fa;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-        }
-        .core-badge:hover {
-            background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(139,92,246,0.3));
-            border-color: #3b82f6;
-            transform: scale(1.05);
-            box-shadow: 0 0 10px rgba(59,130,246,0.4);
-        }
-        .multi-vendor-penalty {
-            background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2));
-            border: 1px solid rgba(239,68,68,0.5);
-            color: #fca5a5;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            animation: pulse 2s infinite;
-            display: inline-flex;
-            align-items: center;
-        }
-        .multi-vendor-penalty:hover {
-            background: linear-gradient(135deg, rgba(239,68,68,0.4), rgba(220,38,38,0.3));
-            border-color: #ef4444;
-            transform: scale(1.05);
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        #coreModal {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.3s ease;
-        }
-        #coreModal.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        #closeModalBtn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: #94a3b8;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-        #closeModalBtn:hover {
-            color: #ef4444;
-            background: rgba(239,68,68,0.2);
-            transform: rotate(90deg);
-        }
-        .modal-overlay { animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(20px); } to { transform: translateY(0); } }
-        .li-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            justify-content: flex-start;
-            align-items: center;
-            padding: 1rem;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.1);
-            overflow-x: auto;
-        }
-        .li-card { flex: 0 0 auto; min-width: 80px; text-align: center; }
-        .li-score-card {
-            background: linear-gradient(to right, rgba(234,179,8,0.2), rgba(251,191,36,0.2));
-            border: 1px solid rgba(234,179,8,0.4);
-            padding: 8px;
-            border-radius: 8px;
-        }
-        .li-score {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: #fbbf24;
-            font-family: 'Orbitron', sans-serif;
-        }
-        .li-flag {
-            width: 20px;
-            height: 15px;
-            margin-top: 4px;
-            border-radius: 2px;
-        }
-        .li-country-li {
-            background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 6px 10px;
-            border-radius: 6px;
-            margin: 1px;
-            font-size: 10px;
-            color: #e2e8f0;
-            min-width: 120px;
-        }
-        .country-li-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: linear-gradient(to right, rgba(234,179,8,0.2), rgba(251,191,36,0.2));
-            border: 1px solid rgba(234,179,8,0.4);
-            color: #fbbf24;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .product-button {
-            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2));
-            border: 1px solid rgba(59,130,246,0.4);
-            color: #60a5fa;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin: 1px;
-            display: inline-block;
-        }
-        .product-button:hover {
-            background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(139,92,246,0.3));
-            border-color: #3b82f6;
-            transform: scale(1.05);
-            box-shadow: 0 0 5px rgba(59,130,246,0.4);
-        }
-    </style>
-</head>
-<body>
+<style> @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap'); body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,rgba(15,23,42,1) 0%,rgba(30,41,59,1) 50%,rgba(12,30,61,1) 100%)!important;min-height:100vh;position:relative;overflow-x:hidden} .orbitron{font-family:'Orbitron',sans-serif}.country-name-text{color:#fff!important} .cyber-grid{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(90deg,rgba(59,130,246,.03) 1px,transparent 1px),linear-gradient(180deg,rgba(59,130,246,.03) 1px,transparent 1px);background-size:50px 50px;z-index:0;animation:gridScroll 20s linear infinite;pointer-events:none} @keyframes gridScroll{0%{transform:translateY(0)}100%{transform:translateY(50px)}} .tab-button{transition:all .3s ease;border-bottom:3px solid transparent;color:#94a3b8} .tab-button.active{background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(139,92,246,.2));border-bottom-color:#3b82f6;color:#60a5fa} .tab-button:hover:not(.active){background:rgba(255,255,255,.05);color:#cbd5e1} .tab-button.rank-1{background:linear-gradient(135deg,rgba(255,215,0,.3),rgba(218,165,32,.2));border-color:rgba(255,215,0,.5)} .tab-button.rank-1.active{background:linear-gradient(135deg,rgba(255,215,0,.4),rgba(218,165,32,.3));border-bottom-color:#FFD700} .tab-button.rank-2{background:linear-gradient(135deg,rgba(192,192,192,.3),rgba(169,169,169,.2));border-color:rgba(192,192,192,.5)} .tab-button.rank-2.active{background:linear-gradient(135deg,rgba(192,192,192,.4),rgba(169,169,169,.3));border-bottom-color:#C0C0C0} .tab-button.rank-3{background:linear-gradient(135deg,rgba(205,127,50,.3),rgba(184,115,51,.2));border-color:rgba(205,127,50,.5)} .tab-button.rank-3.active{background:linear-gradient(135deg,rgba(205,127,50,.4),rgba(184,115,51,.3));border-bottom-color:#CD7F32} .tab-button.system-glow{background:rgba(59,130,246,.35)!important;box-shadow:0 0 30px rgba(59,130,246,.6);border-color:rgba(59,130,246,.8)!important} .aircraft-card{background:linear-gradient(135deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.02) 100%);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);transition:all .3s ease} .manned-card{background:linear-gradient(135deg,rgba(0,31,63,.2) 0%,rgba(0,31,63,.1) 100%) !important;} .unmanned-card{background:linear-gradient(135deg,rgba(135,206,235,.2) 0%,rgba(135,206,235,.1) 100%) !important;} .aircraft-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,.3);border-color:rgba(59,130,246,.5)} .flag-badge{box-shadow:0 4px 6px rgba(0,0,0,.3)} .loading-spinner{border:3px solid rgba(255,255,255,.1);border-top-color:#3b82f6;animation:spin 1s linear infinite} @keyframes spin{to{transform:rotate(360deg)}} .speed-card{background:linear-gradient(135deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.02) 100%);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);transition:all .4s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden} .speed-card::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);transition:left .6s} .speed-card:hover::before{left:100%} .speed-card:hover{transform:translateY(-2px);box-shadow:0 25px 50px rgba(0,0,0,.4);border-color:rgba(255,255,255,.3)} .shimmer-text{background:linear-gradient(90deg,#fff 0%,#60a5fa 50%,#fff 100%);background-size:1000px 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite} @keyframes shimmer{0%{background-position:-1000px 0}100%{background-position:1000px 0}} .metric-display{color:#fff} .subsystem-item{padding:8px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05)} .tab-loading{display:flex;align-items:center;justify-content:center;min-height:400px} .tab-loading .loading-spinner{width:48px;height:48px} .info-icon{cursor:help;display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.4);font-size:10px;font-weight:700;color:#60a5fa;transition:all .2s ease} .info-icon:hover{background:rgba(59,130,246,.3);border-color:rgba(59,130,246,.6);transform:scale(1.1)} .info-icon-wide{width:18px;height:18px;font-size:12px} .tooltip{position:relative;z-index:99999 !important} .tooltip-text{visibility:hidden;opacity:0;position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:linear-gradient(135deg,rgba(30,41,59,.98),rgba(15,23,42,.98));color:#e2e8f0;padding:10px 14px;border-radius:8px;font-size:12px;width:140px;max-width:140px;z-index:99999 !important;border:1px solid rgba(59,130,246,.3);box-shadow:0 10px 25px rgba(0,0,0,.5);transition:all .3s ease;pointer-events:none;line-height:1.4;white-space:normal;} .tooltip:hover .tooltip-text{visibility:visible;opacity:1} .tooltip-text::before{content:'';position:absolute;left:-6px;top:50%;transform:translateY(-50%);border:6px solid transparent;border-right-color:rgba(30,41,59,.98)} .tooltip-left .tooltip-text{left:auto;right:calc(100% + 10px);} .tooltip-left .tooltip-text::before{left:auto;right:-6px;border-right-color:transparent;border-left-color:rgba(30,41,59,.98)} .core-badge { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(59,130,246,0.4); color: #60a5fa; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; } .core-badge:hover { background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(139,92,246,0.3)); border-color: #3b82f6; transform: scale(1.05); box-shadow: 0 0 10px rgba(59,130,246,0.4); } .multi-vendor-penalty { background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; animation: pulse 2s infinite; display: inline-flex; align-items: center; } .multi-vendor-penalty:hover { background: linear-gradient(135deg, rgba(239,68,68,0.4), rgba(220,38,38,0.3)); border-color: #ef4444; transform: scale(1.05); } @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } } #coreModal { opacity: 0; transform: translateY(20px); transition: all 0.3s ease; } #coreModal.show { opacity: 1; transform: translateY(0); } #closeModalBtn { background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; transition: all 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; } #closeModalBtn:hover { color: #ef4444; background: rgba(239,68,68,0.2); transform: rotate(90deg); } .modal-overlay { animation: fadeIn 0.3s ease; } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @keyframes slideUp { from { transform: translateY(20px); } to { transform: translateY(0); } } .li-row { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: flex-start; align-items: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); overflow-x: auto; } .li-card { flex: 0 0 auto; min-width: 80px; text-align: center; } .li-score-card { background: linear-gradient(to right, rgba(234,179,8,0.2), rgba(251,191,36,0.2)); border: 1px solid rgba(234,179,8,0.4); padding: 8px; border-radius: 8px; } .li-score { font-size: 1.25rem; font-weight: bold; color: #fbbf24; font-family: 'Orbitron', sans-serif; } .li-flag { width: 20px; height: 15px; margin-top: 4px; border-radius: 2px; } .li-country-li { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); padding: 6px 10px; border-radius: 6px; margin: 1px; font-size: 10px; color: #e2e8f0; min-width: 120px; } .country-li-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(to right, rgba(234,179,8,0.2), rgba(251,191,36,0.2)); border: 1px solid rgba(234,179,8,0.4); color: #fbbf24; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; font-family: 'Orbitron', sans-serif; white-space: nowrap; } .li-header { text-align: center; margin-bottom: 1rem; } .li-header h3 { color: #fbbf24; font-family: 'Orbitron', sans-serif; font-size: 1.25rem; font-weight: bold; } .product-button { background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(16,185,129,0.2)); border: 1px solid rgba(34,197,94,0.4); color: #10b981; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; margin: 2px; display: inline-flex; align-items: center; } .product-button:hover { background: linear-gradient(135deg, rgba(34,197,94,0.3), rgba(16,185,129,0.3)); border-color: #10b981; transform: scale(1.05); box-shadow: 0 0 8px rgba(34,197,94,0.4); } .company-button { background: linear-gradient(135deg, rgba(234,179,8,0.2), rgba(251,191,36,0.2)); border: 1px solid rgba(234,179,8,0.4); color: #fbbf24; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; margin: 2px; display: inline-flex; align-items: center; } .company-button:hover { background: linear-gradient(135deg, rgba(234,179,8,0.3), rgba(251,191,36,0.3)); border-color: #fbbf24; transform: scale(1.05); box-shadow: 0 0 8px rgba(234,179,8,0.4); } #productModal { opacity: 0; transform: translateY(20px); transition: all 0.3s ease; } #productModal.show { opacity: 1; transform: translateY(0); } #companyModal { opacity: 0; transform: translateY(20px); transition: all 0.3s ease; } #companyModal.show { opacity: 1; transform: translateY(0); } </style>
+    </head>
+<body class="p-4 md:p-8">
     <div class="cyber-grid"></div>
-    <div id="loading" class="fixed inset-0 bg-slate-900 bg-opacity-90 flex items-center justify-center z-50">
-        <div class="text-center">
-            <div class="loading-spinner mx-auto mb-4 rounded-full"></div>
-            <p class="text-white text-lg">Loading Air Combat Power Dashboard...</p>
+    <div class="relative z-10 max-w-[1800px] mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-6xl font-black mb-2 orbitron bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent shimmer-text">AIR COMBAT POWER DASHBOARD</h1>
+            <p class="text-lg md:text-xl text-slate-300">Beyond Visual Range (Find, Fix, Track, Target, Engage, Assess) F2T2EA System Kill Chain Analysis</p>
         </div>
-    </div>
-    <div id="mainContent" class="hidden relative z-10 min-h-screen">
-        <!-- Header -->
-        <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 p-4">
-            <h1 class="text-3xl font-bold orbitron text-white text-center">Air Combat Power Dashboard</h1>
-            <p class="text-slate-400 text-center mt-1">Global BVR Lethality Index 2025</p>
-        </header>
-        <!-- Tabs -->
-        <nav class="flex overflow-x-auto bg-slate-800/50 border-b border-slate-700/50">
-            <div id="tabsContainer" class="flex px-4 py-2 min-w-full"></div>
-        </nav>
-        <!-- Tab Content -->
-        <main id="tabContent" class="p-4 md:p-6 space-y-6">
-            <div id="tabLoading" class="tab-loading hidden">
-                <div class="loading-spinner mx-auto"></div>
-            </div>
-            <div id="tabMain" class="hidden space-y-6"></div>
-        </main>
-    </div>
-
-    <!-- Core Modal -->
-    <div id="coreModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 modal-overlay" onclick="closeModal()">
-        <div class="bg-slate-800 p-6 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center mb-4">
-                <h2 id="modalTitle" class="text-2xl font-bold text-white"></h2>
-                <button id="closeModalBtn" onclick="closeModal()">&times;</button>
-            </div>
-            <div id="liRow" class="li-row mb-4"></div>
-            <div id="modalContent"></div>
+        <div id="loading" class="text-center py-20">
+            <div class="loading-spinner w-16 h-16 rounded-full mx-auto mb-4"></div>
+            <p class="text-slate-400">Loading fleet data...</p>
         </div>
-    </div>
-
-    <!-- Product Modal -->
-    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50" onclick="closeProductModal()">
-        <div class="bg-slate-800 p-6 rounded-lg max-w-md w-full mx-4" onclick="event.stopPropagation()">
-            <h2 id="productModalTitle" class="text-xl font-bold text-white mb-4"></h2>
-            <div id="productModalContent" class="text-white space-y-2"></div>
-            <button onclick="closeProductModal()" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors">Close</button>
-        </div>
-    </div>
-
-    <!-- Company Modal -->
-    <div id="companyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50" onclick="closeCompanyModal()">
-        <div class="bg-slate-800 p-6 rounded-lg max-w-md w-full mx-4" onclick="event.stopPropagation()">
-            <h2 id="companyModalTitle" class="text-xl font-bold text-white mb-4"></h2>
-            <div id="companyModalContent" class="text-white space-y-2"></div>
-            <button onclick="closeCompanyModal()" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors">Close</button>
-        </div>
-    </div>
-
-    <script>
-        let countries = [];
-        let fleetData = {};
-        let calcsData = {};
-        let productsData = {};
-        let companiesData = {};
-
-        // Load CSV functions (assuming GitHub raw URLs)
-        async function loadCalcsCSV() {
-            const response = await fetch('https://raw.githubusercontent.com/ayeeff/aircombat/main/data/calcs.csv');
-            const csv = await response.text();
-            return Papa.parse(csv, { header: true }).data.reduce((acc, row) => {
-                acc[row.Code] = row;
-                return acc;
-            }, {});
-        }
-
-        async function loadProductsCSV() {
-            const response = await fetch('https://raw.githubusercontent.com/ayeeff/aircombat/main/data/products.csv');
-            const csv = await response.text();
-            return Papa.parse(csv, { header: true }).data.reduce((acc, row) => {
-                const key = row.Product.trim();
-                if (key) acc[key] = row;
-                return acc;
-            }, {});
-        }
-
-        async function loadCompaniesCSV() {
-            const response = await fetch('https://raw.githubusercontent.com/ayeeff/aircombat/main/data/companies.csv');
-            const csv = await response.text();
-            return Papa.parse(csv, { header: true }).data.reduce((acc, row) => {
-                const key = row.Company.trim();
-                if (key) acc[key] = row;
-                return acc;
-            }, {});
-        }
-
-        async function loadCountryData(code) {
-            const response = await fetch(`https://raw.githubusercontent.com/ayeeff/aircombat/main/data/${code}.csv`);
-            const csv = await response.text();
-            fleetData[code] = Papa.parse(csv, { header: true }).data;
-        }
-
-        function createTabs() {
-            const container = document.getElementById('tabsContainer');
-            countries.forEach(country => {
-                const button = document.createElement('button');
-                button.className = `tab-button px-4 py-2 flex items-center gap-2 ${country.rank === 1 ? 'rank-1' : country.rank === 2 ? 'rank-2' : country.rank === 3 ? 'rank-3' : ''}`;
-                button.innerHTML = `<img src="${country.flag}" alt="${country.name}" class="w-5 h-4 rounded"> <span>${country.name}</span> <span class="text-xs bg-slate-700 px-2 py-1 rounded">#${country.rank}</span>`;
-                button.onclick = () => switchTab(country.code);
-                container.appendChild(button);
-            });
-        }
-
-        function switchTab(code) {
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            renderTabContent(code);
-            updatePerformancePanel(code);
-        }
-
-        function renderTabContent(code) {
-            const main = document.getElementById('tabMain');
-            const loading = document.getElementById('tabLoading');
-            loading.classList.remove('hidden');
-            main.classList.add('hidden');
-            setTimeout(() => {
-                loading.classList.add('hidden');
-                main.classList.remove('hidden');
-                // Render fleet table or cards here
-                const aircraft = fleetData[code] || [];
-                let html = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
-                aircraft.forEach(ac => {
-                    if (ac['In Service'] && parseInt(ac['In Service']) > 0) {
-                        const mannedClass = ac.Manned === 'Yes' ? 'manned-card' : 'unmanned-card';
-                        html += `<div class="aircraft-card p-4 rounded-lg ${mannedClass}">
-                            <img src="${ac.Photo}" alt="${ac.Aircraft}" class="w-full h-32 object-cover rounded mb-2">
-                            <h3 class="text-lg font-bold text-white">${ac.Aircraft}</h3>
-                            <p class="text-sm text-slate-400">${ac.Type} - ${ac.Versions}</p>
-                            <p class="text-sm font-semibold text-cyan-300">${ac['In Service']} In Service</p>
-                        </div>`;
-                    }
-                });
-                html += '</div>';
-                main.innerHTML = html;
-            }, 500);
-        }
-
-        function updatePerformancePanel(code) {
-            const calc = calcsData[code];
-            if (!calc) return;
-            const panel = document.getElementById('performancePanel') || document.createElement('div');
-            panel.id = 'performancePanel';
-            panel.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div class="speed-card p-4 text-center">
-                        <div class="text-2xl font-bold orbitron text-blue-400">${calc['BVR limit km'] || 'N/A'}</div>
-                        <p class="text-sm text-slate-400">BVR Range (km)</p>
-                    </div>
-                    <div class="speed-card p-4 text-center">
-                        <div class="text-2xl font-bold orbitron text-green-400">${calc.BVR || 'N/A'}</div>
-                        <p class="text-sm text-slate-400">Missile Range (km)</p>
-                    </div>
-                    <div class="speed-card p-4 text-center">
-                        <div class="text-2xl font-bold orbitron text-purple-400">${calc.AEW || 'N/A'}</div>
-                        <p class="text-sm text-slate-400">AEW Cue (km)</p>
-                    </div>
+        <div id="mainContent" class="hidden">
+            <div id="tabButtons" class="flex flex-wrap gap-2 mb-6 speed-card p-4 rounded-xl"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-6">
+                <div id="fleetContent">
+                    <div id="tabContent" class="min-h-screen"></div>
                 </div>
-                <div class="mb-4">
-                    <h3 class="text-lg font-semibold text-white mb-2">Associated Products</h3>
-                    <div id="productsList"></div>
-                </div>
-            `;
-            // Insert panel if not exists
-            if (!document.getElementById('performancePanel')) {
-                document.getElementById('tabMain').insertBefore(panel, document.getElementById('tabMain').firstChild);
-            }
-            // Load products
-            const productsList = document.getElementById('productsList');
-            const allAircraft = fleetData[code] || [];
-            const productSet = new Set();
-            allAircraft.forEach(ac => {
-                if (ac['Associated products']) {
-                    ac['Associated products'].split(',').forEach(p => {
-                        const trimmed = p.trim().replace(/[‑–—]/g, '-');
-                        productSet.add(trimmed);
-                    });
-                }
-            });
-            let productsHtml = '';
-            productSet.forEach(p => {
-                productsHtml += `<span class="product-button" onclick="showProductModal('${p}')">${p}</span>`;
-            });
-            productsList.innerHTML = productsHtml;
-        }
-
-        function renderLIRow(countries) {
-            return countries.map(c => {
-                const li = calcsData[c.code]?.LI || '0';
-                return `<div class="li-card li-score-card">
-                    <img src="${c.flag}" alt="${c.name}" class="li-flag mx-auto">
-                    <div class="li-score">${li}</div>
-                    <p class="text-xs text-slate-300">${c.name}</p>
-                </div>`;
-            }).join('');
-        }
-
-        function showCoreModal(system) {
-            const matchingCountries = countries.filter(c => {
-                const calc = calcsData[c.code];
-                return calc && calc[system] && calc[system].toLowerCase() === system.toLowerCase();
-            }).sort((a, b) => a.rank - b.rank);
-            document.getElementById('modalTitle').textContent = `${system.toUpperCase()} ${system === 'Guidance' ? 'System' : ''}`;
-            const liRow = document.getElementById('liRow');
-            liRow.innerHTML = renderLIRow(matchingCountries);
-            const content = document.getElementById('modalContent');
-            let html = '';
-            matchingCountries.forEach(country => {
-                const calc = calcsData[country.code];
-                const li = calc?.LI || '0';
-                const aircraft = fleetData[country.code] || [];
-                let total = 0;
-                const typeMap = {};
-                aircraft.forEach(ac => {
-                    if (ac['In Service']) {
-                        const ins = parseInt(ac['In Service']) || 0;
-                        total += ins;
-                        const type = ac.Type || 'Unknown';
-                        if (!typeMap[type]) typeMap[type] = { total: 0, variants: new Set() };
-                        typeMap[type].total += ins;
-                        if (ac.Versions) typeMap[type].variants.add(ac.Versions);
-                    }
-                });
-                const metricSquares = `<div class="flex flex-wrap gap-1 mb-4">
-                    <span class="li-country-li"><strong>BVR Missile (km):</strong><br>${calc.BVR || 'N/A'}</span>
-                    <span class="li-country-li"><strong>AEW / Ground Cue (km):</strong><br>${calc.AEW || 'N/A'}</span>
-                    <span class="li-country-li"><strong>BVR System (km):</strong><br>${calc['BVR limit km'] || 'N/A'}</span>
-                </div>`;
-                html += `<div class="p-4 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-4">
-                            <img src="${country.flag}" alt="${country.name}" class="w-12 h-8 rounded-lg flag-badge">
-                            <div class="flex items-center gap-2">
-                                <div>
-                                    <h3 class="text-xl font-bold text-white">${country.name}</h3>
-                                    <p class="text-sm text-slate-400">#${country.rank}</p>
+                <div>
+                    <div class="sticky top-4">
+                        <div class="speed-card rounded-2xl p-6 mb-6" id="countryPerformance">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-4">
+                                    <img id="perfFlag" src="" alt="" class="w-16 h-10 flag-badge rounded-lg">
+                                    <h2 id="perfCountryName" class="text-2xl font-bold orbitron country-name-text">United States</h2>
+                                    <p id="perfRank" class="text-slate-400">Rank #1</p>
                                 </div>
-                                <span class="country-li-badge">Lethality Index Score: ${li}</span>
+                                <div class="text-right flex items-center gap-2">
+                                    <span class="text-sm text-cyan-400 font-semibold">Core System:</span>
+                                    <div id="perfCoreContainer" class="flex flex-wrap gap-1 items-center"></div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-2xl font-black orbitron text-cyan-300">${total}</div>
-                            <p class="text-xs text-slate-400">Total Aircraft</p>
+                            <div class="text-right flex items-center gap-2 mt-2">
+                                <span class="text-sm text-cyan-400 font-semibold">Guidance System:</span>
+                                <div id="perfGuidanceContainer" class="flex flex-wrap gap-1 items-center"></div>
+                            </div>
+                            <div id="perfSellsSection" class="text-right flex items-center gap-2 mt-2" style="display: none;">
+                                <span class="text-sm text-cyan-400 font-semibold">Sells System to:</span>
+                                <div id="perfSellsContainer" class="flex flex-wrap gap-1 items-center"></div>
+                            </div>
+                            <div id="perfBuysSection" class="text-right flex items-center gap-2 mt-2" style="display: none;">
+                                <span class="text-sm text-cyan-400 font-semibold">Buys System from:</span>
+                                <div id="perfBuysContainer" class="flex flex-wrap gap-1 items-center"></div>
+                            </div>
+                            <div id="perfContext" class="mb-6 p-4 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30">
+                                <div class="text-sm text-slate-300 leading-relaxed">
+                                    <span class="text-yellow-400 font-semibold">Context:</span> In a contemporary air war scenario (120+ Jets India vs. Pakistan, May 2025), combat is no longer fought in ace-pilot dogfights à la Top Gun or Ace Combat; instead, engagements are decided beyond visual range using BVR weapons, AWACS/AEW radar networks, and a F2T2EA kill chain.
+                                </div>
+                            </div>
+                            <div id="sidebarMetrics" class="grid grid-cols-[60%_40%] gap-4"></div>
                         </div>
                     </div>
-                    ${metricSquares}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${Object.keys(typeMap).map(type => `<div class="p-3 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-lg border border-blue-500/20">
-                            <div class="text-sm font-semibold text-blue-300 mb-2">${type}</div>
-                            <div class="text-xs text-slate-300 mb-2">Variants: ${Array.from(typeMap[type].variants).join(', ')}</div>
-                            <div class="text-lg font-bold text-white">${typeMap[type].total}</div>
-                        </div>`).join('')}
-                    </div>
-                </div>`;
-            });
-            content.innerHTML = html;
-            const modal = document.getElementById('coreModal');
-            modal.classList.remove('hidden');
-            setTimeout(() => { modal.classList.add('show'); }, 10);
+                </div>
+            </div>
+      ...(truncated 17367 characters)... integration.";tabContent.innerHTML=`<div class="aircraft-card rounded-2xl p-4 md:p-6 mb-6"><h3 class="text-xl font-bold orbitron mb-4 country-name-text">Sub-System Performance</h3><div class="grid grid-cols-4 md:grid-cols-8 gap-2">${subsystemHTML}<div class="p-3 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500/30"><div class="flex items-center gap-1 mb-1"><span class="text-xs text-yellow-400 font-semibold flex items-center gap-1">Lethality Index<span class="tooltip tooltip-left"><span class="info-icon info-icon-wide">?</span><span class="tooltip-text">${liTooltip}</span></span></span></div><div class="text-2xl font-black orbitron text-yellow-400">${calcData.LI||'0'}</div></div></div></div><div class="grid grid-cols-1 gap-4 md:gap-6">${aircraft.map((ac,idx)=>{if(!ac.Aircraft)return '';const bvrKillChain = ac['BVR kill chain'] || '';const associatedProducts = (ac['Associated products'] || '').split(',').map(p => p.trim()).filter(p => p);const company = ac.Company || ac.Origin || 'Unknown';const origin = ac.Origin || 'Unknown';const originCountry = countries.find(c => c.name.toLowerCase() === origin.toLowerCase());const flag = originCountry ? originCountry.flag : '';const mannedClass = ac.Manned === 'Yes' ? 'manned-card' : 'unmanned-card';const productsHtml = associatedProducts.length > 0 ? `<div class="mt-3"><span class="text-xs text-green-400 font-semibold mb-1 block">Associated Products:</span><div class="flex flex-wrap gap-1">${associatedProducts.map(product => `<span class="product-button text-white" onclick="showProductModal('${product}')">${product}</span>`).join('')}</div></div>` : '';const companyHtml = `<div class="mt-3"><span class="text-xs text-yellow-400 font-semibold mb-1 block">Company:</span><span class="company-button" onclick="showCompanyModal('${company}')"><img src="${flag}" class="w-4 h-3 inline-block mr-1 rounded">${company}</span></div>`;return `<div class="aircraft-card ${mannedClass} rounded-xl md:rounded-2xl overflow-hidden p-4 md:p-6"><div class="grid grid-cols-1 md:grid-cols-10 gap-4"><div class="md:col-span-3 flex flex-col"><img src="${ac.Photo||'https://via.placeholder.com/400x300?text=No+Image'}" alt="${ac.Aircraft}" class="w-full h-48 md:h-64 object-cover rounded-lg" loading="lazy" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'"><h3 class="text-xl md:text-2xl font-bold mt-3 orbitron country-name-text">${ac.Aircraft}</h3></div><div class="md:col-span-5"><div class="text-sm text-blue-400 font-semibold mb-1">BVR F2T2EA Kill Chain</div><p class="text-slate-300 leading-relaxed text-sm md:text-base">${bvrKillChain}</p>${companyHtml}${productsHtml}</div><div class="md:col-span-2 space-y-2"><div class="p-2 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-lg border border-blue-500/30"><div class="text-xs text-blue-400 font-semibold mb-1">Type</div><div class="text-xs text-white">${ac.Type}</div></div><div class="p-2 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-lg border border-purple-500/30"><div class="text-xs text-purple-400 font-semibold mb-1">Origin</div><div class="text-xs text-white">${ac.Origin}</div></div><div class="p-2 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-lg border border-green-500/30"><div class="text-xs text-green-400 font-semibold mb-1">Version</div><div class="text-xs text-white">${ac.Versions}</div></div><div class="p-2 bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 rounded-lg border border-yellow-500/30"><div class="text-xs text-yellow-400 font-semibold mb-1">In Service</div><div class="text-sm text-white font-bold">${ac['In Service']}</div></div></div></div></div>`;}).join('')}</div>`;}
+function highlightSystemButtons(cc){const calcData=calcsData[cc];if(!calcData||!calcData.Core)return;const coreSystem=calcData.Core.toLowerCase();const coreKeywords=coreSystem.split('-');const hasNATO=coreKeywords.includes('nato');const primarySystem=coreKeywords[0];document.querySelectorAll('.tab-button').forEach(btn=>{const btnCode=btn.dataset.countryCode;const btnCalcData=calcsData[btnCode];if(btnCalcData&&btnCalcData.Core){const btnCore=btnCalcData.Core.toLowerCase();const btnKeywords=btnCore.split('-');const btnHasNATO=btnKeywords.includes('nato');const btnPrimarySystem=btnKeywords[0];if(btnCore===coreSystem||btnKeywords.includes(primarySystem)||coreKeywords.includes(btnPrimarySystem)||(hasNATO&&btnHasNATO)){btn.classList.add('system-glow');}}});}
+function clearSystemHighlight(){document.querySelectorAll('.tab-button').forEach(btn=>{btn.classList.remove('system-glow');});}
+function renderLIRow(matchingCountries) {
+  const sortedCountries = [...matchingCountries].sort((a, b) => parseFloat(calcsData[b.code]?.LI || 0) - parseFloat(calcsData[a.code]?.LI || 0));
+  const liTooltip = "The Lethality Index represents the system lethality of this nation's air force in Beyond Visual Range combat, factoring in the best available aircraft mix, missile capability, sensor reach, and network integration.";
+  let html = `
+    <div class="li-header">
+      <h3>Lethality Index Ranking <span class="tooltip tooltip-left"><span class="info-icon info-icon-wide">?</span><span class="tooltip-text">${liTooltip}</span></span></h3>
+    </div>
+    <div class="li-row">
+  `;
+  sortedCountries.forEach(country => {
+    const li = calcsData[country.code]?.LI || '0';
+    html += `
+      <div class="li-card">
+        <div class="li-score-card">
+          <div class="li-score">${li}</div>
+          <img src="${country.flag}" alt="${country.name}" class="li-flag">
+        </div>
+      </div>
+    `;
+  });
+  html += '</div>';
+  return html;
+}
+function showCoreModal(system){const matchingCountries=countries.filter(c=>{const calc=calcsData[c.code];return calc&&calc.Core&&calc.Core.toLowerCase().includes(system.toLowerCase());}).sort((a,b)=>a.rank-b.rank);document.getElementById('modalTitle').textContent=`${system.toUpperCase()} Core System`;const liRow=document.getElementById('liRow');liRow.innerHTML=renderLIRow(matchingCountries);const content=document.getElementById('modalContent');let html='';matchingCountries.forEach(country=>{const calc=calcsData[country.code];const li=calc?.LI||'0';const aircraft=fleetData[country.code]||[];let total=0;const typeMap={};aircraft.forEach(ac=>{if(ac['In Service']){const ins=parseInt(ac['In Service'])||0;total+=ins;const type=ac.Type||'Unknown';if(!typeMap[type]){typeMap[type]={total:0,variants:new Set()};}typeMap[type].total+=ins;if(ac.Versions)typeMap[type].variants.add(ac.Versions);}});const metricSquares=`<div class="flex flex-wrap gap-1 mb-4"><span class="li-country-li"><strong>BVR Missile (km):</strong><br>${calc.BVR||'N/A'}</span><span class="li-country-li"><strong>AEW / Ground Cue (km):</strong><br>${calc.AEW||'N/A'}</span><span class="li-country-li"><strong>BVR System (km):</strong><br>${calc['BVR limit km']||'N/A'}</span></div>`;html+=`<div class="p-4 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30"><div class="flex items-center justify-between mb-4"><div class="flex items-center gap-4"><img src="${country.flag}" alt="${country.name}" class="w-12 h-8 rounded-lg flag-badge"><div class="flex items-center gap-2"><div><h3 class="text-xl font-bold text-white">${country.name}</h3><p class="text-sm text-slate-400">#${country.rank}</p></div><span class="country-li-badge">Lethality Index Score: ${li}</span></div></div><div class="text-right"><div class="text-2xl font-black orbitron text-cyan-300">${total}</div><p class="text-xs text-slate-400">Total Aircraft</p></div></div>${metricSquares}<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.keys(typeMap).map(type=>`<div class="p-3 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-lg border border-blue-500/20"><div class="text-sm font-semibold text-blue-300 mb-2">${type}</div><div class="text-xs text-slate-300 mb-2">Variants: ${Array.from(typeMap[type].variants).join(', ')}</div><div class="text-lg font-bold text-white">${typeMap[type].total}</div></div>`).join('')}</div></div>`;});content.innerHTML=html;const modal=document.getElementById('coreModal');modal.classList.remove('hidden');setTimeout(()=>{modal.classList.add('show');},10);}
+function showGuidanceModal(system){const matchingCountries=countries.filter(c=>{const calc=calcsData[c.code];return calc&&calc.Guidance&&calc.Guidance.toLowerCase()===system.toLowerCase();}).sort((a,b)=>a.rank-b.rank);document.getElementById('modalTitle').textContent=`${system.toUpperCase()} Guidance System`;const liRow=document.getElementById('liRow');liRow.innerHTML=renderLIRow(matchingCountries);const content=document.getElementById('modalContent');let html='';matchingCountries.forEach(country=>{const calc=calcsData[country.code];const li=calc?.LI||'0';const aircraft=fleetData[country.code]||[];let total=0;const typeMap={};aircraft.forEach(ac=>{if(ac['In Service']){const ins=parseInt(ac['In Service'])||0;total+=ins;const type=ac.Type||'Unknown';if(!typeMap[type]){typeMap[type]={total:0,variants:new Set()};}typeMap[type].total+=ins;if(ac.Versions)typeMap[type].variants.add(ac.Versions);}});const metricSquares=`<div class="flex flex-wrap gap-1 mb-4"><span class="li-country-li"><strong>BVR Missile (km):</strong><br>${calc.BVR||'N/A'}</span><span class="li-country-li"><strong>AEW / Ground Cue (km):</strong><br>${calc.AEW||'N/A'}</span><span class="li-country-li"><strong>BVR System (km):</strong><br>${calc['BVR limit km']||'N/A'}</span></div>`;html+=`<div class="p-4 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30"><div class="flex items-center justify-between mb-4"><div class="flex items-center gap-4"><img src="${country.flag}" alt="${country.name}" class="w-12 h-8 rounded-lg flag-badge"><div class="flex items-center gap-2"><div><h3 class="text-xl font-bold text-white">${country.name}</h3><p class="text-sm text-slate-400">#${country.rank}</p></div><span class="country-li-badge">Lethality Index Score: ${li}</span></div></div><div class="text-right"><div class="text-2xl font-black orbitron text-cyan-300">${total}</div><p class="text-xs text-slate-400">Total Aircraft</p></div></div>${metricSquares}<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.keys(typeMap).map(type=>`<div class="p-3 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-lg border border-blue-500/20"><div class="text-sm font-semibold text-blue-300 mb-2">${type}</div><div class="text-xs text-slate-300 mb-2">Variants: ${Array.from(typeMap[type].variants).join(', ')}</div><div class="text-lg font-bold text-white">${typeMap[type].total}</div></div>`).join('')}</div></div>`;});content.innerHTML=html;const modal=document.getElementById('coreModal');modal.classList.remove('hidden');setTimeout(()=>{modal.classList.add('show');},10);}
+function closeModal(){const modal=document.getElementById('coreModal');modal.classList.remove('show');setTimeout(()=>{modal.classList.add('hidden');},300);}
+function showProductModal(productName) {
+    console.log('Looking for:', productName, 'Available keys:', Object.keys(productsData)); // Debug log
+    let product = productsData[productName];
+    if (!product) {
+        // Fuzzy fallback: find closest match
+        const keys = Object.keys(productsData);
+        const matchingKey = keys.find(key => 
+            key.toLowerCase().includes(productName.toLowerCase()) || 
+            productName.toLowerCase().includes(key.toLowerCase())
+        );
+        product = matchingKey ? productsData[matchingKey] : null;
+        if (product) {
+            console.log('Fuzzy match found:', matchingKey); // Debug log
         }
-
-        function showGuidanceModal(system) {
-            // Similar to showCoreModal but for Guidance
-            showCoreModal('Guidance');
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('coreModal');
-            modal.classList.remove('show');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
-        }
-
-        function showProductModal(productName) {
-            let normalizedName = productName.replace(/[‑–—]/g, '-').trim().toLowerCase();
-            let product = productsData[productName];
-            let matchedKey = null;
-            if (!product) {
-                const keys = Object.keys(productsData);
-                for (let key of keys) {
-                    let normKey = key.replace(/[‑–—]/g, '-').trim().toLowerCase();
-                    if (normalizedName.includes(normKey) || normKey.includes(normalizedName)) {
-                        matchedKey = key;
-                        product = productsData[matchedKey];
-                        break;
-                    }
-                }
+    }
+    if (!product) {
+        document.getElementById('productModalContent').innerHTML = '<p class="text-red-400">Product details not found.</p>';
+    } else {
+        let html = `<h3 class="text-lg font-bold text-white mb-2">${product.Product || productName}</h3>`;
+        Object.keys(product).forEach(key => {
+            if (key !== 'Product' && product[key]) {
+                html += `<p class="text-sm"><strong>${key}:</strong> ${product[key]}</p>`;
             }
-            const contentEl = document.getElementById('productModalContent');
-            if (!product) {
-                contentEl.innerHTML = `<p class="text-red-400">Product details not found for "${productName}".<br><small>Searched for: ${normalizedName}</small></p>`;
-            } else {
-                let html = `<h3 class="text-lg font-bold text-white mb-2">${product.Product || productName}${matchedKey ? ` (matched: ${matchedKey})` : ''}</h3>`;
-                Object.keys(product).forEach(key => {
-                    if (key !== 'Product' && product[key]) {
-                        html += `<p class="text-sm"><strong>${key}:</strong> ${product[key]}</p>`;
-                    }
-                });
-                contentEl.innerHTML = html;
+        });
+        document.getElementById('productModalContent').innerHTML = html;
+    }
+    document.getElementById('productModalTitle').textContent = productName;
+    const modal = document.getElementById('productModal');
+    modal.classList.remove('hidden');
+    setTimeout(() => { modal.classList.add('show'); }, 10);
+}
+function closeProductModal() {
+    const modal = document.getElementById('productModal');
+    modal.classList.remove('show');
+    setTimeout(() => { modal.classList.add('hidden'); }, 300);
+}
+function showCompanyModal(companyName) {
+    const company = companiesData[companyName];
+    if (!company) {
+        document.getElementById('companyModalContent').innerHTML = '<p class="text-red-400">Company details not found.</p>';
+    } else {
+        let html = `<h3 class="text-lg font-bold text-white mb-2">${company.Company || companyName}</h3>`;
+        Object.keys(company).forEach(key => {
+            if (key !== 'Company' && company[key]) {
+                html += `<p class="text-sm"><strong>${key}:</strong> ${company[key]}</p>`;
             }
-            document.getElementById('productModalTitle').textContent = productName;
-            const modal = document.getElementById('productModal');
-            modal.classList.remove('hidden');
-            setTimeout(() => { modal.classList.add('show'); }, 10);
-        }
-
-        function closeProductModal() {
-            const modal = document.getElementById('productModal');
-            modal.classList.remove('show');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
-        }
-
-        function showCompanyModal(companyName) {
-            const company = companiesData[companyName];
-            const contentEl = document.getElementById('companyModalContent');
-            if (!company) {
-                contentEl.innerHTML = '<p class="text-red-400">Company details not found.</p>';
-            } else {
-                let html = `<h3 class="text-lg font-bold text-white mb-2">${company.Company || companyName}</h3>`;
-                Object.keys(company).forEach(key => {
-                    if (key !== 'Company' && company[key]) {
-                        html += `<p class="text-sm"><strong>${key}:</strong> ${company[key]}</p>`;
-                    }
-                });
-                contentEl.innerHTML = html;
-            }
-            document.getElementById('companyModalTitle').textContent = companyName;
-            const modal = document.getElementById('companyModal');
-            modal.classList.remove('hidden');
-            setTimeout(() => { modal.classList.add('show'); }, 10);
-        }
-
-        function closeCompanyModal() {
-            const modal = document.getElementById('companyModal');
-            modal.classList.remove('show');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
-        }
-
-        async function loadRemainingData() {
-            const priorityCountries = ['us', 'ru', 'cn', 'gb', 'au', 'fr', 'ca', 'de'];
-            for (const code of priorityCountries) {
-                if (!fleetData[code]) {
-                    await loadCountryData(code);
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                }
-            }
-            for (const country of countries) {
-                if (!fleetData[country.code]) {
-                    await loadCountryData(country.code);
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                }
-            }
-        }
-
-        // Load countries data (hardcoded or from CSV)
-        countries = [
-            { code: 'us', name: 'United States', flag: 'https://flagcdn.com/w20/us.png' },
-            { code: 'ru', name: 'Russia', flag: 'https://flagcdn.com/w20/ru.png' },
-            { code: 'cn', name: 'China', flag: 'https://flagcdn.com/w20/cn.png' },
-            { code: 'gb', name: 'United Kingdom', flag: 'https://flagcdn.com/w20/gb.png' },
-            { code: 'au', name: 'Australia', flag: 'https://flagcdn.com/w20/au.png' },
-            { code: 'fr', name: 'France', flag: 'https://flagcdn.com/w20/fr.png' },
-            { code: 'ca', name: 'Canada', flag: 'https://flagcdn.com/w20/ca.png' },
-            { code: 'de', name: 'Germany', flag: 'https://flagcdn.com/w20/de.png' },
-            // Add more as needed
-        ];
-
-        async function init() {
-            try {
-                calcsData = await loadCalcsCSV();
-                productsData = await loadProductsCSV();
-                companiesData = await loadCompaniesCSV();
-                countries.sort((a, b) => parseFloat(calcsData[b.code]?.LI || 0) - parseFloat(calcsData[a.code]?.LI || 0));
-                countries.forEach((c, i) => c.rank = i + 1);
-                await loadCountryData('us');
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('mainContent').classList.remove('hidden');
-                createTabs();
-                renderTabContent('us');
-                updatePerformancePanel('us');
-                loadRemainingData();
-            } catch (error) {
-                console.error('Error initializing dashboard:', error);
-                document.getElementById('loading').innerHTML = `<div class="text-center">
-                    <p class="text-red-400 mb-4">Error loading data</p>
-                    <p class="text-slate-400 text-sm">${error.message}</p>
-                </div>`;
-            }
-        }
-        init();
+        });
+        document.getElementById('companyModalContent').innerHTML = html;
+    }
+    document.getElementById('companyModalTitle').textContent = companyName;
+    const modal = document.getElementById('companyModal');
+    modal.classList.remove('hidden');
+    setTimeout(() => { modal.classList.add('show'); }, 10);
+}
+function closeCompanyModal() {
+    const modal = document.getElementById('companyModal');
+    modal.classList.remove('show');
+    setTimeout(() => { modal.classList.add('hidden'); }, 300);
+}
+async function loadRemainingData(){const priorityCountries=['us','ru','cn','gb','au','fr','ca','de'];for(const code of priorityCountries){if(!fleetData[code]){await loadCountryData(code);await new Promise(resolve=>setTimeout(resolve,100));}}for(const country of countries){if(!fleetData[country.code]){await loadCountryData(country.code);await new Promise(resolve=>setTimeout(resolve,100));}}}
+async function init(){try{calcsData=await loadCalcsCSV();productsData=await loadProductsCSV();companiesData=await loadCompaniesCSV();countries.sort((a,b)=>parseFloat(calcsData[b.code]?.LI||0)-parseFloat(calcsData[a.code]?.LI||0));countries.forEach((c,i)=>c.rank=i+1);await loadCountryData('us');document.getElementById('loading').classList.add('hidden');document.getElementById('mainContent').classList.remove('hidden');createTabs();renderTabContent('us');updatePerformancePanel('us');loadRemainingData();}catch(error){console.error('Error initializing dashboard:',error);document.getElementById('loading').innerHTML=`<div class="text-center"><p class="text-red-400 mb-4">Error loading data</p><p class="text-slate-400 text-sm">${error.message}</p></div>`;}}
+init();
     </script>
 </body>
 </html>
