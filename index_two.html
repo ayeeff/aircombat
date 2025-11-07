@@ -120,7 +120,7 @@ async function loadCompaniesCSV(){const url='https://cdn.jsdelivr.net/gh/ayeeff/
 
 async function loadCountryData(code){if(fleetData[code]||loadingStatus[code])return;loadingStatus[code]=true;const url=csvMap[code];if(!url){console.warn(`No CSV URL for country code: ${code}`);delete loadingStatus[code];return;}return new Promise((resolve,reject)=>{Papa.parse(url,{download:true,header:true,skipEmptyLines:true,complete:(results)=>{fleetData[code]=results.data;delete loadingStatus[code];resolve(results.data);},error:(err)=>{console.error(`Error loading ${code} data:`,err);delete loadingStatus[code];reject(err);}});});}
 
-function createTabs(){const tabButtons=document.getElementById('tabButtons');let html='';countries.forEach((country,i)=>{const rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';const li=calcsData[country.code]?.LI||0;html+=`<button class="tab-button ${rankClass} px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2" data-country-code="${country.code}" onclick="switchTab('${country.code}')"><img src="${country.flag}" alt="${country.name}" class="w-5 h-4 rounded"><span>${country.name}</span><span class="text-xs text-slate-400">(LI: ${li})</span></button>`;});tabButtons.innerHTML=html;const firstBtn=document.querySelector('.tab-button');if(firstBtn)firstBtn.classList.add('active');}
+function createTabs(){const tabButtons=document.getElementById('tabButtons');let html='';countries.forEach((country,i)=>{const rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';const li=calcsData[country.code]?.LI||0;html+=`<button class="tab-button ${rankClass} px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2" data-country-code="${country.code}" onclick="switchTab('${country.code}')"><img src="${country.flag}" alt="${country.name}" class="w-5 h-4 rounded"><span>${country.name}</span></button>`;});tabButtons.innerHTML=html;const firstBtn=document.querySelector('.tab-button');if(firstBtn)firstBtn.classList.add('active');}
 
 function switchTab(code){clearSystemHighlight();document.querySelectorAll('.tab-button').forEach(btn=>btn.classList.remove('active'));document.querySelector(`[data-country-code="${code}"]`).classList.add('active');activeTab=code;renderTabContent(code);updatePerformancePanel(code);highlightSystemButtons(code);}
 
@@ -217,7 +217,13 @@ function showCompanyModal(companyName) {
         let html = `<h3 class="text-lg font-bold text-white mb-2">${company.Company || companyName}</h3>`;
         Object.keys(company).forEach(key => {
             if (key !== 'Company' && company[key]) {
-                html += `<p class="text-sm mb-2"><strong class="text-cyan-400">${key}:</strong> <span class="text-slate-300">${company[key]}</span></p>`;
+                let displayKey = key;
+                if (key === 'Arms') {
+                    displayKey = 'Arms Revenue';
+                } else if (key === 'Total') {
+                    displayKey = 'Total Revenue';
+                }
+                html += `<p class="text-sm mb-2"><strong class="text-cyan-400">${displayKey}:</strong> <span class="text-slate-300">${company[key]}</span></p>`;
             }
         });
         document.getElementById('companyModalContent').innerHTML = html;
