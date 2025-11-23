@@ -1,39 +1,43 @@
-#!/usr/bin/env python3
-"""
-Weekly CSV to Feather converter
-Only overwrites .feather if CSV is newer or .feather missing
-"""
+name: Weekly CSV to Feather
 
-import pathlib
-import pandas as pd
+on:
+  schedule:
+    - cron: "0 3 * * 1"     # Every Monday 03:00 UTC
+  workflow_dispatch:        # Allows manual run
 
-DATA_DIR = pathlib.Path("data")
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-def main():
-    if not DATA_DIR.exists():
-        print(f"{DATA_DIR} not found!")
-        return
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-    csv_files = list(DATA_DIR.rglob("*.csv"))
-    print(f"Found {len(csv_files)} CSV file(s)")
+      - name: Install pandas + pyarrow
+        run: pip install pandas pyarrow
 
-    converted = 0
-    for csv_path in csv_files:
-        feather_path = csv_path.with_suffix(".feather")
+      - name: Convert all CSVs to .feather
+        run: python convert_to_feather.py
 
-        # Skip if feather exists and is newer than CSV
-        if feather_path.exists() and feather_path.stat().st_mtime >= csv_path.stat().st_mtime:
-            continue
+      # This block is now completely bullet-proof
+      - name: Commit and push any new/updated .feather files
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
 
-        try:
-            df = pd.read_csv(csv_path)
-            df.to_feather(feather_path)
-            print(f"Converted: {csv_path.name} → {feather_path.name}")
-            converted += 1
-        except Exception as e:
-            print(f"Failed {csv_path.name}: {e}")
+          # Stage only .feather files that actually exist (never fails)
+          git add -A data/**/*.feather 2>/dev/null || echo "No .feather files yet"
 
-    print(f"Done! {converted} file(s) converted/updated.")
-
-if __name__ == "__main__":
-    main()
+          # Only commit + push if something actually changed
+          git diff --quiet --exit-code --cached
+          if [ $? -eq 0 ]; then
+            echo "No changes detected — nothing to commit"
+          else
+            git commit -m "Auto-update .feather files from CSVs [weekly]"
+            git push
+            echo "Successfully pushed new/updated .feather files"
+          fi
