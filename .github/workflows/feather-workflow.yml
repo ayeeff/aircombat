@@ -1,44 +1,41 @@
-name: Weekly CSV → Feather Conversion
+name: Weekly CSV to Feather
 
-# Run every Monday at 03:00 UTC (adjust if you want another day/time)
 on:
   schedule:
-    - cron: "0 3 * * 1"   # 03:00 UTC on Mondays
-  workflow_dispatch:      # Also allow manual trigger
+    - cron: "0 3 * * 1"     # Every Monday 03:00 UTC
+  workflow_dispatch:        # Allows manual trigger
 
 jobs:
-  convert-to-feather:
+  convert:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install pandas + pyarrow
-        run: |
-          python -m pip install --upgrade pip
-          pip install pandas pyarrow
+      - name: Install dependencies
+        run: pip install pandas pyarrow
 
-      - name: Convert all CSVs to .feather
-        run: |
-          python convert_to_feather.py
+      - name: Convert CSVs to .feather
+        run: python convert_to_feather.py
 
-      - name: Commit and push feather files if changed
+      - name: Commit and push changed .feather files
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/**/*.feather
-          git status
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Safely add any .feather files (never fails)
+          git add data/**/*.feather 2>/dev/null || true
+
+          # Only commit+push if something actually changed
           if git diff --cached --quiet; then
-            echo "No changes detected. Nothing to commit."
+            echo "No changes — nothing to commit"
           else
             git commit -m "Auto-update .feather files from CSVs [weekly]"
             git push
-            echo "Pushed new/updated .feather files!"
+            echo "Pushed updated .feather files"
           fi
