@@ -108,27 +108,28 @@ import { tableFromIPC } from 'https://cdn.jsdelivr.net/npm/apache-arrow@18.0.0/+
 
 const countries=[{code:'us',name:'United States',flag:'https://flagcdn.com/w80/us.png'},{code:'ru',name:'Russia',flag:'https://flagcdn.com/w80/ru.png'},{code:'cn',name:'China',flag:'https://flagcdn.com/w80/cn.png'},{code:'il',name:'Israel',flag:'https://flagcdn.com/w80/il.png'},{code:'gb',name:'United Kingdom',flag:'https://flagcdn.com/w80/gb.png'},{code:'au',name:'Australia',flag:'https://flagcdn.com/w80/au.png'},{code:'jp',name:'Japan',flag:'https://flagcdn.com/w80/jp.png'},{code:'kr',name:'South Korea',flag:'https://flagcdn.com/w80/kr.png'},{code:'se',name:'Sweden',flag:'https://flagcdn.com/w80/se.png'},{code:'it',name:'Italy',flag:'https://flagcdn.com/w80/it.png'},{code:'fr',name:'France',flag:'https://flagcdn.com/w80/fr.png'},{code:'ca',name:'Canada',flag:'https://flagcdn.com/w80/ca.png'},{code:'de',name:'Germany',flag:'https://flagcdn.com/w80/de.png'},{code:'tr',name:'Turkey',flag:'https://flagcdn.com/w80/tr.png'},{code:'pk',name:'Pakistan',flag:'https://flagcdn.com/w80/pk.png'},{code:'th',name:'Thailand',flag:'https://flagcdn.com/w80/th.png'},{code:'es',name:'Spain',flag:'https://flagcdn.com/w80/es.png'},{code:'ir',name:'Iran',flag:'https://flagcdn.com/w80/ir.png'},{code:'in',name:'India',flag:'https://flagcdn.com/w80/in.png'},{code:'sa',name:'Saudi Arabia',flag:'https://flagcdn.com/w80/sa.png'}];
 
+// UPDATED TO USE @latest
 const featherMap = {
-    'us': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/us.feather',
-    'ru': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/rus.feather',
-    'cn': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/chn.feather',
-    'il': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/isr.feather',
-    'gb': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/uk.feather',
-    'au': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/aus.feather',
-    'jp': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/jpn.feather',
-    'kr': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/kor.feather',
-    'se': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/swe.feather',
-    'it': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/ita.feather',
-    'fr': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/fra.feather',
-    'ca': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/can.feather',
-    'de': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/de.feather',
-    'tr': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/tuk.feather',
-    'pk': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/pk.feather',
-    'th': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/thai.feather',
-    'es': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/spa.feather',
-    'ir': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/iran.feather',
-    'in': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/in.feather',
-    'sa': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/sau.feather'
+    'us': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/us.feather',
+    'ru': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/rus.feather',
+    'cn': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/chn.feather',
+    'il': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/isr.feather',
+    'gb': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/uk.feather',
+    'au': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/aus.feather',
+    'jp': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/jpn.feather',
+    'kr': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/kor.feather',
+    'se': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/swe.feather',
+    'it': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/ita.feather',
+    'fr': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/fra.feather',
+    'ca': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/can.feather',
+    'de': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/de.feather',
+    'tr': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/tuk.feather',
+    'pk': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/pk.feather',
+    'th': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/thai.feather',
+    'es': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/spa.feather',
+    'ir': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/iran.feather',
+    'in': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/in.feather',
+    'sa': 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/sau.feather'
 };
 
 const subsystemLabels={A:{name:'Sensor Reach',weight:'22.5%',color:'blue',tooltip:'AESA raw detection range vs. 3 m² target, plus off-board cue quality (AEW/sat-links).'},B:{name:'Signature Control',weight:'15%',color:'purple',tooltip:'Frontal RCS, IR-suppression, passive EW suite.'},C:{name:'Missile Reach',weight:'22.5%',color:'red',tooltip:'Published / leaked aerodynamic range of primary BVR weapon, plus Pk at NEZ.'},D:{name:'Kill-Chain Network',weight:'15%',color:'green',tooltip:'Secure L-16-style datalink, AEW density, ground-radar gap-filler coverage, sat-feed.'},E:{name:'ECM / Self-Protection',weight:'10%',color:'orange',tooltip:'On-board jammer, towed decoy, MAWS, expendable count.'},F:{name:'Sustained Sortie Rate',weight:'5%',color:'cyan',tooltip:'Crew ratio, hot-pit refuel, local MRO, spares pool.'},G:{name:'UCAV/Drone Production',weight:'10%',color:'pink',tooltip:'Mass production volume of unmanned combat aerial vehicles, loitering munitions, and collaborative combat aircraft.'}};
@@ -155,7 +156,7 @@ async function loadFeather(url) {
 }
 
 async function loadCalcsData() {
-    const url = 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/calcs.feather';
+    const url = 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/calcs.feather';
     const data = await loadFeather(url);
     const dataMap = {};
     data.forEach(row => {
@@ -171,7 +172,7 @@ async function loadCalcsData() {
 }
 
 async function loadProductsData() {
-    const url = 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/products.feather';
+    const url = 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/products.feather';
     const data = await loadFeather(url);
     const dataMap = {};
     data.forEach(row => {
@@ -183,7 +184,7 @@ async function loadProductsData() {
 }
 
 async function loadCompaniesData() {
-    const url = 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@main/data/company.feather';
+    const url = 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/company.feather';
     const data = await loadFeather(url);
     const dataMap = {};
     data.forEach(row => {
