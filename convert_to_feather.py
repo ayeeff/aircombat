@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Weekly job: Convert every CSV in /data/ to .feather (Arrow IPC)
-Keeps the same filename, just changes extension: data.csv → data.feather
+Weekly CSV to Feather converter
+Only overwrites .feather if CSV is newer or .feather missing
 """
 
 import pathlib
@@ -11,32 +11,29 @@ DATA_DIR = pathlib.Path("data")
 
 def main():
     if not DATA_DIR.exists():
-        print(f"Error: {DATA_DIR} directory not found!")
+        print(f"{DATA_DIR} not found!")
         return
 
     csv_files = list(DATA_DIR.rglob("*.csv"))
-    if not csv_files:
-        print("No CSV files found in /data/")
-        return
+    print(f"Found {len(csv_files)} CSV file(s)")
 
-    print(f"Found {len(csv_files)} CSV file(s). Converting to .feather...")
-
+    converted = 0
     for csv_path in csv_files:
         feather_path = csv_path.with_suffix(".feather")
 
-        # Skip if already up-to-date and feather is newer
-        if feather_path.exists() and feather_path.stat().st_mtime > csv_path.stat().st_mtime:
-            print(f"Skipping (already up-to-date): {feather_path.name}")
+        # Skip if feather exists and is newer than CSV
+        if feather_path.exists() and feather_path.stat().st_mtime >= csv_path.stat().st_mtime:
             continue
 
         try:
             df = pd.read_csv(csv_path)
             df.to_feather(feather_path)
-            print(f"Converted: {csv_path.name} → {feather_path.name} ({feather_path.stat().st_size / 1024:.1f} KB)")
+            print(f"Converted: {csv_path.name} → {feather_path.name}")
+            converted += 1
         except Exception as e:
-            print(f"Failed on {csv_path.name}: {e}")
+            print(f"Failed {csv_path.name}: {e}")
 
-    print("All done! Your HTML dashboards will now load instantly.")
+    print(f"Done! {converted} file(s) converted/updated.")
 
 if __name__ == "__main__":
     main()
