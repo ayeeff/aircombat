@@ -4,29 +4,35 @@ import os
 import re
 
 def merge_csvs():
-    # Find all CSV files in the current directory
-    all_files = glob.glob("*.csv")
+    # Define the data directory
+    data_dir = 'data'
     
-    # Regex to match filenames that are exactly 2 or 3 letters long (e.g., aus.csv, uk.csv)
-    # This filters out 'products.csv', 'calcs.csv', and the output file itself.
+    # path to look for csvs (e.g., data/*.csv)
+    search_path = os.path.join(data_dir, "*.csv")
+    all_files = glob.glob(search_path)
+    
+    # Regex to match filenames that are exactly 2 or 3 letters long
+    # We check os.path.basename to ignore the 'data/' folder prefix in the regex
     country_pattern = re.compile(r'^[a-zA-Z]{2,3}\.csv$')
     
     dataframes = []
     
-    print("Found the following country files to merge:")
+    print(f"Scanning '{data_dir}' folder...")
     
-    for filename in all_files:
+    for filepath in all_files:
+        filename = os.path.basename(filepath)
+        
         if country_pattern.match(filename):
             print(f"- Processing {filename}...")
             
             try:
                 # Read the CSV
-                df = pd.read_csv(filename)
+                df = pd.read_csv(filepath)
                 
-                # Extract filename without extension (e.g., 'aus')
+                # Extract filename without extension for the column (e.g., 'aus')
                 country_name = os.path.splitext(filename)[0]
                 
-                # Add the new column based on filename
+                # Add the new column
                 df['country'] = country_name
                 
                 dataframes.append(df)
@@ -37,15 +43,15 @@ def merge_csvs():
         # Merge all dataframes
         merged_df = pd.concat(dataframes, ignore_index=True)
         
-        # Save to a single CSV
-        output_filename = "global_merged.csv"
-        merged_df.to_csv(output_filename, index=False)
-        print(f"Successfully merged {len(dataframes)} files into {output_filename}")
+        # Save to data folder
+        output_path = os.path.join(data_dir, "global_merged.csv")
+        merged_df.to_csv(output_path, index=False)
         
-        # Optional: Save as feather format since your repo uses it
-        # merged_df.to_feather("global_merged.feather") 
+        print(f"Successfully merged {len(dataframes)} files into {output_path}")
     else:
-        print("No matching country CSV files found.")
+        print("No matching country CSV files found in /data/.")
+        # Create an empty file or raise error to ensure git has something to touch? 
+        # Better to just print error so user checks logs.
 
 if __name__ == "__main__":
     merge_csvs()
