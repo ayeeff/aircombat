@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Combat Power - Global View</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/globe.gl"></script>
+    
+    <style> 
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap'); 
+        
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #000; font-family: 'Inter', sans-serif; }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        
+        /* Custom Aircombat Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 3px; }
+        
+        /* Glassmorphism & Effects */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .speed-card {
+            background: linear-gradient(135deg,rgba(255,255,255,.05) 0%,rgba(255,255,255,.01) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,.1);
+            transition: all .3s ease;
+        }
+        
+        /* Tab Button Styling */
+        .tab-button {
+            transition: all .3s ease;
+            border-bottom: 2px solid transparent;
+            color: #94a3b8;
+            background: rgba(0,0,0,0.3);
+            white-space: nowrap;
+        }
+        .tab-button:hover { background: rgba(59, 130, 246, 0.2); color: #fff; transform: translateY(-2px); }
+        .tab-button.active {
+            background: linear-gradient(135deg,rgba(59,130,246,.2),rgba(139,92,246,.2));
+            border-bottom-color: #3b82f6;
+            color: #60a5fa;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Rank Specific Styles */
+        .rank-1 { border-color: rgba(255,215,0,.3); color: #fbbf24; }
+        .rank-1.active { background: linear-gradient(135deg,rgba(255,215,0,.2),rgba(218,165,32,.1)); border-bottom-color: #FFD700; color: #fbbf24; }
+        
+        .rank-2 { border-color: rgba(192,192,192,.3); }
+        .rank-2.active { background: linear-gradient(135deg,rgba(192,192,192,.2),rgba(169,169,169,.1)); border-bottom-color: #C0C0C0; color: #e2e8f0; }
+        
+        .rank-3 { border-color: rgba(205,127,50,.3); }
+        .rank-3.active { background: linear-gradient(135deg,rgba(205,127,50,.2),rgba(184,115,51,.1)); border-bottom-color: #CD7F32; color: #fdba74; }
+
+        /* Markers */
+        .airport-marker {
+            width: 12px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .airport-marker:hover { transform: scale(1.5); background: #fff; }
+        
+        .system-glow { box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); border-color: rgba(59, 130, 246, 0.8) !important; }
+    </style>
+</head>
+<body class="text-slate-200 aircombat">
+
+    <div class="absolute top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
+        <div class="p-6 pb-2 pointer-events-auto bg-gradient-to-b from-black/90 to-transparent">
+            <h1 class="text-3xl font-black orbitron tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-lg">
+                AIR COMBAT <span class="text-white">GLOBAL</span>
+            </h1>
+            <p class="text-sm text-slate-400 mt-1 font-mono">Select a nation to analyze F2T2EA Capabilities & Fleet Distribution</p>
+        </div>
+
+        <div class="w-full overflow-x-auto px-6 py-2 pointer-events-auto no-scrollbar">
+            <div id="tabButtons" class="flex flex-nowrap gap-3 pb-2">
+                <div class="animate-pulse flex space-x-4">
+                    <div class="h-10 w-32 bg-slate-800 rounded opacity-50"></div>
+                    <div class="h-10 w-32 bg-slate-800 rounded opacity-50"></div>
+                    <div class="h-10 w-32 bg-slate-800 rounded opacity-50"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="globeViz" class="w-full h-screen bg-slate-900 cursor-move"></div>
+
+    <div id="infoBox" class="absolute top-36 right-4 w-96 max-h-[70vh] glass-panel rounded-2xl p-0 transform translate-x-[120%] transition-transform duration-500 ease-out z-40 flex flex-col shadow-2xl overflow-hidden">
+        
+        <div class="p-5 border-b border-white/10 bg-black/20">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img id="infoFlag" src="" class="w-10 h-auto rounded shadow-sm" alt="Flag">
+                    <div>
+                        <h2 id="infoCountry" class="text-xl font-bold orbitron text-white leading-none">Country</h2>
+                        <span id="infoRank" class="text-xs font-mono text-blue-400">Rank #--</span>
+                    </div>
+                </div>
+                <button onclick="closeInfoBox()" class="text-slate-500 hover:text-white transition-colors text-2xl">&times;</button>
+            </div>
+            <div class="mt-4 flex justify-between items-center bg-white/5 rounded-lg p-2">
+                <div class="text-center">
+                    <div class="text-xs text-slate-400">Lethality Index</div>
+                    <div id="infoLI" class="text-lg font-bold text-yellow-400 orbitron">0.0</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-xs text-slate-400">Fleet Size</div>
+                    <div id="infoTotal" class="text-lg font-bold text-cyan-400 orbitron">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="overflow-y-auto p-4 space-y-4 custom-scrollbar">
+            
+            <div>
+                <h3 class="text-xs font-bold text-purple-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-purple-500"></span> Strategic Airports
+                </h3>
+                <div id="infoAirports" class="flex flex-wrap gap-2 text-xs"></div>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span> Active Fleet
+                </h3>
+                <div id="infoFleet" class="space-y-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="absolute inset-0 bg-slate-900 z-[60] flex items-center justify-center transition-opacity duration-1000">
+        <div class="text-center">
+            <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 class="text-2xl font-bold orbitron text-white">INITIALIZING SATELLITE FEED</h2>
+            <p class="text-blue-400 font-mono text-sm mt-2">Loading Global Assets...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { tableFromIPC } from 'https://cdn.jsdelivr.net/npm/apache-arrow@18.0.0/+esm';
+
+        // --- CONFIGURATION ---
+        const FEATHER_URL_GLOBAL = 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/global_merged.feather';
+        const FEATHER_URL_CALCS = 'https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/calcs.feather';
+        const GEOJSON_URL = 'https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson';
+
+        // Code Mapping (Filename -> ISO 2/Frontend Code)
+        const filenameToCodeMap = {
+            'us': 'us', 'rus': 'ru', 'chn': 'cn', 'isr': 'il', 'uk': 'gb',
+            'aus': 'au', 'jpn': 'jp', 'kor': 'kr', 'swe': 'se', 'ita': 'it',
+            'fra': 'fr', 'can': 'ca', 'de': 'de', 'tuk': 'tr', 'pk': 'pk',
+            'thai': 'th', 'spa': 'es', 'iran': 'ir', 'in': 'in', 'sau': 'sa'
+        };
+
+        // Standard Countries Metadata
+        const countriesMeta = [
+            {code:'us', name:'United States', flag:'https://flagcdn.com/w80/us.png'},
+            {code:'ru', name:'Russia', flag:'https://flagcdn.com/w80/ru.png'},
+            {code:'cn', name:'China', flag:'https://flagcdn.com/w80/cn.png'},
+            {code:'il', name:'Israel', flag:'https://flagcdn.com/w80/il.png'},
+            {code:'gb', name:'United Kingdom', flag:'https://flagcdn.com/w80/gb.png'},
+            {code:'au', name:'Australia', flag:'https://flagcdn.com/w80/au.png'},
+            {code:'jp', name:'Japan', flag:'https://flagcdn.com/w80/jp.png'},
+            {code:'kr', name:'South Korea', flag:'https://flagcdn.com/w80/kr.png'},
+            {code:'se', name:'Sweden', flag:'https://flagcdn.com/w80/se.png'},
+            {code:'it', name:'Italy', flag:'https://flagcdn.com/w80/it.png'},
+            {code:'fr', name:'France', flag:'https://flagcdn.com/w80/fr.png'},
+            {code:'ca', name:'Canada', flag:'https://flagcdn.com/w80/ca.png'},
+            {code:'de', name:'Germany', flag:'https://flagcdn.com/w80/de.png'},
+            {code:'tr', name:'Turkey', flag:'https://flagcdn.com/w80/tr.png'},
+            {code:'pk', name:'Pakistan', flag:'https://flagcdn.com/w80/pk.png'},
+            {code:'th', name:'Thailand', flag:'https://flagcdn.com/w80/th.png'},
+            {code:'es', name:'Spain', flag:'https://flagcdn.com/w80/es.png'},
+            {code:'ir', name:'Iran', flag:'https://flagcdn.com/w80/ir.png'},
+            {code:'in', name:'India', flag:'https://flagcdn.com/w80/in.png'},
+            {code:'sa', name:'Saudi Arabia', flag:'https://flagcdn.com/w80/sa.png'}
+        ];
+
+        // --- STATE ---
+        let world;
+        let fleetData = {}; // { 'us': [rows], 'ru': [rows] }
+        let calcsData = {}; // { 'us': {LI: 88.5, ...} }
+        let geoData = null;
+        let activeCountryCode = null;
+
+        // --- DATA LOADERS ---
+        async function loadFeather(url) {
+            const response = await fetch(url);
+            const buffer = await response.arrayBuffer();
+            const table = tableFromIPC(buffer);
+            return table.toArray().map(row => row.toJSON());
+        }
+
+        async function initData() {
+            try {
+                // 1. Load GeoJSON
+                const geoRes = await fetch(GEOJSON_URL);
+                geoData = await geoRes.json();
+
+                // 2. Load Global Fleet Data
+                const globalRows = await loadFeather(FEATHER_URL_GLOBAL);
+                globalRows.forEach(row => {
+                    const fileCode = row.country; 
+                    const code = filenameToCodeMap[fileCode] || fileCode;
+                    if (!fleetData[code]) fleetData[code] = [];
+                    if (row.Aircraft && row['In Service']) {
+                        fleetData[code].push(row);
+                    }
+                });
+
+                // 3. Load Calculations (LI)
+                const calcRows = await loadFeather(FEATHER_URL_CALCS);
+                calcRows.forEach(row => {
+                    const cName = row.Country?.trim();
+                    const meta = countriesMeta.find(c => c.name === cName);
+                    if (meta) {
+                        calcsData[meta.code] = row;
+                    }
+                });
+
+                // 4. Merge Data into Countries Meta for Sorting
+                countriesMeta.forEach(c => {
+                    c.li = parseFloat(calcsData[c.code]?.LI || 0);
+                    c.fleetCount = fleetData[c.code]?.reduce((sum, r) => sum + (parseInt(r['In Service'])||0), 0) || 0;
+                });
+
+                // 5. Sort by LI
+                countriesMeta.sort((a, b) => b.li - a.li);
+                
+                // 6. Assign Rank
+                countriesMeta.forEach((c, i) => c.rank = i + 1);
+
+                // 7. Initialize UI
+                renderTabs();
+                initGlobe();
+
+                // Hide Loader
+                document.getElementById('loadingOverlay').style.opacity = '0';
+                setTimeout(() => document.getElementById('loadingOverlay').remove(), 1000);
+
+            } catch (err) {
+                console.error("Critical Init Error:", err);
+                alert("Failed to load mission data.");
+            }
+        }
+
+        // --- UI RENDERING ---
+        function renderTabs() {
+            const container = document.getElementById('tabButtons');
+            let html = '';
+            
+            countriesMeta.forEach(c => {
+                let rankClass = '';
+                if(c.rank === 1) rankClass = 'rank-1';
+                else if(c.rank === 2) rankClass = 'rank-2';
+                else if(c.rank === 3) rankClass = 'rank-3';
+
+                html += `
+                <button 
+                    class="tab-button ${rankClass} px-4 py-2 rounded-lg text-sm font-semibold border border-white/5 flex items-center gap-2" 
+                    data-code="${c.code}"
+                    onclick="window.selectCountry('${c.code}')"
+                >
+                    <img src="${c.flag}" alt="${c.code}" class="w-5 h-4 rounded shadow-sm">
+                    <span class="country-name-text hidden md:inline">${c.name}</span>
+                    <span class="font-mono text-xs opacity-70">#${c.rank}</span>
+                </button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // --- GLOBE LOGIC ---
+        function initGlobe() {
+            const elem = document.getElementById('globeViz');
+            
+            // Prepare Country Points (Centroids) for "Airports"
+            // Since we don't have exact lat/lng for airports, we place a beacon at the country centroid
+            // We need to find centroids from the GeoJSON features
+            const countryPoints = [];
+
+            // Filter GeoJSON to only include our relevant countries to highlight them
+            // We map ISO A2 (frontend code) to ISO A3 (geojson properties usually have ISO_A3 or NAME)
+            // Note: simple matching by name is risky, but NE_110m usually has standard names.
+            
+            // Helper to find geo feature
+            const getFeature = (code) => {
+                const meta = countriesMeta.find(c => c.code === code);
+                if (!meta) return null;
+                return geoData.features.find(f => 
+                    f.properties.NAME === meta.name || 
+                    f.properties.NAME_LONG === meta.name ||
+                    f.properties.ADMIN === meta.name ||
+                    (code === 'us' && f.properties.ISO_A3 === 'USA') ||
+                    (code === 'gb' && f.properties.ISO_A3 === 'GBR') ||
+                    (code === 'ru' && f.properties.ISO_A3 === 'RUS') ||
+                    (code === 'kr' && f.properties.ISO_A3 === 'KOR')
+                );
+            };
+
+            countriesMeta.forEach(c => {
+                const feature = getFeature(c.code);
+                if (feature) {
+                    // Calculate roughly the centroid for the point
+                    // Globe.gl helps, but we can just use the polygon center logic or a lookup
+                    // For simplicity, we assign the feature to the country meta for clicking
+                    c.feature = feature;
+                    
+                    // Add a label/point data
+                    countryPoints.push({
+                        lat: 0, lng: 0, // Will be calculated by globe.gl polygonCenter if possible, or we rely on click
+                        ...c
+                    });
+                }
+            });
+
+            world = Globe()
+                (elem)
+                .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+                .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
+                .polygonsData(geoData.features.filter(d => d.properties.ISO_A2 !== 'AQ')) // Exclude Antarctica
+                .polygonCapColor(d => {
+                    // Check if this polygon belongs to one of our countries
+                    const meta = countriesMeta.find(c => c.feature && c.feature === d);
+                    if (meta) {
+                        // Color based on Rank/LI
+                        if (meta.rank === 1) return 'rgba(251, 191, 36, 0.3)'; // Gold
+                        if (meta.rank === 2) return 'rgba(156, 163, 175, 0.3)'; // Silver
+                        if (meta.rank === 3) return 'rgba(217, 119, 6, 0.3)'; // Bronze
+                        return 'rgba(59, 130, 246, 0.1)'; // Blue default
+                    }
+                    return 'rgba(255, 255, 255, 0)'; // Invisible/Transparent for others
+                })
+                .polygonSideColor(() => 'rgba(255, 255, 255, 0.05)')
+                .polygonStrokeColor(() => '#111')
+                .polygonLabel(({ properties: d }) => `
+                    <div class="bg-slate-900/80 backdrop-blur px-2 py-1 rounded text-xs text-white border border-white/10">
+                        ${d.NAME}
+                    </div>
+                `)
+                .onPolygonClick(d => {
+                    // Match clicked polygon to our country list
+                    const meta = countriesMeta.find(c => 
+                        c.name === d.properties.NAME || 
+                        c.name === d.properties.NAME_LONG || 
+                        c.name === d.properties.ADMIN ||
+                        (d.properties.ISO_A3 === 'USA' && c.code === 'us') ||
+                        (d.properties.ISO_A3 === 'GBR' && c.code === 'gb') ||
+                        (d.properties.ISO_A3 === 'RUS' && c.code === 'ru')
+                    );
+                    
+                    if (meta) {
+                        window.selectCountry(meta.code);
+                    }
+                });
+
+            // Add Atmosphere
+            world.controls().autoRotate = true;
+            world.controls().autoRotateSpeed = 0.5;
+            
+            // Adjust camera
+            world.pointOfView({ altitude: 2.5 });
+        }
+
+        // --- INTERACTION LOGIC ---
+        window.selectCountry = (code) => {
+            const meta = countriesMeta.find(c => c.code === code);
+            if (!meta) return;
+
+            activeCountryCode = code;
+
+            // 1. Highlight Tab
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active', 'system-glow');
+                if (btn.dataset.code === code) btn.classList.add('active', 'system-glow');
+            });
+
+            // 2. Move Globe
+            if (meta.feature) {
+                // Get centroid of polygon to center camera
+                // Simple approx: standard lat/lng lookup would be better, but we rely on polygon bbox
+                // We utilize globe.gl internal utility if available, or just a rough dictionary for major powers
+                const coords = getApproxCoords(code);
+                world.pointOfView({ lat: coords.lat, lng: coords.lng, altitude: 1.5 }, 1500);
+                world.controls().autoRotate = false;
+            }
+
+            // 3. Populate Info Box
+            populateInfoBox(meta);
+        };
+
+        window.closeInfoBox = () => {
+            document.getElementById('infoBox').classList.add('translate-x-[120%]');
+            world.controls().autoRotate = true;
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active', 'system-glow'));
+        };
+
+        function populateInfoBox(meta) {
+            const box = document.getElementById('infoBox');
+            const data = fleetData[meta.code] || [];
+            const calc = calcsData[meta.code] || {};
+
+            // Header Info
+            document.getElementById('infoFlag').src = meta.flag;
+            document.getElementById('infoCountry').innerText = meta.name;
+            document.getElementById('infoRank').innerText = `Global Rank #${meta.rank}`;
+            document.getElementById('infoLI').innerText = calc.LI || 'N/A';
+            document.getElementById('infoTotal').innerText = meta.fleetCount;
+
+            // Airports (Unique Set)
+            const airportSet = new Set();
+            data.forEach(row => {
+                if (row.Airport) {
+                    row.Airport.split(',').forEach(ap => airportSet.add(ap.trim()));
+                }
+            });
+            const airportsHtml = Array.from(airportSet).map(ap => 
+                `<span class="px-2 py-1 bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded hover:bg-purple-500/20 transition-colors cursor-default">${ap}</span>`
+            ).join('');
+            document.getElementById('infoAirports').innerHTML = airportsHtml || '<span class="text-slate-500 italic">No airbase data listed</span>';
+
+            // Fleet List
+            let fleetHtml = '';
+            data.forEach(row => {
+                const isManned = row.Manned === 'Yes';
+                const bgClass = isManned ? 'bg-blue-500/5 border-blue-500/10' : 'bg-cyan-500/5 border-cyan-500/10';
+                fleetHtml += `
+                <div class="${bgClass} border rounded p-2 flex items-center gap-3 hover:bg-white/5 transition-colors">
+                    <img src="${row.Photo || ''}" onerror="this.style.display='none'" class="w-12 h-8 object-cover rounded bg-black/50">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-white text-sm truncate">${row.Aircraft}</span>
+                            <span class="text-xs font-bold text-white bg-white/10 px-1 rounded">${row['In Service']}</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-[10px] text-slate-400 truncate">${row.Type}</span>
+                            <span class="text-[10px] text-yellow-500/80 truncate max-w-[80px]">${row.Company || 'Unknown'}</span>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('infoFleet').innerHTML = fleetHtml;
+
+            // Show Box
+            box.classList.remove('translate-x-[120%]');
+        }
+
+        // Hardcoded Coordinates for clean camera centering
+        function getApproxCoords(code) {
+            const map = {
+                'us': {lat: 37.09, lng: -95.71},
+                'ru': {lat: 61.52, lng: 105.31},
+                'cn': {lat: 35.86, lng: 104.19},
+                'il': {lat: 31.04, lng: 34.85},
+                'gb': {lat: 55.37, lng: -3.43},
+                'au': {lat: -25.27, lng: 133.77},
+                'jp': {lat: 36.20, lng: 138.25},
+                'kr': {lat: 35.90, lng: 127.76},
+                'se': {lat: 60.12, lng: 18.64},
+                'it': {lat: 41.87, lng: 12.56},
+                'fr': {lat: 46.22, lng: 2.21},
+                'ca': {lat: 56.13, lng: -106.34},
+                'de': {lat: 51.16, lng: 10.45},
+                'tr': {lat: 38.96, lng: 35.24},
+                'pk': {lat: 30.37, lng: 69.34},
+                'th': {lat: 15.87, lng: 100.99},
+                'es': {lat: 40.46, lng: -3.74},
+                'in': {lat: 20.59, lng: 78.96},
+                'sa': {lat: 23.88, lng: 45.07},
+                'ir': {lat: 32.42, lng: 53.68}
+            };
+            return map[code] || {lat: 0, lng: 0};
+        }
+
+        // Start
+        initData();
+
+    </script>
+</body>
+</html>
