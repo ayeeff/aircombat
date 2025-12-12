@@ -22,7 +22,7 @@
         ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
         
         /* UI Components */
-        .glass-panel { background: rgba(15,23,42,0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .glass-panel { background: rgba(15,23,42,0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         
         /* Navigation Tabs */
         .tab-button { transition: all .3s ease; border-bottom: 2px solid transparent; color: #94a3b8; background: rgba(0,0,0,0.3); white-space: nowrap; }
@@ -31,14 +31,16 @@
         
         /* Rank Styles */
         .rank-1 { border-color: rgba(255,215,0,.3); color: #fbbf24; }
-        .rank-1.active { background: linear-gradient(135deg,rgba(255,215,0,.2),rgba(218,165,32,.1)); border-bottom-color: #FFD700; color: #fbbf24; }
+        .rank-2 { border-color: rgba(192,192,192,.3); color: #e2e8f0; }
+        .rank-3 { border-color: rgba(205,127,50,.3); color: #fdba74; }
         
         /* Badges */
-        .core-badge { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(59,130,246,0.4); color: #60a5fa; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; margin-right: 4px; margin-bottom: 4px; }
-        .trade-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px; margin-bottom: 4px; }
+        .core-badge { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(59,130,246,0.4); color: #60a5fa; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; margin-right: 4px; margin-bottom: 4px; cursor: pointer; }
+        .trade-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px; margin-bottom: 4px; cursor: pointer;}
+        .metric-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px; border-radius: 6px; }
         .system-glow { box-shadow: 0 0 10px rgba(59,130,246,0.5); border-color: rgba(59,130,246,0.8)!important; }
         
-        /* Animation states for panels */
+        /* Animation states */
         .panel-hidden-left { transform: translateX(-120%); opacity: 0; }
         .panel-hidden-right { transform: translateX(120%); opacity: 0; }
         .panel-visible { transform: translateX(0); opacity: 1; }
@@ -62,54 +64,87 @@
 
         <div id="globeViz" class="w-full h-full bg-slate-900 cursor-move"></div>
         
-        <div id="leftPanel" class="absolute top-48 left-6 w-80 glass-panel rounded-xl p-5 z-40 flex flex-col transition-all duration-500 ease-out panel-hidden-left pointer-events-auto">
-            <div class="mb-4 border-b border-white/10 pb-2">
-                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Strategic Architecture</h3>
-                <h2 id="lpCountry" class="text-xl font-black orbitron text-white">SELECT NATION</h2>
-            </div>
-            
-            <div class="mb-4">
-                <span class="text-xs text-cyan-400 font-bold uppercase mb-2 block">Core System Architecture</span>
-                <div id="lpCore" class="flex flex-wrap"></div>
-            </div>
-
-            <div class="mb-4">
-                <span class="text-xs text-purple-400 font-bold uppercase mb-2 block">Guidance & Cueing</span>
-                <div id="lpGuidance" class="flex flex-wrap"></div>
-            </div>
-
-            <div id="lpTradeSection" class="hidden flex-col gap-3 pt-2 border-t border-white/5">
-                <div id="lpSellsGroup" class="hidden">
-                    <span class="text-[10px] text-green-400 font-bold uppercase mb-1 block">Exports System To:</span>
-                    <div id="lpSells" class="flex flex-wrap"></div>
+        <div id="leftPanel" class="absolute top-48 left-6 w-[24rem] max-h-[75vh] glass-panel rounded-xl p-0 z-40 flex flex-col transition-all duration-500 ease-out panel-hidden-left pointer-events-auto shadow-2xl overflow-hidden">
+            <div class="overflow-y-auto p-5 custom-scrollbar">
+                
+                <div class="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">
+                    <img id="lpFlag" src="" alt="" class="w-16 h-10 rounded-lg shadow-md">
+                    <div>
+                        <h2 id="lpCountry" class="text-2xl font-black orbitron text-white leading-none">SELECT NATION</h2>
+                        <p id="lpRank" class="text-slate-400 text-sm mt-1">Rank #--</p>
+                    </div>
                 </div>
-                <div id="lpBuysGroup" class="hidden">
-                    <span class="text-[10px] text-orange-400 font-bold uppercase mb-1 block">Imports System From:</span>
-                    <div id="lpBuys" class="flex flex-wrap"></div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-cyan-400 font-bold uppercase">Core System</span>
+                    </div>
+                    <div id="lpCore" class="flex flex-wrap"></div>
+                </div>
+
+                <div class="mb-4">
+                     <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-cyan-400 font-bold uppercase">Guidance System</span>
+                    </div>
+                    <div id="lpGuidance" class="flex flex-wrap"></div>
+                </div>
+
+                <div id="lpTradeSection" class="hidden flex-col gap-3 mb-4 p-3 bg-white/5 rounded-lg border border-white/5">
+                    <div id="lpSellsGroup" class="hidden">
+                        <span class="text-[10px] text-green-400 font-bold uppercase mb-1 block">Exports To:</span>
+                        <div id="lpSells" class="flex flex-wrap"></div>
+                    </div>
+                    <div id="lpBuysGroup" class="hidden">
+                        <span class="text-[10px] text-orange-400 font-bold uppercase mb-1 block">Imports From:</span>
+                        <div id="lpBuys" class="flex flex-wrap"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4 p-3 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30">
+                    <div class="text-xs text-slate-300 leading-relaxed">
+                        <span class="text-yellow-400 font-semibold">Context:</span> In a contemporary air war scenario (120+ Jets India vs. Pakistan, May 2025), combat is no longer fought in ace-pilot dogfights; instead, engagements are decided beyond visual range using BVR weapons, AWACS/AEW radar networks, and a F2T2EA kill chain.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="metric-box bg-red-900/10 border-red-500/20">
+                        <div class="text-[10px] text-red-400 font-semibold uppercase">BVR Range</div>
+                        <div id="lpBVR" class="text-lg font-bold text-white orbitron">0 km</div>
+                    </div>
+                    <div class="metric-box bg-purple-900/10 border-purple-500/20">
+                        <div class="text-[10px] text-purple-400 font-semibold uppercase">AEW Range</div>
+                        <div id="lpAEW" class="text-lg font-bold text-white orbitron">0 km</div>
+                    </div>
+                </div>
+                
+                <div class="metric-box bg-cyan-900/10 border-cyan-500/20 mb-4">
+                     <div class="text-[10px] text-cyan-400 font-semibold uppercase">Total Fleet Size</div>
+                     <div id="lpTotalFleet" class="text-2xl font-black text-cyan-300 orbitron">0</div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <span class="text-xs text-green-400 font-semibold mb-1 block">Companies:</span>
+                        <div id="lpCompanies" class="flex flex-wrap gap-1"></div>
+                    </div>
+                    <div>
+                        <span class="text-xs text-green-400 font-semibold mb-1 block">Associated Products:</span>
+                        <div id="lpProducts" class="flex flex-wrap gap-1"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="infoBox" class="absolute top-36 right-4 w-96 max-h-[70vh] glass-panel rounded-2xl p-0 transition-all duration-500 ease-out panel-hidden-right z-40 flex flex-col overflow-hidden pointer-events-auto">
+        <div id="infoBox" class="absolute top-36 right-4 w-80 max-h-[70vh] glass-panel rounded-2xl p-0 transition-all duration-500 ease-out panel-hidden-right z-40 flex flex-col overflow-hidden pointer-events-auto">
             <div class="p-5 border-b border-white/10 bg-black/20">
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <img id="infoFlag" src="" class="w-10 h-auto rounded shadow-sm" alt="Flag">
-                        <div>
-                            <h2 id="infoCountry" class="text-xl font-bold orbitron text-white leading-none">Country</h2>
-                            <span id="infoRank" class="text-xs font-mono text-blue-400">Rank #--</span>
-                        </div>
-                    </div>
+                    <h2 class="text-lg font-bold orbitron text-white">Active Assets</h2>
                     <button onclick="closeInfoBox()" class="text-slate-500 hover:text-white transition-colors text-2xl">&times;</button>
                 </div>
                 <div class="mt-4 flex justify-between items-center bg-white/5 rounded-lg p-2">
                     <div class="text-center">
                         <div class="text-xs text-slate-400">Lethality Index</div>
                         <div id="infoLI" class="text-lg font-bold text-yellow-400 orbitron">0.0</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-xs text-slate-400">Fleet Size</div>
-                        <div id="infoTotal" class="text-lg font-bold text-cyan-400 orbitron">0</div>
                     </div>
                 </div>
             </div>
@@ -119,7 +154,7 @@
                     <div id="infoAirports" class="flex flex-wrap gap-2 text-xs"></div>
                 </div>
                 <div>
-                    <h3 class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Active Fleet</h3>
+                    <h3 class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Fleet List</h3>
                     <div id="infoFleet" class="space-y-2"></div>
                 </div>
             </div>
@@ -139,18 +174,20 @@
     <script type="module">
         import{tableFromIPC}from'https://cdn.jsdelivr.net/npm/apache-arrow@18.0.0/+esm';
         
-        // Data Sources
         const FEATHER_URL_GLOBAL='https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/global_merged.feather';
         const FEATHER_URL_CALCS='https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/calcs.feather';
+        const FEATHER_URL_PROD='https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/products.feather';
+        const FEATHER_URL_COMP='https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/company.feather';
         const GEOJSON_URL='https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson';
         
-        // Mappings
         const filenameToCodeMap={'us':'us','rus':'ru','chn':'cn','isr':'il','uk':'gb','aus':'au','jpn':'jp','kor':'kr','swe':'se','ita':'it','fra':'fr','can':'ca','de':'de','tuk':'tr','pk':'pk','thai':'th','spa':'es','iran':'ir','in':'in','sau':'sa'};
         const countriesMeta=[{code:'us',name:'United States',flag:'https://flagcdn.com/w80/us.png'},{code:'ru',name:'Russia',flag:'https://flagcdn.com/w80/ru.png'},{code:'cn',name:'China',flag:'https://flagcdn.com/w80/cn.png'},{code:'il',name:'Israel',flag:'https://flagcdn.com/w80/il.png'},{code:'gb',name:'United Kingdom',flag:'https://flagcdn.com/w80/gb.png'},{code:'au',name:'Australia',flag:'https://flagcdn.com/w80/au.png'},{code:'jp',name:'Japan',flag:'https://flagcdn.com/w80/jp.png'},{code:'kr',name:'South Korea',flag:'https://flagcdn.com/w80/kr.png'},{code:'se',name:'Sweden',flag:'https://flagcdn.com/w80/se.png'},{code:'it',name:'Italy',flag:'https://flagcdn.com/w80/it.png'},{code:'fr',name:'France',flag:'https://flagcdn.com/w80/fr.png'},{code:'ca',name:'Canada',flag:'https://flagcdn.com/w80/ca.png'},{code:'de',name:'Germany',flag:'https://flagcdn.com/w80/de.png'},{code:'tr',name:'Turkey',flag:'https://flagcdn.com/w80/tr.png'},{code:'pk',name:'Pakistan',flag:'https://flagcdn.com/w80/pk.png'},{code:'th',name:'Thailand',flag:'https://flagcdn.com/w80/th.png'},{code:'es',name:'Spain',flag:'https://flagcdn.com/w80/es.png'},{code:'ir',name:'Iran',flag:'https://flagcdn.com/w80/ir.png'},{code:'in',name:'India',flag:'https://flagcdn.com/w80/in.png'},{code:'sa',name:'Saudi Arabia',flag:'https://flagcdn.com/w80/sa.png'}];
         
         let world;
         let fleetData={};
         let calcsData={};
+        let productsData={};
+        let companiesData={};
         let geoData=null;
         
         async function loadFeather(url){
@@ -165,6 +202,7 @@
                 const geoRes=await fetch(GEOJSON_URL);
                 geoData=await geoRes.json();
                 
+                // Load Fleet
                 const globalRows=await loadFeather(FEATHER_URL_GLOBAL);
                 globalRows.forEach(row=>{
                     const fileCode=row.country;
@@ -175,12 +213,20 @@
                     }
                 });
                 
+                // Load Calcs
                 const calcRows=await loadFeather(FEATHER_URL_CALCS);
                 calcRows.forEach(row=>{
                     const cName=row.Country?.trim();
                     const meta=countriesMeta.find(c=>c.name===cName);
                     if(meta){calcsData[meta.code]=row}
                 });
+
+                // Load Products & Companies for badges
+                const prodRows=await loadFeather(FEATHER_URL_PROD);
+                prodRows.forEach(row=>{if(row.Product) productsData[row.Product.trim()]=row});
+
+                const compRows=await loadFeather(FEATHER_URL_COMP);
+                compRows.forEach(row=>{if(row.Company) companiesData[row.Company.trim()]=row});
                 
                 countriesMeta.forEach(c=>{
                     c.li=parseFloat(calcsData[c.code]?.LI||0);
@@ -197,7 +243,7 @@
                 setTimeout(()=>document.getElementById('loadingOverlay').remove(),1000)
             }catch(err){
                 console.error("Critical Init Error:",err);
-                alert("Failed to load mission data.")
+                alert("Failed to load data.")
             }
         }
         
@@ -207,7 +253,8 @@
             countriesMeta.forEach(c=>{
                 let rankClass='';
                 if(c.rank===1)rankClass='rank-1';
-                else if(c.rank===2)rankClass='rank-2'; // Fixed: was rank-1 in snippet
+                else if(c.rank===2)rankClass='rank-2';
+                else if(c.rank===3)rankClass='rank-3';
                 html+=`<button class="tab-button ${rankClass} px-4 py-2 rounded-lg text-sm font-semibold border border-white/5 flex items-center gap-2" data-code="${c.code}" onclick="window.selectCountry('${c.code}')"><img src="${c.flag}" alt="${c.code}" class="w-5 h-4 rounded shadow-sm"><span class="country-name-text hidden md:inline">${c.name}</span><span class="font-mono text-xs opacity-70">#${c.rank}</span></button>`
             });
             container.innerHTML=html
@@ -225,8 +272,6 @@
                     if(meta){
                         const rank=meta.rank;
                         if(rank===1)return'rgba(251, 191, 36, 0.6)';
-                        if(rank===2)return'rgba(203, 213, 225, 0.5)';
-                        if(rank===3)return'rgba(217, 119, 6, 0.5)';
                         if(rank<=5)return'rgba(59, 130, 246, 0.4)';
                         return'rgba(59, 130, 246, 0.15)'
                     }
@@ -253,44 +298,42 @@
             world.pointOfView({altitude:2.5});
         }
         
-        // --- NEW: LOGIC TO POPULATE THE LEFT PANEL ---
+        // --- LEFT PANEL LOGIC ---
         function populateLeftPanel(meta) {
             const panel = document.getElementById('leftPanel');
             const data = calcsData[meta.code] || {};
+            const fleet = fleetData[meta.code] || [];
 
-            // 1. Country Name
+            // 1. Header
+            document.getElementById('lpFlag').src = meta.flag;
             document.getElementById('lpCountry').innerText = meta.name.toUpperCase();
+            document.getElementById('lpRank').innerText = `Global Rank #${meta.rank}`;
 
             // 2. Core System
             const coreRaw = data.Core || 'Unknown';
             const cores = coreRaw.split('-').filter(s=>s.trim());
-            const coreHtml = cores.map(c => `<span class="core-badge">${c.trim()}</span>`).join('');
+            const coreHtml = cores.map(c => `<span class="core-badge" onclick="dashboardInstance.showCoreModal('${c.trim()}')">${c.trim()}</span>`).join('');
             document.getElementById('lpCore').innerHTML = coreHtml || '<span class="text-xs text-slate-500">No data</span>';
 
             // 3. Guidance
             const guide = data.Guidance || 'Unknown';
-            document.getElementById('lpGuidance').innerHTML = `<span class="px-2 py-1 rounded bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold">${guide}</span>`;
+            document.getElementById('lpGuidance').innerHTML = `<span class="px-2 py-1 rounded bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold cursor-pointer" onclick="dashboardInstance.showGuidanceModal('${guide}')">${guide}</span>`;
 
-            // 4. Trade Relationships (Sells/Buys)
+            // 4. Trade Relationships
             const sells = data.Sell ? data.Sell.split('-').map(s=>s.trim()).filter(s=>s) : [];
             const buys = data.Buy ? data.Buy.split('-').map(s=>s.trim()).filter(s=>s) : [];
-
-            // Helper to generate trade badges
+            
             const makeTradeBadge = (name) => {
                 const partner = countriesMeta.find(c => c.name.toLowerCase().includes(name.toLowerCase()));
                 if(partner) {
-                    return `<span class="trade-badge" onclick="window.selectCountry('${partner.code}')" style="cursor:pointer; hover:bg-white/10"><img src="${partner.flag}" class="w-3 h-2 rounded-sm"> ${partner.code.toUpperCase()}</span>`;
+                    return `<span class="trade-badge hover:bg-white/10" onclick="window.selectCountry('${partner.code}')"><img src="${partner.flag}" class="w-3 h-2 rounded-sm"> ${partner.code.toUpperCase()}</span>`;
                 }
                 return `<span class="trade-badge">${name}</span>`;
             };
 
-            const sellHtml = sells.map(makeTradeBadge).join('');
-            const buyHtml = buys.map(makeTradeBadge).join('');
+            document.getElementById('lpSells').innerHTML = sells.map(makeTradeBadge).join('');
+            document.getElementById('lpBuys').innerHTML = buys.map(makeTradeBadge).join('');
 
-            document.getElementById('lpSells').innerHTML = sellHtml;
-            document.getElementById('lpBuys').innerHTML = buyHtml;
-
-            // Visibility toggle for trade section
             const tradeSec = document.getElementById('lpTradeSection');
             const sellGroup = document.getElementById('lpSellsGroup');
             const buyGroup = document.getElementById('lpBuysGroup');
@@ -298,53 +341,64 @@
             if (sells.length > 0 || buys.length > 0) {
                 tradeSec.classList.remove('hidden');
                 tradeSec.classList.add('flex');
-                if(sells.length>0) sellGroup.classList.remove('hidden'); else sellGroup.classList.add('hidden');
-                if(buys.length>0) buyGroup.classList.remove('hidden'); else buyGroup.classList.add('hidden');
+                sellGroup.style.display = sells.length > 0 ? 'block' : 'none';
+                buyGroup.style.display = buys.length > 0 ? 'block' : 'none';
             } else {
                 tradeSec.classList.add('hidden');
                 tradeSec.classList.remove('flex');
             }
+
+            // 5. Metrics
+            document.getElementById('lpBVR').innerText = (data.BVR || 'N/A') + '';
+            document.getElementById('lpAEW').innerText = (data.AEW || 'N/A') + '';
+            document.getElementById('lpTotalFleet').innerText = meta.fleetCount;
+
+            // 6. Companies & Products
+            const productSet = new Set();
+            const companySet = new Set();
+            fleet.forEach(ac => {
+                if(ac.Company) companySet.add(ac.Company);
+                if(ac['Associated products']) ac['Associated products'].split(',').forEach(p=>productSet.add(p.trim()));
+            });
+
+            const prodHtml = Array.from(productSet).map(p=> `<span class="trade-badge text-green-300 border-green-500/30" onclick="dashboardInstance.showProductModal('${p}')">${p}</span>`).join('');
+            const compHtml = Array.from(companySet).map(c=> `<span class="trade-badge text-yellow-300 border-yellow-500/30" onclick="dashboardInstance.showCompanyModal('${c}')">${c}</span>`).join('');
+
+            document.getElementById('lpProducts').innerHTML = prodHtml || '<span class="text-xs text-slate-500">-</span>';
+            document.getElementById('lpCompanies').innerHTML = compHtml || '<span class="text-xs text-slate-500">-</span>';
 
             // Show Panel
             panel.classList.remove('panel-hidden-left');
             panel.classList.add('panel-visible');
         }
 
-        // --- GLOBAL SELECTION LOGIC ---
         window.selectCountry = (code) => {
             const meta = countriesMeta.find(c => c.code === code);
             if(!meta) return;
             
-            // Highlight Tab
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.classList.remove('active','system-glow');
                 if(btn.dataset.code === code) btn.classList.add('active','system-glow');
             });
             
-            // Move Globe
             const coords = getApproxCoords(code);
             world.pointOfView({lat:coords.lat, lng:coords.lng, altitude:1.5}, 1500);
             world.controls().autoRotate = false;
             
-            // Update UI Panels
             populateInfoBox(meta);
-            populateLeftPanel(meta); // Trigger the new panel
+            populateLeftPanel(meta);
             
-            // Sync with Dashboard (if it exists)
             const dashboard = document.querySelector('combat-dashboard');
             if(dashboard && dashboard.switchToTab) {
-                dashboard.switchToTab(code); // Keep dashboard in sync
+                dashboard.switchToTab(code);
             }
         };
         
         window.closeInfoBox=()=>{
             document.getElementById('infoBox').classList.remove('panel-visible');
             document.getElementById('infoBox').classList.add('panel-hidden-right');
-            
-            // Also hide left panel for a clean "reset"
             document.getElementById('leftPanel').classList.remove('panel-visible');
             document.getElementById('leftPanel').classList.add('panel-hidden-left');
-
             world.controls().autoRotate=true;
             document.querySelectorAll('.tab-button').forEach(btn=>btn.classList.remove('active','system-glow'))
         };
@@ -354,11 +408,7 @@
             const data=fleetData[meta.code]||[];
             const calc=calcsData[meta.code]||{};
             
-            document.getElementById('infoFlag').src=meta.flag;
-            document.getElementById('infoCountry').innerText=meta.name;
-            document.getElementById('infoRank').innerText=`Global Rank #${meta.rank}`;
             document.getElementById('infoLI').innerText=calc.LI||'N/A';
-            document.getElementById('infoTotal').innerText=meta.fleetCount;
             
             const airportSet=new Set();
             data.forEach(row=>{if(row.Airport){row.Airport.split(',').forEach(ap=>airportSet.add(ap.trim()))}});
@@ -406,7 +456,7 @@
                 this.activeTab = 'us';
                 this.countries = [{code:'us',name:'United States',flag:'https://flagcdn.com/w80/us.png'},{code:'ru',name:'Russia',flag:'https://flagcdn.com/w80/ru.png'},{code:'cn',name:'China',flag:'https://flagcdn.com/w80/cn.png'},{code:'il',name:'Israel',flag:'https://flagcdn.com/w80/il.png'},{code:'gb',name:'United Kingdom',flag:'https://flagcdn.com/w80/gb.png'},{code:'au',name:'Australia',flag:'https://flagcdn.com/w80/au.png'},{code:'jp',name:'Japan',flag:'https://flagcdn.com/w80/jp.png'},{code:'kr',name:'South Korea',flag:'https://flagcdn.com/w80/kr.png'},{code:'se',name:'Sweden',flag:'https://flagcdn.com/w80/se.png'},{code:'it',name:'Italy',flag:'https://flagcdn.com/w80/it.png'},{code:'fr',name:'France',flag:'https://flagcdn.com/w80/fr.png'},{code:'ca',name:'Canada',flag:'https://flagcdn.com/w80/ca.png'},{code:'de',name:'Germany',flag:'https://flagcdn.com/w80/de.png'},{code:'tr',name:'Turkey',flag:'https://flagcdn.com/w80/tr.png'},{code:'pk',name:'Pakistan',flag:'https://flagcdn.com/w80/pk.png'},{code:'th',name:'Thailand',flag:'https://flagcdn.com/w80/th.png'},{code:'es',name:'Spain',flag:'https://flagcdn.com/w80/es.png'},{code:'ir',name:'Iran',flag:'https://flagcdn.com/w80/ir.png'},{code:'in',name:'India',flag:'https://flagcdn.com/w80/in.png'},{code:'sa',name:'Saudi Arabia',flag:'https://flagcdn.com/w80/sa.png'}];
                 this.filenameToCodeMap = { 'us': 'us', 'rus': 'ru', 'chn': 'cn', 'isr': 'il', 'uk': 'gb', 'aus': 'au', 'jpn': 'jp', 'kor': 'kr', 'swe': 'se', 'ita': 'it', 'fra': 'fr', 'can': 'ca', 'de': 'de', 'tuk': 'tr', 'pk': 'pk', 'thai': 'th', 'spa': 'es', 'iran': 'ir', 'in': 'in', 'sau': 'sa' };
-                this.subsystemLabels={A:{name:'Sensor Reach',weight:'22.5%',color:'blue',tooltip:'AESA raw detection range vs. 3 m² target.'},B:{name:'Signature Control',weight:'15%',color:'purple',tooltip:'Frontal RCS, IR-suppression.'},C:{name:'Missile Reach',weight:'22.5%',color:'red',tooltip:'Published range of primary BVR weapon.'},D:{name:'Kill-Chain Network',weight:'15%',color:'green',tooltip:'Secure datalinks, AEW density.'},E:{name:'ECM / Self-Protection',weight:'10%',color:'orange',tooltip:'On-board jammer, towed decoy.'},F:{name:'Sustained Sortie Rate',weight:'5%',color:'cyan',tooltip:'Crew ratio, maintenance.'},G:{name:'UCAV/Drone Production',weight:'10%',color:'pink',tooltip:'Mass production volume.'}};
+                this.subsystemLabels={A:{name:'Sensor Reach',weight:'22.5%',color:'blue'},B:{name:'Signature Control',weight:'15%',color:'purple'},C:{name:'Missile Reach',weight:'22.5%',color:'red'},D:{name:'Kill-Chain Network',weight:'15%',color:'green'},E:{name:'ECM / Self-Protection',weight:'10%',color:'orange'},F:{name:'Sustained Sortie Rate',weight:'5%',color:'cyan'},G:{name:'UCAV/Drone Production',weight:'10%',color:'pink'}};
             }
 
             connectedCallback() {
@@ -418,12 +468,58 @@
             switchToTab(cc) { 
                 this.activeTab = cc;
                 this.renderTabContent(cc);
-                // Note: Performance panel update is now handled by the main window script
             }
             
-            showProductModal(name) { /* ... same logic as before ... */ }
-            showCompanyModal(name) { /* ... same logic as before ... */ }
-            showAirportModal(name) { /* ... same logic as before ... */ }
+            showProductModal(name) {
+                const product = this.productsData[name];
+                let html = '';
+                if (!product) html = '<p class="text-red-400">Product details not found.</p>';
+                else {
+                    html = `<h3 class="text-lg font-bold text-white mb-2">${product.Product || name}</h3>`;
+                    Object.keys(product).forEach(key => { if (key !== 'Product' && product[key]) html += `<p class="text-sm"><strong>${key}:</strong> ${product[key]}</p>`; });
+                }
+                this.shadowRoot.getElementById('productModalContent').innerHTML = html;
+                this.shadowRoot.getElementById('productModalTitle').textContent = name;
+                this.openModal('productModal');
+            }
+            
+            showCompanyModal(name) {
+                const company = this.companiesData[name];
+                let html = '';
+                if (!company) html = '<p class="text-red-400">Company details not found.</p>';
+                else {
+                     html = `<h3 class="text-lg font-bold text-white mb-2">${company.Company || name}</h3>`;
+                     Object.keys(company).forEach(key => { if (key !== 'Company' && company[key]) html += `<p class="text-sm"><strong>${key}:</strong> ${company[key]}</p>`; });
+                }
+                this.shadowRoot.getElementById('companyModalContent').innerHTML = html;
+                this.shadowRoot.getElementById('companyModalTitle').textContent = name;
+                this.openModal('companyModal');
+            }
+            
+            showCoreModal(system) {
+                 this.shadowRoot.getElementById('modalTitle').textContent=`${system} Details`;
+                 this.shadowRoot.getElementById('modalContent').innerHTML = `<p class="text-slate-300">Detailed specs for ${system}...</p>`;
+                 this.openModal('coreModal');
+            }
+            showGuidanceModal(system) {
+                 this.shadowRoot.getElementById('modalTitle').textContent=`${system} Guidance`;
+                 this.shadowRoot.getElementById('modalContent').innerHTML = `<p class="text-slate-300">Guidance details for ${system}...</p>`;
+                 this.openModal('coreModal');
+            }
+
+            showAirportModal(name) { 
+                 const cc = this.activeTab;
+                 const aircraft = this.fleetData[cc] || [];
+                 const filtered = aircraft.filter(ac => ac.Aircraft && ac['Airport'] && ac['Airport'].split(',').some(ap => ap.trim() === name));
+                 let html = '';
+                 filtered.forEach(ac => {
+                    html += `<div class="bg-white/5 p-4 rounded-lg"><h4 class="font-bold text-white">${ac.Aircraft}</h4><p class="text-sm text-slate-400">Count: ${ac['In Service']}</p></div>`;
+                 });
+                 this.shadowRoot.getElementById('airportModalContent').innerHTML = html;
+                 this.shadowRoot.getElementById('airportModalTitle').textContent = name;
+                 this.openModal('airportModal');
+            }
+
             openModal(id) { const modal = this.shadowRoot.getElementById(id); modal.classList.remove('hidden'); setTimeout(() => modal.classList.add('show'), 10); }
             closeModal(id) { const modal = this.shadowRoot.getElementById(id); modal.classList.remove('show'); setTimeout(() => modal.classList.add('hidden'), 300); }
 
@@ -436,6 +532,7 @@
                 .product-button { background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.4); color: #10b981; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-right:4px; display:inline-block; }
                 .company-button { background: rgba(234,179,8,0.2); border: 1px solid rgba(234,179,8,0.4); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-right:4px; display:inline-block; }
                 .airport-button { background: rgba(168,85,247,0.2); border: 1px solid rgba(168,85,247,0.4); color: #a855f7; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-right:4px; display:inline-block; }
+                #coreModal, #productModal, #companyModal, #airportModal { opacity: 0; transform: translateY(20px); transition: all 0.3s ease; } .show { opacity: 1 !important; transform: translateY(0) !important; }
                 `;
 
                 this.shadowRoot.innerHTML = `
@@ -451,9 +548,10 @@
                         </div>
                     </div>
                 </div>
-                <div id="productModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-lg w-full border border-white/10"><h2 id="productModalTitle" class="text-xl font-bold text-white mb-4"></h2><div id="productModalContent" class="text-slate-300"></div><button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded" onclick="window.dashboardInstance.closeModal('productModal')">Close</button></div></div>
-                <div id="companyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-lg w-full border border-white/10"><h2 id="companyModalTitle" class="text-xl font-bold text-white mb-4"></h2><div id="companyModalContent" class="text-slate-300"></div><button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded" onclick="window.dashboardInstance.closeModal('companyModal')">Close</button></div></div>
-                <div id="airportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-4xl w-full border border-white/10"><h2 id="airportModalTitle" class="text-xl font-bold text-white mb-4"></h2><div id="airportModalContent" class="grid grid-cols-3 gap-4"></div><button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded" onclick="window.dashboardInstance.closeModal('airportModal')">Close</button></div></div>
+                <div id="productModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-lg w-full border border-white/10"><div class="flex justify-between items-center mb-4"><h2 id="productModalTitle" class="text-xl font-bold text-white"></h2><button onclick="window.dashboardInstance.closeModal('productModal')" class="text-slate-400 hover:text-white">×</button></div><div id="productModalContent" class="text-slate-300"></div></div></div>
+                <div id="companyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-lg w-full border border-white/10"><div class="flex justify-between items-center mb-4"><h2 id="companyModalTitle" class="text-xl font-bold text-white"></h2><button onclick="window.dashboardInstance.closeModal('companyModal')" class="text-slate-400 hover:text-white">×</button></div><div id="companyModalContent" class="text-slate-300"></div></div></div>
+                <div id="airportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-4xl w-full border border-white/10"><div class="flex justify-between items-center mb-4"><h2 id="airportModalTitle" class="text-xl font-bold text-white"></h2><button onclick="window.dashboardInstance.closeModal('airportModal')" class="text-slate-400 hover:text-white">×</button></div><div id="airportModalContent" class="grid grid-cols-3 gap-4"></div></div></div>
+                <div id="coreModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-4xl w-full border border-white/10"><div class="flex justify-between items-center mb-4"><h2 id="modalTitle" class="text-xl font-bold text-white"></h2><button onclick="window.dashboardInstance.closeModal('coreModal')" class="text-slate-400 hover:text-white">×</button></div><div id="modalContent"></div></div></div>
                 `;
             }
 
@@ -462,7 +560,12 @@
                     await this.loadGlobalFleetData();
                     const cData = await loadFeather('https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/calcs.feather');
                     cData.forEach(row => { const c = this.countries.find(x => x.name === row.Country?.trim()); if(c) this.calcsData[c.code] = row; });
-                    // Load Products/Companies (Optional for full modals, simplified here)
+                    
+                    const pData = await loadFeather('https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/products.feather');
+                    pData.forEach(row => { if (row.Product) this.productsData[row.Product.trim()] = row; });
+
+                    const coData = await loadFeather('https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/company.feather');
+                    coData.forEach(row => { if (row.Company) this.companiesData[row.Company.trim()] = row; });
                     
                     this.shadowRoot.getElementById('loading').classList.add('hidden');
                     this.shadowRoot.getElementById('mainContent').classList.remove('hidden');
