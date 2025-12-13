@@ -85,7 +85,8 @@
             <div class="p-6 pb-2 pointer-events-auto bg-gradient-to-b from-black/95 to-transparent text-center">
                 <h1 class="text-3xl font-black orbitron tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-lg">AIR COMBAT <span class="text-white">GLOBAL</span></h1>
                 <p class="text-xs md:text-sm text-slate-300 mt-2 font-mono max-w-4xl mx-auto leading-relaxed bg-black/40 p-3 rounded border border-white/10 backdrop-blur-sm">
-                     <span class="text-blue-400 font-bold block mt-1">Beyond Visual Range (Find, Fix, Track, Target, Engage, Assess) F2T2EA System Kill Chain Analysis for Modern Air Wars</span>
+                    In a contemporary air war scenario (120+ Jets India vs. Pakistan, May 2025), combat is no longer fought in ace-pilot dogfights; instead, engagements are decided beyond visual range using BVR weapons, AWACS/AEW radar networks & a F2T2EA kill chain.
+                    <br><span class="text-blue-400 font-bold block mt-1">Select a nation to analyze F2T2EA Capabilities & Fleet Distribution</span>
                 </p>
             </div>
             
@@ -348,7 +349,7 @@
                     const meta=countriesMeta.find(c=>c.name===d.properties.NAME||c.name===d.properties.NAME_LONG||c.name===d.properties.ADMIN||(d.properties.ISO_A3==='USA'&&c.code==='us')||(d.properties.ISO_A3==='GBR'&&c.code==='gb')||(d.properties.ISO_A3==='RUS'&&c.code==='ru'));
                     if(meta){
                         if (highlightedGroup.has(meta.code)) {
-                            return 'rgba(16, 185, 129, 0.6)'; 
+                            return 'rgba(16, 185, 129, 0.6)'; // Emerald Green
                         }
                         const rank=meta.rank;
                         if(rank===1)return'rgba(251, 191, 36, 0.6)';
@@ -381,6 +382,7 @@
             world.pointOfView({altitude:2.5});
         }
         
+        // --- Highlighting Logic ---
         function highlightCountriesByCode(codes) {
             highlightedGroup = new Set(codes);
             world.polygonCapColor(world.polygonCapColor()); // Trigger Update
@@ -420,10 +422,12 @@
 
             const coreRaw = data.Core || 'Unknown';
             const cores = coreRaw.split('-').filter(s=>s.trim());
+            // Updated Badges: Mouseover highlights, click opens modal only
             const coreHtml = cores.map(c => `<span class="core-badge" onmouseover="window.highlightCore('${c.trim()}')" onmouseout="window.clearHighlights()" onclick="window.showCoreModal('${c.trim()}')">${c.trim()}</span>`).join('');
             document.getElementById('lpCore').innerHTML = coreHtml || '<span class="text-xs text-slate-500">No data</span>';
 
             const guide = data.Guidance || 'Unknown';
+            // Updated Badge for Guidance
             document.getElementById('lpGuidance').innerHTML = `<span class="px-2 py-1 rounded bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold cursor-pointer" onmouseover="window.highlightGuidance('${guide}')" onmouseout="window.clearHighlights()" onclick="window.showGuidanceModal('${guide}')">${guide}</span>`;
 
             const sells = data.Sell ? data.Sell.split('-').map(s=>s.trim()).filter(s=>s) : [];
