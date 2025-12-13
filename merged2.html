@@ -24,6 +24,19 @@
         /* UI Components */
         .glass-panel { background: rgba(15,23,42,0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         
+        /* Speed Card (New Nav Container Style from Index) */
+        .speed-card {
+            background: linear-gradient(135deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.02) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,.1);
+            transition: all .4s cubic-bezier(.4,0,.2,1);
+            position: relative;
+            overflow: hidden;
+        }
+        .speed-card::before { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent); transition:left .6s; pointer-events:none; }
+        .speed-card:hover::before { left:100%; }
+        .speed-card:hover { transform:translateY(-2px); box-shadow:0 25px 50px rgba(0,0,0,.4); border-color:rgba(255,255,255,.3); }
+
         /* Navigation Tabs */
         .tab-button { transition: all .3s ease; border-bottom: 2px solid transparent; color: #94a3b8; background: rgba(0,0,0,0.3); white-space: nowrap; }
         .tab-button:hover { background: rgba(59,130,246,0.2); color: #fff; transform: translateY(-2px); }
@@ -31,8 +44,11 @@
         
         /* Rank Styles */
         .rank-1 { border-color: rgba(255,215,0,.3); color: #fbbf24; }
+        .rank-1.active { background: linear-gradient(135deg,rgba(255,215,0,.2),rgba(218,165,32,.1)); border-bottom-color: #FFD700; color: #fbbf24; }
         .rank-2 { border-color: rgba(192,192,192,.3); color: #e2e8f0; }
+        .rank-2.active { background: linear-gradient(135deg,rgba(192,192,192,.2),rgba(169,169,169,.1)); border-bottom-color: #C0C0C0; color: #e2e8f0; }
         .rank-3 { border-color: rgba(205,127,50,.3); color: #fdba74; }
+        .rank-3.active { background: linear-gradient(135deg,rgba(205,127,50,.2),rgba(184,115,51,.1)); border-bottom-color: #CD7F32; color: #fdba74; }
         
         /* Badges */
         .core-badge { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(59,130,246,0.4); color: #60a5fa; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; margin-right: 4px; margin-bottom: 4px; cursor: pointer; }
@@ -51,20 +67,20 @@
     <div id="globe-container" class="relative w-full h-screen">
         
         <div class="absolute top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
-            <div class="p-6 pb-2 pointer-events-auto bg-gradient-to-b from-black/90 to-transparent">
+            <div class="p-6 pb-2 pointer-events-auto bg-gradient-to-b from-black/90 to-transparent text-center">
                 <h1 class="text-3xl font-black orbitron tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-lg">AIR COMBAT <span class="text-white">GLOBAL</span></h1>
                 <p class="text-sm text-slate-400 mt-1 font-mono">Select a nation to analyze F2T2EA Capabilities & Fleet Distribution</p>
-                <p class="text-xs text-slate-500 mt-2 animate-bounce">Scroll down for Dashboard &darr;</p>
             </div>
-            <div class="w-full overflow-x-auto px-6 py-2 pointer-events-auto no-scrollbar">
-                <div id="tabButtons" class="flex flex-nowrap gap-3 pb-2">
+            
+            <div class="w-full px-4 py-2 pointer-events-auto flex justify-center">
+                <div id="tabButtons" class="flex flex-wrap justify-center gap-2 mb-6 speed-card p-4 rounded-xl max-w-[90vw]">
                     </div>
             </div>
         </div>
 
         <div id="globeViz" class="w-full h-full bg-slate-900 cursor-move"></div>
         
-        <div id="leftPanel" class="absolute top-48 left-6 w-[24rem] max-h-[75vh] glass-panel rounded-xl p-0 z-40 flex flex-col transition-all duration-500 ease-out panel-hidden-left pointer-events-auto shadow-2xl overflow-hidden">
+        <div id="leftPanel" class="absolute top-64 left-6 w-[24rem] max-h-[70vh] glass-panel rounded-xl p-0 z-40 flex flex-col transition-all duration-500 ease-out panel-hidden-left pointer-events-auto shadow-2xl overflow-hidden">
             <div class="overflow-y-auto p-5 custom-scrollbar">
                 
                 <div class="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">
@@ -135,7 +151,7 @@
             </div>
         </div>
 
-        <div id="infoBox" class="absolute top-36 right-4 w-80 max-h-[70vh] glass-panel rounded-2xl p-0 transition-all duration-500 ease-out panel-hidden-right z-40 flex flex-col overflow-hidden pointer-events-auto">
+        <div id="infoBox" class="absolute top-64 right-4 w-80 max-h-[70vh] glass-panel rounded-2xl p-0 transition-all duration-500 ease-out panel-hidden-right z-40 flex flex-col overflow-hidden pointer-events-auto">
             <div class="p-5 border-b border-white/10 bg-black/20">
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-bold orbitron text-white">Active Assets</h2>
@@ -202,7 +218,6 @@
                 const geoRes=await fetch(GEOJSON_URL);
                 geoData=await geoRes.json();
                 
-                // Load Fleet
                 const globalRows=await loadFeather(FEATHER_URL_GLOBAL);
                 globalRows.forEach(row=>{
                     const fileCode=row.country;
@@ -213,7 +228,6 @@
                     }
                 });
                 
-                // Load Calcs
                 const calcRows=await loadFeather(FEATHER_URL_CALCS);
                 calcRows.forEach(row=>{
                     const cName=row.Country?.trim();
@@ -221,7 +235,6 @@
                     if(meta){calcsData[meta.code]=row}
                 });
 
-                // Load Products & Companies for badges
                 const prodRows=await loadFeather(FEATHER_URL_PROD);
                 prodRows.forEach(row=>{if(row.Product) productsData[row.Product.trim()]=row});
 
@@ -247,6 +260,7 @@
             }
         }
         
+        // UPDATED RENDER TABS TO MATCH YOUR REQUEST
         function renderTabs(){
             const container=document.getElementById('tabButtons');
             let html='';
@@ -255,9 +269,18 @@
                 if(c.rank===1)rankClass='rank-1';
                 else if(c.rank===2)rankClass='rank-2';
                 else if(c.rank===3)rankClass='rank-3';
-                html+=`<button class="tab-button ${rankClass} px-4 py-2 rounded-lg text-sm font-semibold border border-white/5 flex items-center gap-2" data-code="${c.code}" onclick="window.selectCountry('${c.code}')"><img src="${c.flag}" alt="${c.code}" class="w-5 h-4 rounded shadow-sm"><span class="country-name-text hidden md:inline">${c.name}</span><span class="font-mono text-xs opacity-70">#${c.rank}</span></button>`
+                
+                html+=`<button class="tab-button ${rankClass} px-6 py-3 rounded-lg text-sm font-semibold border border-white/5 flex items-center gap-2 transition-all" data-code="${c.code}" onclick="window.selectCountry('${c.code}')">
+                    <img src="${c.flag}" alt="${c.code}" class="w-5 h-4 inline-block mr-2 rounded">
+                    <span class="country-name-text">${c.name}</span>
+                    <span class="ml-2 text-xs opacity-75">#${c.rank}</span>
+                </button>`
             });
-            container.innerHTML=html
+            container.innerHTML=html;
+            
+            // Set initial active state for #1
+            const firstBtn = container.querySelector('.rank-1');
+            if(firstBtn) firstBtn.classList.add('active');
         }
         
         function initGlobe(){
@@ -298,28 +321,23 @@
             world.pointOfView({altitude:2.5});
         }
         
-        // --- LEFT PANEL LOGIC ---
         function populateLeftPanel(meta) {
             const panel = document.getElementById('leftPanel');
             const data = calcsData[meta.code] || {};
             const fleet = fleetData[meta.code] || [];
 
-            // 1. Header
             document.getElementById('lpFlag').src = meta.flag;
             document.getElementById('lpCountry').innerText = meta.name.toUpperCase();
             document.getElementById('lpRank').innerText = `Global Rank #${meta.rank}`;
 
-            // 2. Core System
             const coreRaw = data.Core || 'Unknown';
             const cores = coreRaw.split('-').filter(s=>s.trim());
             const coreHtml = cores.map(c => `<span class="core-badge" onclick="dashboardInstance.showCoreModal('${c.trim()}')">${c.trim()}</span>`).join('');
             document.getElementById('lpCore').innerHTML = coreHtml || '<span class="text-xs text-slate-500">No data</span>';
 
-            // 3. Guidance
             const guide = data.Guidance || 'Unknown';
             document.getElementById('lpGuidance').innerHTML = `<span class="px-2 py-1 rounded bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold cursor-pointer" onclick="dashboardInstance.showGuidanceModal('${guide}')">${guide}</span>`;
 
-            // 4. Trade Relationships
             const sells = data.Sell ? data.Sell.split('-').map(s=>s.trim()).filter(s=>s) : [];
             const buys = data.Buy ? data.Buy.split('-').map(s=>s.trim()).filter(s=>s) : [];
             
@@ -348,12 +366,10 @@
                 tradeSec.classList.remove('flex');
             }
 
-            // 5. Metrics
             document.getElementById('lpBVR').innerText = (data.BVR || 'N/A') + '';
             document.getElementById('lpAEW').innerText = (data.AEW || 'N/A') + '';
             document.getElementById('lpTotalFleet').innerText = meta.fleetCount;
 
-            // 6. Companies & Products
             const productSet = new Set();
             const companySet = new Set();
             fleet.forEach(ac => {
@@ -367,7 +383,6 @@
             document.getElementById('lpProducts').innerHTML = prodHtml || '<span class="text-xs text-slate-500">-</span>';
             document.getElementById('lpCompanies').innerHTML = compHtml || '<span class="text-xs text-slate-500">-</span>';
 
-            // Show Panel
             panel.classList.remove('panel-hidden-left');
             panel.classList.add('panel-visible');
         }
