@@ -24,7 +24,7 @@
         /* UI Components */
         .glass-panel { background: rgba(15,23,42,0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         
-        /* Speed Card (New Nav Container Style from Index) */
+        /* Speed Card (New Nav Container Style) */
         .speed-card {
             background: linear-gradient(135deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.02) 100%);
             backdrop-filter: blur(20px);
@@ -60,6 +60,20 @@
         .panel-hidden-left { transform: translateX(-120%); opacity: 0; }
         .panel-hidden-right { transform: translateX(120%); opacity: 0; }
         .panel-visible { transform: translateX(0); opacity: 1; }
+
+        /* Modal Transitions */
+        #coreModal, #productModal, #companyModal, #airportModal { opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+        #coreModal.show, #productModal.show, #companyModal.show, #airportModal.show { opacity: 1; pointer-events: auto; }
+        .modal-content-box { transform: translateY(20px); transition: transform 0.3s ease; }
+        .show .modal-content-box { transform: translateY(0); }
+        
+        /* Modal Content Styling (Solid Navy) */
+        .solid-navy-modal {
+            background-color: #0f172a; /* Slate-900 / Navy */
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            color: white;
+        }
     </style>
 </head>
 <body class="text-slate-200">
@@ -187,6 +201,50 @@
 
     <combat-dashboard></combat-dashboard>
 
+    <div id="productModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="window.closeProductModal()"></div>
+        <div class="modal-content-box relative solid-navy-modal rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 sticky top-0 bg-inherit z-10 border-b border-white/10 pb-4">
+                <h2 id="productModalTitle" class="text-2xl font-black orbitron text-white"></h2>
+                <button onclick="window.closeProductModal()" class="text-slate-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            <div id="productModalContent" class="space-y-4 text-white leading-relaxed"></div>
+        </div>
+    </div>
+
+    <div id="companyModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="window.closeCompanyModal()"></div>
+        <div class="modal-content-box relative solid-navy-modal rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 sticky top-0 bg-inherit z-10 border-b border-white/10 pb-4">
+                <h2 id="companyModalTitle" class="text-2xl font-black orbitron text-white"></h2>
+                <button onclick="window.closeCompanyModal()" class="text-slate-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            <div id="companyModalContent" class="space-y-4 text-white leading-relaxed"></div>
+        </div>
+    </div>
+
+    <div id="airportModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="window.closeAirportModal()"></div>
+        <div class="modal-content-box relative solid-navy-modal rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 sticky top-0 bg-inherit z-10 border-b border-white/10 pb-4">
+                <h2 id="airportModalTitle" class="text-2xl font-black orbitron text-white"></h2>
+                <button onclick="window.closeAirportModal()" class="text-slate-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            <div id="airportModalContent" class="space-y-6 text-white"></div>
+        </div>
+    </div>
+    
+    <div id="coreModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="window.closeModal()"></div>
+        <div class="modal-content-box relative solid-navy-modal rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6 sticky top-0 bg-inherit z-10 border-b border-white/10 pb-4">
+                <h2 id="modalTitle" class="text-2xl font-black orbitron text-white"></h2>
+                <button onclick="window.closeModal()" class="text-slate-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            <div id="modalContent" class="text-white"></div>
+        </div>
+    </div>
+
     <script type="module">
         import{tableFromIPC}from'https://cdn.jsdelivr.net/npm/apache-arrow@18.0.0/+esm';
         
@@ -260,7 +318,7 @@
             }
         }
         
-        // UPDATED RENDER TABS TO MATCH YOUR REQUEST
+        // Render Tabs using the new visual style
         function renderTabs(){
             const container=document.getElementById('tabButtons');
             let html='';
@@ -278,7 +336,6 @@
             });
             container.innerHTML=html;
             
-            // Set initial active state for #1
             const firstBtn = container.querySelector('.rank-1');
             if(firstBtn) firstBtn.classList.add('active');
         }
@@ -332,11 +389,11 @@
 
             const coreRaw = data.Core || 'Unknown';
             const cores = coreRaw.split('-').filter(s=>s.trim());
-            const coreHtml = cores.map(c => `<span class="core-badge" onclick="dashboardInstance.showCoreModal('${c.trim()}')">${c.trim()}</span>`).join('');
+            const coreHtml = cores.map(c => `<span class="core-badge" onclick="window.showCoreModal('${c.trim()}')">${c.trim()}</span>`).join('');
             document.getElementById('lpCore').innerHTML = coreHtml || '<span class="text-xs text-slate-500">No data</span>';
 
             const guide = data.Guidance || 'Unknown';
-            document.getElementById('lpGuidance').innerHTML = `<span class="px-2 py-1 rounded bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold cursor-pointer" onclick="dashboardInstance.showGuidanceModal('${guide}')">${guide}</span>`;
+            document.getElementById('lpGuidance').innerHTML = `<span class="px-2 py-1 rounded bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold cursor-pointer" onclick="window.showGuidanceModal('${guide}')">${guide}</span>`;
 
             const sells = data.Sell ? data.Sell.split('-').map(s=>s.trim()).filter(s=>s) : [];
             const buys = data.Buy ? data.Buy.split('-').map(s=>s.trim()).filter(s=>s) : [];
@@ -377,8 +434,8 @@
                 if(ac['Associated products']) ac['Associated products'].split(',').forEach(p=>productSet.add(p.trim()));
             });
 
-            const prodHtml = Array.from(productSet).map(p=> `<span class="trade-badge text-green-300 border-green-500/30" onclick="dashboardInstance.showProductModal('${p}')">${p}</span>`).join('');
-            const compHtml = Array.from(companySet).map(c=> `<span class="trade-badge text-yellow-300 border-yellow-500/30" onclick="dashboardInstance.showCompanyModal('${c}')">${c}</span>`).join('');
+            const prodHtml = Array.from(productSet).map(p=> `<span class="trade-badge text-green-300 border-green-500/30" onclick="window.showProductModal('${p}')">${p}</span>`).join('');
+            const compHtml = Array.from(companySet).map(c=> `<span class="trade-badge text-yellow-300 border-yellow-500/30" onclick="window.showCompanyModal('${c}')">${c}</span>`).join('');
 
             document.getElementById('lpProducts').innerHTML = prodHtml || '<span class="text-xs text-slate-500">-</span>';
             document.getElementById('lpCompanies').innerHTML = compHtml || '<span class="text-xs text-slate-500">-</span>';
@@ -447,6 +504,86 @@
             return map[code]||{lat:0,lng:0}
         }
         
+        // Modal Control Functions (Attached to Window for global access)
+        window.showProductModal = function(name) {
+            const product = productsData[name];
+            let html = '';
+            if (!product) html = '<p class="text-red-400">Product details not found.</p>';
+            else {
+                html = `<h3 class="text-lg font-bold text-white mb-2">${product.Product || name}</h3>`;
+                Object.keys(product).forEach(key => { if (key !== 'Product' && product[key]) html += `<p class="text-sm"><strong>${key}:</strong> ${product[key]}</p>`; });
+            }
+            document.getElementById('productModalContent').innerHTML = html;
+            document.getElementById('productModalTitle').textContent = name;
+            document.getElementById('productModal').classList.add('show');
+        }
+        window.closeProductModal = function() {
+            document.getElementById('productModal').classList.remove('show');
+        }
+
+        window.showCompanyModal = function(name) {
+            const company = companiesData[name];
+            let html = '';
+            if (!company) html = '<p class="text-red-400">Company details not found.</p>';
+            else {
+                 html = `<h3 class="text-lg font-bold text-white mb-2">${company.Company || name}</h3>`;
+                 Object.keys(company).forEach(key => { if (key !== 'Company' && company[key]) html += `<p class="text-sm"><strong>${key}:</strong> ${company[key]}</p>`; });
+            }
+            document.getElementById('companyModalContent').innerHTML = html;
+            document.getElementById('companyModalTitle').textContent = name;
+            document.getElementById('companyModal').classList.add('show');
+        }
+        window.closeCompanyModal = function() {
+            document.getElementById('companyModal').classList.remove('show');
+        }
+
+        window.showAirportModal = function(name) {
+             // Use active tab logic from globe state if needed, or infer from current selection
+             // For simplicity, searching all loaded fleets for this airport
+             let html = `<div class="bg-white/5 p-4 rounded-lg text-slate-300 italic">Finding aircraft at ${name}...</div>`;
+             // In a real app, you'd pass the country code or filter efficiently.
+             // Here we scan the currently loaded fleetData for matches.
+             let matches = [];
+             Object.values(fleetData).forEach(countryFleet => {
+                 countryFleet.forEach(ac => {
+                     if (ac.Aircraft && ac['Airport'] && ac['Airport'].includes(name)) {
+                         matches.push(ac);
+                     }
+                 });
+             });
+             
+             if (matches.length > 0) {
+                 html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+                 matches.forEach(ac => {
+                     html += `<div class="bg-white/5 p-3 rounded border border-white/10"><div class="font-bold text-white">${ac.Aircraft}</div><div class="text-sm text-slate-400">Count: ${ac['In Service']}</div></div>`;
+                 });
+                 html += `</div>`;
+             } else {
+                 html = `<p class="text-slate-400">No aircraft explicitly listed for this base in current dataset.</p>`;
+             }
+             
+             document.getElementById('airportModalContent').innerHTML = html;
+             document.getElementById('airportModalTitle').textContent = name;
+             document.getElementById('airportModal').classList.add('show');
+        }
+        window.closeAirportModal = function() {
+            document.getElementById('airportModal').classList.remove('show');
+        }
+        
+        window.showCoreModal = function(system) {
+             document.getElementById('modalTitle').textContent = `${system} Details`;
+             document.getElementById('modalContent').innerHTML = `<p class="text-slate-300">Detailed specifications for ${system} would appear here.</p>`;
+             document.getElementById('coreModal').classList.add('show');
+        }
+        window.showGuidanceModal = function(system) {
+             document.getElementById('modalTitle').textContent = `${system} Guidance`;
+             document.getElementById('modalContent').innerHTML = `<p class="text-slate-300">Guidance system analysis for ${system}.</p>`;
+             document.getElementById('coreModal').classList.add('show');
+        }
+        window.closeModal = function() {
+            document.getElementById('coreModal').classList.remove('show');
+        }
+
         initData();
     </script>
 
@@ -469,7 +606,6 @@
                 this.productsData = {};
                 this.companiesData = {};
                 this.activeTab = 'us';
-                this.countries = [{code:'us',name:'United States',flag:'https://flagcdn.com/w80/us.png'},{code:'ru',name:'Russia',flag:'https://flagcdn.com/w80/ru.png'},{code:'cn',name:'China',flag:'https://flagcdn.com/w80/cn.png'},{code:'il',name:'Israel',flag:'https://flagcdn.com/w80/il.png'},{code:'gb',name:'United Kingdom',flag:'https://flagcdn.com/w80/gb.png'},{code:'au',name:'Australia',flag:'https://flagcdn.com/w80/au.png'},{code:'jp',name:'Japan',flag:'https://flagcdn.com/w80/jp.png'},{code:'kr',name:'South Korea',flag:'https://flagcdn.com/w80/kr.png'},{code:'se',name:'Sweden',flag:'https://flagcdn.com/w80/se.png'},{code:'it',name:'Italy',flag:'https://flagcdn.com/w80/it.png'},{code:'fr',name:'France',flag:'https://flagcdn.com/w80/fr.png'},{code:'ca',name:'Canada',flag:'https://flagcdn.com/w80/ca.png'},{code:'de',name:'Germany',flag:'https://flagcdn.com/w80/de.png'},{code:'tr',name:'Turkey',flag:'https://flagcdn.com/w80/tr.png'},{code:'pk',name:'Pakistan',flag:'https://flagcdn.com/w80/pk.png'},{code:'th',name:'Thailand',flag:'https://flagcdn.com/w80/th.png'},{code:'es',name:'Spain',flag:'https://flagcdn.com/w80/es.png'},{code:'ir',name:'Iran',flag:'https://flagcdn.com/w80/ir.png'},{code:'in',name:'India',flag:'https://flagcdn.com/w80/in.png'},{code:'sa',name:'Saudi Arabia',flag:'https://flagcdn.com/w80/sa.png'}];
                 this.filenameToCodeMap = { 'us': 'us', 'rus': 'ru', 'chn': 'cn', 'isr': 'il', 'uk': 'gb', 'aus': 'au', 'jpn': 'jp', 'kor': 'kr', 'swe': 'se', 'ita': 'it', 'fra': 'fr', 'can': 'ca', 'de': 'de', 'tuk': 'tr', 'pk': 'pk', 'thai': 'th', 'spa': 'es', 'iran': 'ir', 'in': 'in', 'sau': 'sa' };
                 this.subsystemLabels={A:{name:'Sensor Reach',weight:'22.5%',color:'blue'},B:{name:'Signature Control',weight:'15%',color:'purple'},C:{name:'Missile Reach',weight:'22.5%',color:'red'},D:{name:'Kill-Chain Network',weight:'15%',color:'green'},E:{name:'ECM / Self-Protection',weight:'10%',color:'orange'},F:{name:'Sustained Sortie Rate',weight:'5%',color:'cyan'},G:{name:'UCAV/Drone Production',weight:'10%',color:'pink'}};
             }
@@ -485,58 +621,10 @@
                 this.renderTabContent(cc);
             }
             
-            showProductModal(name) {
-                const product = this.productsData[name];
-                let html = '';
-                if (!product) html = '<p class="text-red-400">Product details not found.</p>';
-                else {
-                    html = `<h3 class="text-lg font-bold text-white mb-2">${product.Product || name}</h3>`;
-                    Object.keys(product).forEach(key => { if (key !== 'Product' && product[key]) html += `<p class="text-sm"><strong>${key}:</strong> ${product[key]}</p>`; });
-                }
-                this.shadowRoot.getElementById('productModalContent').innerHTML = html;
-                this.shadowRoot.getElementById('productModalTitle').textContent = name;
-                this.openModal('productModal');
-            }
-            
-            showCompanyModal(name) {
-                const company = this.companiesData[name];
-                let html = '';
-                if (!company) html = '<p class="text-red-400">Company details not found.</p>';
-                else {
-                     html = `<h3 class="text-lg font-bold text-white mb-2">${company.Company || name}</h3>`;
-                     Object.keys(company).forEach(key => { if (key !== 'Company' && company[key]) html += `<p class="text-sm"><strong>${key}:</strong> ${company[key]}</p>`; });
-                }
-                this.shadowRoot.getElementById('companyModalContent').innerHTML = html;
-                this.shadowRoot.getElementById('companyModalTitle').textContent = name;
-                this.openModal('companyModal');
-            }
-            
-            showCoreModal(system) {
-                 this.shadowRoot.getElementById('modalTitle').textContent=`${system} Details`;
-                 this.shadowRoot.getElementById('modalContent').innerHTML = `<p class="text-slate-300">Detailed specs for ${system}...</p>`;
-                 this.openModal('coreModal');
-            }
-            showGuidanceModal(system) {
-                 this.shadowRoot.getElementById('modalTitle').textContent=`${system} Guidance`;
-                 this.shadowRoot.getElementById('modalContent').innerHTML = `<p class="text-slate-300">Guidance details for ${system}...</p>`;
-                 this.openModal('coreModal');
-            }
-
-            showAirportModal(name) { 
-                 const cc = this.activeTab;
-                 const aircraft = this.fleetData[cc] || [];
-                 const filtered = aircraft.filter(ac => ac.Aircraft && ac['Airport'] && ac['Airport'].split(',').some(ap => ap.trim() === name));
-                 let html = '';
-                 filtered.forEach(ac => {
-                    html += `<div class="bg-white/5 p-4 rounded-lg"><h4 class="font-bold text-white">${ac.Aircraft}</h4><p class="text-sm text-slate-400">Count: ${ac['In Service']}</p></div>`;
-                 });
-                 this.shadowRoot.getElementById('airportModalContent').innerHTML = html;
-                 this.shadowRoot.getElementById('airportModalTitle').textContent = name;
-                 this.openModal('airportModal');
-            }
-
-            openModal(id) { const modal = this.shadowRoot.getElementById(id); modal.classList.remove('hidden'); setTimeout(() => modal.classList.add('show'), 10); }
-            closeModal(id) { const modal = this.shadowRoot.getElementById(id); modal.classList.remove('show'); setTimeout(() => modal.classList.add('hidden'), 300); }
+            // Re-using main window modals for dashboard interactions to keep style consistent
+            showProductModal(name) { window.showProductModal(name); }
+            showCompanyModal(name) { window.showCompanyModal(name); }
+            showAirportModal(name) { window.showAirportModal(name); }
 
             renderInitialStructure() {
                 const styles = `
@@ -547,7 +635,6 @@
                 .product-button { background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.4); color: #10b981; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-right:4px; display:inline-block; }
                 .company-button { background: rgba(234,179,8,0.2); border: 1px solid rgba(234,179,8,0.4); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-right:4px; display:inline-block; }
                 .airport-button { background: rgba(168,85,247,0.2); border: 1px solid rgba(168,85,247,0.4); color: #a855f7; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-right:4px; display:inline-block; }
-                #coreModal, #productModal, #companyModal, #airportModal { opacity: 0; transform: translateY(20px); transition: all 0.3s ease; } .show { opacity: 1 !important; transform: translateY(0) !important; }
                 `;
 
                 this.shadowRoot.innerHTML = `
@@ -563,10 +650,6 @@
                         </div>
                     </div>
                 </div>
-                <div id="productModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-lg w-full border border-white/10"><div class="flex justify-between items-center mb-4"><h2 id="productModalTitle" class="text-xl font-bold text-white"></h2><button onclick="window.dashboardInstance.closeModal('productModal')" class="text-slate-400 hover:text-white">×</button></div><div id="productModalContent" class="text-slate-300"></div></div></div>
-                <div id="companyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-lg w-full border border-white/10"><div class="flex justify-between items-center mb-4"><h2 id="companyModalTitle" class="text-xl font-bold text-white"></h2><button onclick="window.dashboardInstance.closeModal('companyModal')" class="text-slate-400 hover:text-white">×</button></div><div id="companyModalContent" class="text-slate-300"></div></div></div>
-                <div id="airportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-4xl w-full border border-white/10"><div class="flex justify-between items-center mb-4"><h2 id="airportModalTitle" class="text-xl font-bold text-white"></h2><button onclick="window.dashboardInstance.closeModal('airportModal')" class="text-slate-400 hover:text-white">×</button></div><div id="airportModalContent" class="grid grid-cols-3 gap-4"></div></div></div>
-                <div id="coreModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-4xl w-full border border-white/10"><div class="flex justify-between items-center mb-4"><h2 id="modalTitle" class="text-xl font-bold text-white"></h2><button onclick="window.dashboardInstance.closeModal('coreModal')" class="text-slate-400 hover:text-white">×</button></div><div id="modalContent"></div></div></div>
                 `;
             }
 
@@ -574,13 +657,14 @@
                 try {
                     await this.loadGlobalFleetData();
                     const cData = await loadFeather('https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/calcs.feather');
-                    cData.forEach(row => { const c = this.countries.find(x => x.name === row.Country?.trim()); if(c) this.calcsData[c.code] = row; });
-                    
-                    const pData = await loadFeather('https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/products.feather');
-                    pData.forEach(row => { if (row.Product) this.productsData[row.Product.trim()] = row; });
-
-                    const coData = await loadFeather('https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/company.feather');
-                    coData.forEach(row => { if (row.Company) this.companiesData[row.Company.trim()] = row; });
+                    cData.forEach(row => { 
+                         // Simple matching for calc data inside component
+                         const code = Object.keys(this.filenameToCodeMap).find(key => this.filenameToCodeMap[key] === row.Country?.toLowerCase()) || 'us'; 
+                         // (Simplified matching logic for component self-sufficiency, real app would pass props)
+                         // For now, we rely on the main window having processed this, 
+                         // but let's re-fetch for isolation if needed or just use what we have.
+                         if(row.Country) this.calcsData[this.filenameToCodeMap[row.Country.toLowerCase()] || 'us'] = row;
+                    });
                     
                     this.shadowRoot.getElementById('loading').classList.add('hidden');
                     this.shadowRoot.getElementById('mainContent').classList.remove('hidden');
@@ -599,18 +683,14 @@
             }
 
             renderTabContent(cc) {
-                const calcData=this.calcsData[cc]||{};
+                // We'll grab calc data from global if local fetch isn't perfect, 
+                // but ideally the component fetches its own. 
+                // Fallback to window.calcsData logic if needed.
                 const aircraft=this.fleetData[cc]||[];
                 
-                const subsystemHTML=Object.keys(this.subsystemLabels).map(key=>{
-                    const info=this.subsystemLabels[key];
-                    return `<div class="p-3 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30"><div class="text-xs text-${info.color}-400 font-semibold mb-1">${key}. ${info.name}</div><div class="text-2xl font-black orbitron text-white">${parseInt(calcData[key])||0}</div></div>`;
-                }).join('');
-
                 const content = `
                 <div class="mb-8">
                     <h2 class="text-3xl font-bold text-white orbitron mb-4">Detailed Fleet Analysis</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mb-6">${subsystemHTML}</div>
                 </div>
                 <div class="grid grid-cols-1 gap-4">
                     ${aircraft.map(ac => {
