@@ -24,7 +24,7 @@
         /* UI Components */
         .glass-panel { background: rgba(15,23,42,0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         
-        /* Speed Card (New Nav Container Style) */
+        /* Speed Card */
         .speed-card {
             background: linear-gradient(135deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.02) 100%);
             backdrop-filter: blur(20px);
@@ -54,26 +54,25 @@
         .core-badge { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(59,130,246,0.4); color: #60a5fa; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; margin-right: 4px; margin-bottom: 4px; cursor: pointer; }
         .trade-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px; margin-bottom: 4px; cursor: pointer;}
         .metric-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px; border-radius: 6px; }
-        .system-glow { box-shadow: 0 0 10px rgba(59,130,246,0.5); border-color: rgba(59,130,246,0.8)!important; }
+        
+        /* Modal Styles */
+        #coreModal, #productModal, #companyModal, #airportModal { opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+        #coreModal.show, #productModal.show, #companyModal.show, #airportModal.show { opacity: 1; pointer-events: auto; }
+        .modal-content-box { transform: translateY(20px); transition: transform 0.3s ease; }
+        .show .modal-content-box { transform: translateY(0); }
+        .solid-navy-modal { background-color: #0f172a; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); color: white; }
+        
+        /* Modal Content Helpers */
+        .li-row { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: flex-start; align-items: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); overflow-x: auto; }
+        .li-card { flex: 0 0 auto; min-width: 80px; text-align: center; }
+        .li-score-card { background: linear-gradient(to right, rgba(234,179,8,0.2), rgba(251,191,36,0.2)); border: 1px solid rgba(234,179,8,0.4); padding: 8px; border-radius: 8px; }
+        .li-score { font-size: 1.25rem; font-weight: bold; color: #fbbf24; font-family: 'Orbitron', sans-serif; }
+        .li-flag { width: 20px; height: 15px; margin-top: 4px; border-radius: 2px; }
         
         /* Animation states */
         .panel-hidden-left { transform: translateX(-120%); opacity: 0; }
         .panel-hidden-right { transform: translateX(120%); opacity: 0; }
         .panel-visible { transform: translateX(0); opacity: 1; }
-
-        /* Modal Transitions */
-        #coreModal, #productModal, #companyModal, #airportModal { opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
-        #coreModal.show, #productModal.show, #companyModal.show, #airportModal.show { opacity: 1; pointer-events: auto; }
-        .modal-content-box { transform: translateY(20px); transition: transform 0.3s ease; }
-        .show .modal-content-box { transform: translateY(0); }
-        
-        /* Modal Content Styling (Solid Navy) */
-        .solid-navy-modal {
-            background-color: #0f172a; /* Slate-900 / Navy */
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-            color: white;
-        }
     </style>
 </head>
 <body class="text-slate-200">
@@ -81,9 +80,11 @@
     <div id="globe-container" class="relative w-full h-screen">
         
         <div class="absolute top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
-            <div class="p-6 pb-2 pointer-events-auto bg-gradient-to-b from-black/90 to-transparent text-center">
+            <div class="p-6 pb-2 pointer-events-auto bg-gradient-to-b from-black/95 to-transparent text-center">
                 <h1 class="text-3xl font-black orbitron tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-lg">AIR COMBAT <span class="text-white">GLOBAL</span></h1>
-                <p class="text-sm text-slate-400 mt-1 font-mono">Select a nation to analyze F2T2EA Capabilities & Fleet Distribution</p>
+                <p class="text-xs md:text-sm text-slate-300 mt-2 font-mono max-w-4xl mx-auto leading-relaxed bg-black/40 p-2 rounded border border-white/10 backdrop-blur-sm">
+                    In a contemporary air war scenario (120+ Jets India vs. Pakistan, May 2025), combat is no longer fought in ace-pilot dogfights; instead, engagements are decided beyond visual range using BVR weapons, AWACS/AEW radar networks & a F2T2EA kill chain. Select a nation to analyze F2T2EA Capabilities & Fleet Distribution
+                </p>
             </div>
             
             <div class="w-full px-4 py-2 pointer-events-auto flex justify-center">
@@ -94,7 +95,7 @@
 
         <div id="globeViz" class="w-full h-full bg-slate-900 cursor-move"></div>
         
-        <div id="leftPanel" class="absolute top-64 left-6 w-[24rem] max-h-[70vh] glass-panel rounded-xl p-0 z-40 flex flex-col transition-all duration-500 ease-out panel-hidden-left pointer-events-auto shadow-2xl overflow-hidden">
+        <div id="leftPanel" class="absolute top-72 left-6 w-[24rem] max-h-[65vh] glass-panel rounded-xl p-0 z-40 flex flex-col transition-all duration-500 ease-out panel-hidden-left pointer-events-auto shadow-2xl overflow-hidden">
             <div class="overflow-y-auto p-5 custom-scrollbar">
                 
                 <div class="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">
@@ -130,12 +131,6 @@
                     </div>
                 </div>
 
-                <div class="mb-4 p-3 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30">
-                    <div class="text-xs text-slate-300 leading-relaxed">
-                        <span class="text-yellow-400 font-semibold">Context:</span> In a contemporary air war scenario (120+ Jets India vs. Pakistan, May 2025), combat is no longer fought in ace-pilot dogfights; instead, engagements are decided beyond visual range using BVR weapons, AWACS/AEW radar networks, and a F2T2EA kill chain.
-                    </div>
-                </div>
-
                 <div class="grid grid-cols-2 gap-3 mb-4">
                     <div class="metric-box bg-red-900/10 border-red-500/20">
                         <div class="text-[10px] text-red-400 font-semibold uppercase">BVR Range</div>
@@ -165,7 +160,7 @@
             </div>
         </div>
 
-        <div id="infoBox" class="absolute top-64 right-4 w-80 max-h-[70vh] glass-panel rounded-2xl p-0 transition-all duration-500 ease-out panel-hidden-right z-40 flex flex-col overflow-hidden pointer-events-auto">
+        <div id="infoBox" class="absolute top-72 right-4 w-80 max-h-[65vh] glass-panel rounded-2xl p-0 transition-all duration-500 ease-out panel-hidden-right z-40 flex flex-col overflow-hidden pointer-events-auto">
             <div class="p-5 border-b border-white/10 bg-black/20">
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-bold orbitron text-white">Active Assets</h2>
@@ -241,6 +236,7 @@
                 <h2 id="modalTitle" class="text-2xl font-black orbitron text-white"></h2>
                 <button onclick="window.closeModal()" class="text-slate-400 hover:text-white text-3xl">&times;</button>
             </div>
+            <div id="liRow" class="mb-6"></div>
             <div id="modalContent" class="text-white"></div>
         </div>
     </div>
@@ -263,7 +259,9 @@
         let productsData={};
         let companiesData={};
         let geoData=null;
-        
+        let highlightedGroup = new Set(); // Stores country codes for current system highlight
+        let activeCountryCode = null;
+
         async function loadFeather(url){
             const response=await fetch(url);
             const buffer=await response.arrayBuffer();
@@ -318,7 +316,6 @@
             }
         }
         
-        // Render Tabs using the new visual style
         function renderTabs(){
             const container=document.getElementById('tabButtons');
             let html='';
@@ -335,7 +332,6 @@
                 </button>`
             });
             container.innerHTML=html;
-            
             const firstBtn = container.querySelector('.rank-1');
             if(firstBtn) firstBtn.classList.add('active');
         }
@@ -350,6 +346,10 @@
                 .polygonCapColor(d=>{
                     const meta=countriesMeta.find(c=>c.name===d.properties.NAME||c.name===d.properties.NAME_LONG||c.name===d.properties.ADMIN||(d.properties.ISO_A3==='USA'&&c.code==='us')||(d.properties.ISO_A3==='GBR'&&c.code==='gb')||(d.properties.ISO_A3==='RUS'&&c.code==='ru'));
                     if(meta){
+                        // Highlight Logic
+                        if (highlightedGroup.has(meta.code)) {
+                            return 'rgba(16, 185, 129, 0.6)'; // Emerald Green for group matches
+                        }
                         const rank=meta.rank;
                         if(rank===1)return'rgba(251, 191, 36, 0.6)';
                         if(rank<=5)return'rgba(59, 130, 246, 0.4)';
@@ -359,8 +359,11 @@
                 })
                 .polygonSideColor(()=>'rgba(255, 255, 255, 0.02)')
                 .polygonStrokeColor(d=>{
-                    const meta=countriesMeta.find(c=>c.name===d.properties.NAME);
+                    const meta=countriesMeta.find(c=>c.name===d.properties.NAME||c.name===d.properties.NAME_LONG||c.name===d.properties.ADMIN);
                     if(meta){
+                        if (highlightedGroup.has(meta.code)) {
+                            return '#10b981'; // Emerald Border
+                        }
                         if(meta.rank===1)return'#fbbf24';
                         if(meta.rank===2)return'#cbd5e1';
                         return'#3b82f6'
@@ -378,6 +381,21 @@
             world.pointOfView({altitude:2.5});
         }
         
+        // --- System Highlighting Logic ---
+        function highlightCountriesByCode(codes) {
+            highlightedGroup = new Set(codes);
+            // Re-trigger color update by re-assigning the accessor
+            // A simple way to force globe update for colors is to re-set the accessor
+            world.polygonCapColor(world.polygonCapColor());
+            world.polygonStrokeColor(world.polygonStrokeColor());
+        }
+        
+        function clearHighlights() {
+            highlightedGroup.clear();
+            world.polygonCapColor(world.polygonCapColor());
+            world.polygonStrokeColor(world.polygonStrokeColor());
+        }
+
         function populateLeftPanel(meta) {
             const panel = document.getElementById('leftPanel');
             const data = calcsData[meta.code] || {};
@@ -447,6 +465,7 @@
         window.selectCountry = (code) => {
             const meta = countriesMeta.find(c => c.code === code);
             if(!meta) return;
+            activeCountryCode = code;
             
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.classList.remove('active','system-glow');
@@ -504,7 +523,64 @@
             return map[code]||{lat:0,lng:0}
         }
         
-        // Modal Control Functions (Attached to Window for global access)
+        // Modal & Globe Interaction
+        function renderLIRow(matchingCountries) {
+            const sortedCountries = [...matchingCountries].sort((a, b) => parseFloat(calcsData[b.code]?.LI || 0) - parseFloat(calcsData[a.code]?.LI || 0));
+            let html = `<div class="li-header"><h3>Lethality Index Ranking</h3></div><div class="li-row">`;
+            sortedCountries.forEach(country => {
+                const li = calcsData[country.code]?.LI || '0';
+                html += `<div class="li-card"><div class="li-score-card"><div class="li-score">${li}</div><img src="${country.flag}" alt="${country.name}" class="li-flag"></div></div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        window.showCoreModal = function(system) {
+             const matchingCountries = countriesMeta.filter(c => {
+                 const calc = calcsData[c.code];
+                 return calc && calc.Core && calc.Core.toLowerCase().includes(system.toLowerCase());
+             });
+             
+             // Trigger Globe Highlight
+             highlightCountriesByCode(matchingCountries.map(c => c.code));
+
+             document.getElementById('modalTitle').textContent = `${system.toUpperCase()} Core System`;
+             document.getElementById('liRow').innerHTML = renderLIRow(matchingCountries);
+             
+             let html = '';
+             matchingCountries.forEach(country => {
+                 const calc = calcsData[country.code];
+                 html += `<div class="p-4 bg-white/5 rounded-lg border border-white/10 mb-2"><div class="flex items-center gap-4"><img src="${country.flag}" class="w-8 h-6 rounded"><span class="font-bold">${country.name}</span><span class="text-slate-400 text-sm">#${country.rank}</span></div></div>`;
+             });
+             document.getElementById('modalContent').innerHTML = html;
+             document.getElementById('coreModal').classList.add('show');
+        }
+
+        window.showGuidanceModal = function(system) {
+             const matchingCountries = countriesMeta.filter(c => {
+                 const calc = calcsData[c.code];
+                 return calc && calc.Guidance && calc.Guidance.toLowerCase() === system.toLowerCase();
+             });
+             
+             // Trigger Globe Highlight
+             highlightCountriesByCode(matchingCountries.map(c => c.code));
+
+             document.getElementById('modalTitle').textContent = `${system.toUpperCase()} Guidance System`;
+             document.getElementById('liRow').innerHTML = renderLIRow(matchingCountries);
+             
+             let html = '';
+             matchingCountries.forEach(country => {
+                 html += `<div class="p-4 bg-white/5 rounded-lg border border-white/10 mb-2"><div class="flex items-center gap-4"><img src="${country.flag}" class="w-8 h-6 rounded"><span class="font-bold">${country.name}</span><span class="text-slate-400 text-sm">#${country.rank}</span></div></div>`;
+             });
+             document.getElementById('modalContent').innerHTML = html;
+             document.getElementById('coreModal').classList.add('show');
+        }
+
+        window.closeModal = function() {
+            document.getElementById('coreModal').classList.remove('show');
+            clearHighlights(); // Reset Globe
+        }
+
         window.showProductModal = function(name) {
             const product = productsData[name];
             let html = '';
@@ -517,9 +593,7 @@
             document.getElementById('productModalTitle').textContent = name;
             document.getElementById('productModal').classList.add('show');
         }
-        window.closeProductModal = function() {
-            document.getElementById('productModal').classList.remove('show');
-        }
+        window.closeProductModal = function() { document.getElementById('productModal').classList.remove('show'); }
 
         window.showCompanyModal = function(name) {
             const company = companiesData[name];
@@ -533,16 +607,10 @@
             document.getElementById('companyModalTitle').textContent = name;
             document.getElementById('companyModal').classList.add('show');
         }
-        window.closeCompanyModal = function() {
-            document.getElementById('companyModal').classList.remove('show');
-        }
+        window.closeCompanyModal = function() { document.getElementById('companyModal').classList.remove('show'); }
 
         window.showAirportModal = function(name) {
-             // Use active tab logic from globe state if needed, or infer from current selection
-             // For simplicity, searching all loaded fleets for this airport
              let html = `<div class="bg-white/5 p-4 rounded-lg text-slate-300 italic">Finding aircraft at ${name}...</div>`;
-             // In a real app, you'd pass the country code or filter efficiently.
-             // Here we scan the currently loaded fleetData for matches.
              let matches = [];
              Object.values(fleetData).forEach(countryFleet => {
                  countryFleet.forEach(ac => {
@@ -551,38 +619,18 @@
                      }
                  });
              });
-             
              if (matches.length > 0) {
                  html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
                  matches.forEach(ac => {
                      html += `<div class="bg-white/5 p-3 rounded border border-white/10"><div class="font-bold text-white">${ac.Aircraft}</div><div class="text-sm text-slate-400">Count: ${ac['In Service']}</div></div>`;
                  });
                  html += `</div>`;
-             } else {
-                 html = `<p class="text-slate-400">No aircraft explicitly listed for this base in current dataset.</p>`;
-             }
-             
+             } else { html = `<p class="text-slate-400">No aircraft explicitly listed for this base in current dataset.</p>`; }
              document.getElementById('airportModalContent').innerHTML = html;
              document.getElementById('airportModalTitle').textContent = name;
              document.getElementById('airportModal').classList.add('show');
         }
-        window.closeAirportModal = function() {
-            document.getElementById('airportModal').classList.remove('show');
-        }
-        
-        window.showCoreModal = function(system) {
-             document.getElementById('modalTitle').textContent = `${system} Details`;
-             document.getElementById('modalContent').innerHTML = `<p class="text-slate-300">Detailed specifications for ${system} would appear here.</p>`;
-             document.getElementById('coreModal').classList.add('show');
-        }
-        window.showGuidanceModal = function(system) {
-             document.getElementById('modalTitle').textContent = `${system} Guidance`;
-             document.getElementById('modalContent').innerHTML = `<p class="text-slate-300">Guidance system analysis for ${system}.</p>`;
-             document.getElementById('coreModal').classList.add('show');
-        }
-        window.closeModal = function() {
-            document.getElementById('coreModal').classList.remove('show');
-        }
+        window.closeAirportModal = function() { document.getElementById('airportModal').classList.remove('show'); }
 
         initData();
     </script>
@@ -621,7 +669,6 @@
                 this.renderTabContent(cc);
             }
             
-            // Re-using main window modals for dashboard interactions to keep style consistent
             showProductModal(name) { window.showProductModal(name); }
             showCompanyModal(name) { window.showCompanyModal(name); }
             showAirportModal(name) { window.showAirportModal(name); }
@@ -658,11 +705,7 @@
                     await this.loadGlobalFleetData();
                     const cData = await loadFeather('https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/calcs.feather');
                     cData.forEach(row => { 
-                         // Simple matching for calc data inside component
                          const code = Object.keys(this.filenameToCodeMap).find(key => this.filenameToCodeMap[key] === row.Country?.toLowerCase()) || 'us'; 
-                         // (Simplified matching logic for component self-sufficiency, real app would pass props)
-                         // For now, we rely on the main window having processed this, 
-                         // but let's re-fetch for isolation if needed or just use what we have.
                          if(row.Country) this.calcsData[this.filenameToCodeMap[row.Country.toLowerCase()] || 'us'] = row;
                     });
                     
@@ -683,9 +726,6 @@
             }
 
             renderTabContent(cc) {
-                // We'll grab calc data from global if local fetch isn't perfect, 
-                // but ideally the component fetches its own. 
-                // Fallback to window.calcsData logic if needed.
                 const aircraft=this.fleetData[cc]||[];
                 
                 const content = `
