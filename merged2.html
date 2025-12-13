@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Air Combat Power & Analytics</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/globe.gl"></script>
+    
+    <style>
+        /* Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        /* Global Styles */
+        body { margin: 0; padding: 0; background-color: #000; font-family: 'Inter', sans-serif; overflow-x: hidden; overflow-y: auto; }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(15,23,42,0.5); }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
+        
+        /* UI Components */
+        .glass-panel { background: rgba(15,23,42,0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        
+        /* Navigation Tabs */
+        .tab-button { transition: all .3s ease; border-bottom: 2px solid transparent; color: #94a3b8; background: rgba(0,0,0,0.3); white-space: nowrap; }
+        .tab-button:hover { background: rgba(59,130,246,0.2); color: #fff; transform: translateY(-2px); }
+        .tab-button.active { background: linear-gradient(135deg,rgba(59,130,246,.2),rgba(139,92,246,.2)); border-bottom-color: #3b82f6; color: #60a5fa; box-shadow: 0 0 15px rgba(59,130,246,0.3); }
+        
+        /* Rank Styles */
+        .rank-1 { border-color: rgba(255,215,0,.3); color: #fbbf24; }
+        .rank-2 { border-color: rgba(192,192,192,.3); color: #e2e8f0; }
+        .rank-3 { border-color: rgba(205,127,50,.3); color: #fdba74; }
+        
+        /* Badges */
+        .core-badge { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(59,130,246,0.4); color: #60a5fa; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; margin-right: 4px; margin-bottom: 4px; cursor: pointer; }
+        .trade-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px; margin-bottom: 4px; cursor: pointer;}
+        .metric-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px; border-radius: 6px; }
+        .system-glow { box-shadow: 0 0 10px rgba(59,130,246,0.5); border-color: rgba(59,130,246,0.8)!important; }
+        
+        /* Animation states */
+        .panel-hidden-left { transform: translateX(-120%); opacity: 0; }
+        .panel-hidden-right { transform: translateX(120%); opacity: 0; }
+        .panel-visible { transform: translateX(0); opacity: 1; }
+    </style>
+</head>
+<body class="text-slate-200">
+
+    <div id="globe-container" class="relative w-full h-screen">
+        
+        <div class="absolute top-0 left-0 w-full z-50 flex flex-col pointer-events-none">
+            <div class="p-6 pb-2 pointer-events-auto bg-gradient-to-b from-black/90 to-transparent">
+                <h1 class="text-3xl font-black orbitron tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-lg">AIR COMBAT <span class="text-white">GLOBAL</span></h1>
+                <p class="text-sm text-slate-400 mt-1 font-mono">Select a nation to analyze F2T2EA Capabilities & Fleet Distribution</p>
+                <p class="text-xs text-slate-500 mt-2 animate-bounce">Scroll down for Dashboard &darr;</p>
+            </div>
+            <div class="w-full overflow-x-auto px-6 py-2 pointer-events-auto no-scrollbar">
+                <div id="tabButtons" class="flex flex-nowrap gap-3 pb-2">
+                    </div>
+            </div>
+        </div>
+
+        <div id="globeViz" class="w-full h-full bg-slate-900 cursor-move"></div>
+        
+        <div id="leftPanel" class="absolute top-48 left-6 w-[24rem] max-h-[75vh] glass-panel rounded-xl p-0 z-40 flex flex-col transition-all duration-500 ease-out panel-hidden-left pointer-events-auto shadow-2xl overflow-hidden">
+            <div class="overflow-y-auto p-5 custom-scrollbar">
+                
+                <div class="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">
+                    <img id="lpFlag" src="" alt="" class="w-16 h-10 rounded-lg shadow-md">
+                    <div>
+                        <h2 id="lpCountry" class="text-2xl font-black orbitron text-white leading-none">SELECT NATION</h2>
+                        <p id="lpRank" class="text-slate-400 text-sm mt-1">Rank #--</p>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-cyan-400 font-bold uppercase">Core System</span>
+                    </div>
+                    <div id="lpCore" class="flex flex-wrap"></div>
+                </div>
+
+                <div class="mb-4">
+                     <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-cyan-400 font-bold uppercase">Guidance System</span>
+                    </div>
+                    <div id="lpGuidance" class="flex flex-wrap"></div>
+                </div>
+
+                <div id="lpTradeSection" class="hidden flex-col gap-3 mb-4 p-3 bg-white/5 rounded-lg border border-white/5">
+                    <div id="lpSellsGroup" class="hidden">
+                        <span class="text-[10px] text-green-400 font-bold uppercase mb-1 block">Exports To:</span>
+                        <div id="lpSells" class="flex flex-wrap"></div>
+                    </div>
+                    <div id="lpBuysGroup" class="hidden">
+                        <span class="text-[10px] text-orange-400 font-bold uppercase mb-1 block">Imports From:</span>
+                        <div id="lpBuys" class="flex flex-wrap"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4 p-3 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30">
+                    <div class="text-xs text-slate-300 leading-relaxed">
+                        <span class="text-yellow-400 font-semibold">Context:</span> In a contemporary air war scenario (120+ Jets India vs. Pakistan, May 2025), combat is no longer fought in ace-pilot dogfights; instead, engagements are decided beyond visual range using BVR weapons, AWACS/AEW radar networks, and a F2T2EA kill chain.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="metric-box bg-red-900/10 border-red-500/20">
+                        <div class="text-[10px] text-red-400 font-semibold uppercase">BVR Range</div>
+                        <div id="lpBVR" class="text-lg font-bold text-white orbitron">0 km</div>
+                    </div>
+                    <div class="metric-box bg-purple-900/10 border-purple-500/20">
+                        <div class="text-[10px] text-purple-400 font-semibold uppercase">AEW Range</div>
+                        <div id="lpAEW" class="text-lg font-bold text-white orbitron">0 km</div>
+                    </div>
+                </div>
+                
+                <div class="metric-box bg-cyan-900/10 border-cyan-500/20 mb-4">
+                     <div class="text-[10px] text-cyan-400 font-semibold uppercase">Total Fleet Size</div>
+                     <div id="lpTotalFleet" class="text-2xl font-black text-cyan-300 orbitron">0</div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <span class="text-xs text-green-400 font-semibold mb-1 block">Companies:</span>
+                        <div id="lpCompanies" class="flex flex-wrap gap-1"></div>
+                    </div>
+                    <div>
+                        <span class="text-xs text-green-400 font-semibold mb-1 block">Associated Products:</span>
+                        <div id="lpProducts" class="flex flex-wrap gap-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="infoBox" class="absolute top-36 right-4 w-80 max-h-[70vh] glass-panel rounded-2xl p-0 transition-all duration-500 ease-out panel-hidden-right z-40 flex flex-col overflow-hidden pointer-events-auto">
+            <div class="p-5 border-b border-white/10 bg-black/20">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-bold orbitron text-white">Active Assets</h2>
+                    <button onclick="closeInfoBox()" class="text-slate-500 hover:text-white transition-colors text-2xl">&times;</button>
+                </div>
+                <div class="mt-4 flex justify-between items-center bg-white/5 rounded-lg p-2">
+                    <div class="text-center">
+                        <div class="text-xs text-slate-400">Lethality Index</div>
+                        <div id="infoLI" class="text-lg font-bold text-yellow-400 orbitron">0.0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                <div>
+                    <h3 class="text-xs font-bold text-purple-400 uppercase tracking-widest mb-2 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-purple-500"></span> Strategic Airports</h3>
+                    <div id="infoAirports" class="flex flex-wrap gap-2 text-xs"></div>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Fleet List</h3>
+                    <div id="infoFleet" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="loadingOverlay" class="absolute inset-0 bg-slate-900 z-[60] flex items-center justify-center transition-opacity duration-1000">
+            <div class="text-center">
+                <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <h2 class="text-2xl font-bold orbitron text-white">INITIALIZING SATELLITE FEED</h2>
+                <p class="text-blue-400 font-mono text-sm mt-2">Loading Global Assets...</p>
+            </div>
+        </div>
+    </div>
+
+    <combat-dashboard></combat-dashboard>
+
+    <script type="module">
+        import{tableFromIPC}from'https://cdn.jsdelivr.net/npm/apache-arrow@18.0.0/+esm';
+        
+        const FEATHER_URL_GLOBAL='https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/global_merged.feather';
+        const FEATHER_URL_CALCS='https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/calcs.feather';
+        const FEATHER_URL_PROD='https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/products.feather';
+        const FEATHER_URL_COMP='https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/company.feather';
+        const GEOJSON_URL='https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson';
+        
+        const filenameToCodeMap={'us':'us','rus':'ru','chn':'cn','isr':'il','uk':'gb','aus':'au','jpn':'jp','kor':'kr','swe':'se','ita':'it','fra':'fr','can':'ca','de':'de','tuk':'tr','pk':'pk','thai':'th','spa':'es','iran':'ir','in':'in','sau':'sa'};
+        const countriesMeta=[{code:'us',name:'United States',flag:'https://flagcdn.com/w80/us.png'},{code:'ru',name:'Russia',flag:'https://flagcdn.com/w80/ru.png'},{code:'cn',name:'China',flag:'https://flagcdn.com/w80/cn.png'},{code:'il',name:'Israel',flag:'https://flagcdn.com/w80/il.png'},{code:'gb',name:'United Kingdom',flag:'https://flagcdn.com/w80/gb.png'},{code:'au',name:'Australia',flag:'https://flagcdn.com/w80/au.png'},{code:'jp',name:'Japan',flag:'https://flagcdn.com/w80/jp.png'},{code:'kr',name:'South Korea',flag:'https://flagcdn.com/w80/kr.png'},{code:'se',name:'Sweden',flag:'https://flagcdn.com/w80/se.png'},{code:'it',name:'Italy',flag:'https://flagcdn.com/w80/it.png'},{code:'fr',name:'France',flag:'https://flagcdn.com/w80/fr.png'},{code:'ca',name:'Canada',flag:'https://flagcdn.com/w80/ca.png'},{code:'de',name:'Germany',flag:'https://flagcdn.com/w80/de.png'},{code:'tr',name:'Turkey',flag:'https://flagcdn.com/w80/tr.png'},{code:'pk',name:'Pakistan',flag:'https://flagcdn.com/w80/pk.png'},{code:'th',name:'Thailand',flag:'https://flagcdn.com/w80/th.png'},{code:'es',name:'Spain',flag:'https://flagcdn.com/w80/es.png'},{code:'ir',name:'Iran',flag:'https://flagcdn.com/w80/ir.png'},{code:'in',name:'India',flag:'https://flagcdn.com/w80/in.png'},{code:'sa',name:'Saudi Arabia',flag:'https://flagcdn.com/w80/sa.png'}];
+        
+        let world;
+        let fleetData={};
+        let calcsData={};
+        let productsData={};
+        let companiesData={};
+        let geoData=null;
+        
+        async function loadFeather(url){
+            const response=await fetch(url);
+            const buffer=await response.arrayBuffer();
+            const table=tableFromIPC(buffer);
+            return table.toArray().map(row=>row.toJSON())
+        }
+        
+        async function initData(){
+            try{
+                const geoRes=await fetch(GEOJSON_URL);
+                geoData=await geoRes.json();
+                
+                // Load Fleet
+                const globalRows=await loadFeather(FEATHER_URL_GLOBAL);
+                globalRows.forEach(row=>{
+                    const fileCode=row.country;
+                    const code=filenameToCodeMap[fileCode]||fileCode;
+                    if(!fleetData[code])fleetData[code]=[];
+                    if(row.Aircraft&&row['In Service']){
+                        fleetData[code].push(row)
+                    }
+                });
+                
+                // Load Calcs
+                const calcRows=await loadFeather(FEATHER_URL_CALCS);
+                calcRows.forEach(row=>{
+                    const cName=row.Country?.trim();
+                    const meta=countriesMeta.find(c=>c.name===cName);
+                    if(meta){calcsData[meta.code]=row}
+                });
+
+                // Load Products & Companies for badges
+                const prodRows=await loadFeather(FEATHER_URL_PROD);
+                prodRows.forEach(row=>{if(row.Product) productsData[row.Product.trim()]=row});
+
+                const compRows=await loadFeather(FEATHER_URL_COMP);
+                compRows.forEach(row=>{if(row.Company) companiesData[row.Company.trim()]=row});
+                
+                countriesMeta.forEach(c=>{
+                    c.li=parseFloat(calcsData[c.code]?.LI||0);
+                    c.fleetCount=fleetData[c.code]?.reduce((sum,r)=>sum+(parseInt(r['In Service'])||0),0)||0
+                });
+                
+                countriesMeta.sort((a,b)=>b.li-a.li);
+                countriesMeta.forEach((c,i)=>c.rank=i+1);
+                
+                renderTabs();
+                initGlobe();
+                
+                document.getElementById('loadingOverlay').style.opacity='0';
+                setTimeout(()=>document.getElementById('loadingOverlay').remove(),1000)
+            }catch(err){
+                console.error("Critical Init Error:",err);
+                alert("Failed to load data.")
+            }
+        }
+        
+        function renderTabs(){
+            const container=document.getElementById('tabButtons');
+            let html='';
+            countriesMeta.forEach(c=>{
+                let rankClass='';
+                if(c.rank===1)rankClass='rank-1';
+                else if(c.rank===2)rankClass='rank-2';
+                else if(c.rank===3)rankClass='rank-3';
+                html+=`<button class="tab-button ${rankClass} px-4 py-2 rounded-lg text-sm font-semibold border border-white/5 flex items-center gap-2" data-code="${c.code}" onclick="window.selectCountry('${c.code}')"><img src="${c.flag}" alt="${c.code}" class="w-5 h-4 rounded shadow-sm"><span class="country-name-text hidden md:inline">${c.name}</span><span class="font-mono text-xs opacity-70">#${c.rank}</span></button>`
+            });
+            container.innerHTML=html
+        }
+        
+        function initGlobe(){
+            const elem=document.getElementById('globeViz');
+            
+            world=Globe()(elem)
+                .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+                .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
+                .polygonsData(geoData.features.filter(d=>d.properties.ISO_A2!=='AQ'))
+                .polygonCapColor(d=>{
+                    const meta=countriesMeta.find(c=>c.name===d.properties.NAME||c.name===d.properties.NAME_LONG||c.name===d.properties.ADMIN||(d.properties.ISO_A3==='USA'&&c.code==='us')||(d.properties.ISO_A3==='GBR'&&c.code==='gb')||(d.properties.ISO_A3==='RUS'&&c.code==='ru'));
+                    if(meta){
+                        const rank=meta.rank;
+                        if(rank===1)return'rgba(251, 191, 36, 0.6)';
+                        if(rank<=5)return'rgba(59, 130, 246, 0.4)';
+                        return'rgba(59, 130, 246, 0.15)'
+                    }
+                    return'rgba(20, 20, 30, 0.1)'
+                })
+                .polygonSideColor(()=>'rgba(255, 255, 255, 0.02)')
+                .polygonStrokeColor(d=>{
+                    const meta=countriesMeta.find(c=>c.name===d.properties.NAME);
+                    if(meta){
+                        if(meta.rank===1)return'#fbbf24';
+                        if(meta.rank===2)return'#cbd5e1';
+                        return'#3b82f6'
+                    }
+                    return'#1a1a2e'
+                })
+                .polygonLabel(({properties:d})=>`<div class="bg-slate-900/80 backdrop-blur px-2 py-1 rounded text-xs text-white border border-white/10">${d.NAME}</div>`)
+                .onPolygonClick(d=>{
+                     const meta=countriesMeta.find(c=>c.name===d.properties.NAME||c.name===d.properties.NAME_LONG||c.name===d.properties.ADMIN||(d.properties.ISO_A3==='USA'&&c.code==='us')||(d.properties.ISO_A3==='GBR'&&c.code==='gb')||(d.properties.ISO_A3==='RUS'&&c.code==='ru'));
+                    if(meta){window.selectCountry(meta.code)}
+                });
+                
+            world.controls().autoRotate=true;
+            world.controls().autoRotateSpeed=0.5;
+            world.pointOfView({altitude:2.5});
+        }
+        
+        // --- LEFT PANEL LOGIC ---
+        function populateLeftPanel(meta) {
+            const panel = document.getElementById('leftPanel');
+            const data = calcsData[meta.code] || {};
+            const fleet = fleetData[meta.code] || [];
+
+            // 1. Header
+            document.getElementById('lpFlag').src = meta.flag;
+            document.getElementById('lpCountry').innerText = meta.name.toUpperCase();
+            document.getElementById('lpRank').innerText = `Global Rank #${meta.rank}`;
+
+            // 2. Core System
+            const coreRaw = data.Core || 'Unknown';
+            const cores = coreRaw.split('-').filter(s=>s.trim());
+            const coreHtml = cores.map(c => `<span class="core-badge" onclick="dashboardInstance.showCoreModal('${c.trim()}')">${c.trim()}</span>`).join('');
+            document.getElementById('lpCore').innerHTML = coreHtml || '<span class="text-xs text-slate-500">No data</span>';
+
+            // 3. Guidance
+            const guide = data.Guidance || 'Unknown';
+            document.getElementById('lpGuidance').innerHTML = `<span class="px-2 py-1 rounded bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold cursor-pointer" onclick="dashboardInstance.showGuidanceModal('${guide}')">${guide}</span>`;
+
+            // 4. Trade Relationships
+            const sells = data.Sell ? data.Sell.split('-').map(s=>s.trim()).filter(s=>s) : [];
+            const buys = data.Buy ? data.Buy.split('-').map(s=>s.trim()).filter(s=>s) : [];
+            
+            const makeTradeBadge = (name) => {
+                const partner = countriesMeta.find(c => c.name.toLowerCase().includes(name.toLowerCase()));
+                if(partner) {
+                    return `<span class="trade-badge hover:bg-white/10" onclick="window.selectCountry('${partner.code}')"><img src="${partner.flag}" class="w-3 h-2 rounded-sm"> ${partner.code.toUpperCase()}</span>`;
+                }
+                return `<span class="trade-badge">${name}</span>`;
+            };
+
+            document.getElementById('lpSells').innerHTML = sells.map(makeTradeBadge).join('');
+            document.getElementById('lpBuys').innerHTML = buys.map(makeTradeBadge).join('');
+
+            const tradeSec = document.getElementById('lpTradeSection');
+            const sellGroup = document.getElementById('lpSellsGroup');
+            const buyGroup = document.getElementById('lpBuysGroup');
+
+            if (sells.length > 0 || buys.length > 0) {
+                tradeSec.classList.remove('hidden');
+                tradeSec.classList.add('flex');
+                sellGroup.style.display = sells.length > 0 ? 'block' : 'none';
+                buyGroup.style.display = buys.length > 0 ? 'block' : 'none';
+            } else {
+                tradeSec.classList.add('hidden');
+                tradeSec.classList.remove('flex');
+            }
+
+            // 5. Metrics
+            document.getElementById('lpBVR').innerText = (data.BVR || 'N/A') + '';
+            document.getElementById('lpAEW').innerText = (data.AEW || 'N/A') + '';
+            document.getElementById('lpTotalFleet').innerText = meta.fleetCount;
+
+            // 6. Companies & Products
+            const productSet = new Set();
+            const companySet = new Set();
+            fleet.forEach(ac => {
+                if(ac.Company) companySet.add(ac.Company);
+                if(ac['Associated products']) ac['Associated products'].split(',').forEach(p=>productSet.add(p.trim()));
+            });
+
+            const prodHtml = Array.from(productSet).map(p=> `<span class="trade-badge text-green-300 border-green-500/30" onclick="dashboardInstance.showProductModal('${p}')">${p}</span>`).join('');
+            const compHtml = Array.from(companySet).map(c=> `<span class="trade-badge text-yellow-300 border-yellow-500/30" onclick="dashboardInstance.showCompanyModal('${c}')">${c}</span>`).join('');
+
+            document.getElementById('lpProducts').innerHTML = prodHtml || '<span class="text-xs text-slate-500">-</span>';
+            document.getElementById('lpCompanies').innerHTML = compHtml || '<span class="text-xs text-slate-500">-</span>';
+
+            // Show Panel
+            panel.classList.remove('panel-hidden-left');
+            panel.classList.add('panel-visible');
+        }
+
+        window.selectCountry = (code) => {
+            const meta = countriesMeta.find(c => c.code === code);
+            if(!meta) return;
+            
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active','system-glow');
+                if(btn.dataset.code === code) btn.classList.add('active','system-glow');
+            });
+            
+            const coords = getApproxCoords(code);
+            world.pointOfView({lat:coords.lat, lng:coords.lng, altitude:1.5}, 1500);
+            world.controls().autoRotate = false;
+            
+            populateInfoBox(meta);
+            populateLeftPanel(meta);
+            
+            const dashboard = document.querySelector('combat-dashboard');
+            if(dashboard && dashboard.switchToTab) {
+                dashboard.switchToTab(code);
+            }
+        };
+        
+        window.closeInfoBox=()=>{
+            document.getElementById('infoBox').classList.remove('panel-visible');
+            document.getElementById('infoBox').classList.add('panel-hidden-right');
+            document.getElementById('leftPanel').classList.remove('panel-visible');
+            document.getElementById('leftPanel').classList.add('panel-hidden-left');
+            world.controls().autoRotate=true;
+            document.querySelectorAll('.tab-button').forEach(btn=>btn.classList.remove('active','system-glow'))
+        };
+        
+        function populateInfoBox(meta){
+            const box=document.getElementById('infoBox');
+            const data=fleetData[meta.code]||[];
+            const calc=calcsData[meta.code]||{};
+            
+            document.getElementById('infoLI').innerText=calc.LI||'N/A';
+            
+            const airportSet=new Set();
+            data.forEach(row=>{if(row.Airport){row.Airport.split(',').forEach(ap=>airportSet.add(ap.trim()))}});
+            const airportsHtml=Array.from(airportSet).map(ap=>`<span class="px-2 py-1 bg-purple-500/10 border border-purple-500/20 text-purple-300 rounded hover:bg-purple-500/20 transition-colors cursor-default">${ap}</span>`).join('');
+            document.getElementById('infoAirports').innerHTML=airportsHtml||'<span class="text-slate-500 italic">No airbase data listed</span>';
+            
+            let fleetHtml='';
+            data.forEach(row=>{
+                const isManned=row.Manned==='Yes';
+                const bgClass=isManned?'bg-blue-500/5 border-blue-500/10':'bg-cyan-500/5 border-cyan-500/10';
+                fleetHtml+=`<div class="${bgClass} border rounded p-2 flex items-center gap-3 hover:bg-white/5 transition-colors"><img src="${row.Photo||''}" onerror="this.style.display='none'" class="w-12 h-8 object-cover rounded bg-black/50"><div class="flex-1 min-w-0"><div class="flex justify-between items-center"><span class="font-bold text-white text-sm truncate">${row.Aircraft}</span><span class="text-xs font-bold text-white bg-white/10 px-1 rounded">${row['In Service']}</span></div><div class="flex justify-between items-center mt-1"><span class="text-[10px] text-slate-400 truncate">${row.Type}</span><span class="text-[10px] text-yellow-500/80 truncate max-w-[80px]">${row.Company||'Unknown'}</span></div></div></div>`
+            });
+            document.getElementById('infoFleet').innerHTML=fleetHtml;
+            
+            box.classList.remove('panel-hidden-right');
+            box.classList.add('panel-visible');
+        }
+        
+        function getApproxCoords(code){
+            const map={'us':{lat:37.09,lng:-95.71},'ru':{lat:61.52,lng:105.31},'cn':{lat:35.86,lng:104.19},'il':{lat:31.04,lng:34.85},'gb':{lat:55.37,lng:-3.43},'au':{lat:-25.27,lng:133.77},'jp':{lat:36.20,lng:138.25},'kr':{lat:35.90,lng:127.76},'se':{lat:60.12,lng:18.64},'it':{lat:41.87,lng:12.56},'fr':{lat:46.22,lng:2.21},'ca':{lat:56.13,lng:-106.34},'de':{lat:51.16,lng:10.45},'tr':{lat:38.96,lng:35.24},'pk':{lat:30.37,lng:69.34},'th':{lat:15.87,lng:100.99},'es':{lat:40.46,lng:-3.74},'in':{lat:20.59,lng:78.96},'sa':{lat:23.88,lng:45.07},'ir':{lat:32.42,lng:53.68}};
+            return map[code]||{lat:0,lng:0}
+        }
+        
+        initData();
+    </script>
+
+    <script type="module">
+        import { tableFromIPC } from 'https://cdn.jsdelivr.net/npm/apache-arrow@18.0.0/+esm';
+
+        async function loadFeather(url) {
+            const response = await fetch(url);
+            const buffer = await response.arrayBuffer();
+            const table = tableFromIPC(buffer);
+            return table.toArray().map(row => row.toJSON());
+        }
+
+        class CombatDashboard extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+                this.fleetData = {};
+                this.calcsData = {};
+                this.productsData = {};
+                this.companiesData = {};
+                this.activeTab = 'us';
+                this.countries = [{code:'us',name:'United States',flag:'https://flagcdn.com/w80/us.png'},{code:'ru',name:'Russia',flag:'https://flagcdn.com/w80/ru.png'},{code:'cn',name:'China',flag:'https://flagcdn.com/w80/cn.png'},{code:'il',name:'Israel',flag:'https://flagcdn.com/w80/il.png'},{code:'gb',name:'United Kingdom',flag:'https://flagcdn.com/w80/gb.png'},{code:'au',name:'Australia',flag:'https://flagcdn.com/w80/au.png'},{code:'jp',name:'Japan',flag:'https://flagcdn.com/w80/jp.png'},{code:'kr',name:'South Korea',flag:'https://flagcdn.com/w80/kr.png'},{code:'se',name:'Sweden',flag:'https://flagcdn.com/w80/se.png'},{code:'it',name:'Italy',flag:'https://flagcdn.com/w80/it.png'},{code:'fr',name:'France',flag:'https://flagcdn.com/w80/fr.png'},{code:'ca',name:'Canada',flag:'https://flagcdn.com/w80/ca.png'},{code:'de',name:'Germany',flag:'https://flagcdn.com/w80/de.png'},{code:'tr',name:'Turkey',flag:'https://flagcdn.com/w80/tr.png'},{code:'pk',name:'Pakistan',flag:'https://flagcdn.com/w80/pk.png'},{code:'th',name:'Thailand',flag:'https://flagcdn.com/w80/th.png'},{code:'es',name:'Spain',flag:'https://flagcdn.com/w80/es.png'},{code:'ir',name:'Iran',flag:'https://flagcdn.com/w80/ir.png'},{code:'in',name:'India',flag:'https://flagcdn.com/w80/in.png'},{code:'sa',name:'Saudi Arabia',flag:'https://flagcdn.com/w80/sa.png'}];
+                this.filenameToCodeMap = { 'us': 'us', 'rus': 'ru', 'chn': 'cn', 'isr': 'il', 'uk': 'gb', 'aus': 'au', 'jpn': 'jp', 'kor': 'kr', 'swe': 'se', 'ita': 'it', 'fra': 'fr', 'can': 'ca', 'de': 'de', 'tuk': 'tr', 'pk': 'pk', 'thai': 'th', 'spa': 'es', 'iran': 'ir', 'in': 'in', 'sau': 'sa' };
+                this.subsystemLabels={A:{name:'Sensor Reach',weight:'22.5%',color:'blue'},B:{name:'Signature Control',weight:'15%',color:'purple'},C:{name:'Missile Reach',weight:'22.5%',color:'red'},D:{name:'Kill-Chain Network',weight:'15%',color:'green'},E:{name:'ECM / Self-Protection',weight:'10%',color:'orange'},F:{name:'Sustained Sortie Rate',weight:'5%',color:'cyan'},G:{name:'UCAV/Drone Production',weight:'10%',color:'pink'}};
+            }
+
+            connectedCallback() {
+                this.renderInitialStructure();
+                this.init();
+                window.dashboardInstance = this;
+            }
+            
+            switchToTab(cc) { 
+                this.activeTab = cc;
+                this.renderTabContent(cc);
+            }
+            
+            showProductModal(name) {
+                const product = this.productsData[name];
+                let html = '';
+                if (!product) html = '<p class="text-red-400">Product details not found.</p>';
+                else {
+                    html = `<h3 class="text-lg font-bold text-white mb-2">${product.Product || name}</h3>`;
+                    Object.keys(product).forEach(key => { if (key !== 'Product' && product[key]) html += `<p class="text-sm"><strong>${key}:</strong> ${product[key]}</p>`; });
+                }
+                this.shadowRoot.getElementById('productModalContent').innerHTML = html;
+                this.shadowRoot.getElementById('productModalTitle').textContent = name;
+                this.openModal('productModal');
+            }
+            
+            showCompanyModal(name) {
+                const company = this.companiesData[name];
+                let html = '';
+                if (!company) html = '<p class="text-red-400">Company details not found.</p>';
+                else {
+                     html = `<h3 class="text-lg font-bold text-white mb-2">${company.Company || name}</h3>`;
+                     Object.keys(company).forEach(key => { if (key !== 'Company' && company[key]) html += `<p class="text-sm"><strong>${key}:</strong> ${company[key]}</p>`; });
+                }
+                this.shadowRoot.getElementById('companyModalContent').innerHTML = html;
+                this.shadowRoot.getElementById('companyModalTitle').textContent = name;
+                this.openModal('companyModal');
+            }
+            
+            showCoreModal(system) {
+                 this.shadowRoot.getElementById('modalTitle').textContent=`${system} Details`;
+                 this.shadowRoot.getElementById('modalContent').innerHTML = `<p class="text-slate-300">Detailed specs for ${system}...</p>`;
+                 this.openModal('coreModal');
+            }
+            showGuidanceModal(system) {
+                 this.shadowRoot.getElementById('modalTitle').textContent=`${system} Guidance`;
+                 this.shadowRoot.getElementById('modalContent').innerHTML = `<p class="text-slate-300">Guidance details for ${system}...</p>`;
+                 this.openModal('coreModal');
+            }
+
+            showAirportModal(name) { 
+                 const cc = this.activeTab;
+                 const aircraft = this.fleetData[cc] || [];
+                 const filtered = aircraft.filter(ac => ac.Aircraft && ac['Airport'] && ac['Airport'].split(',').some(ap => ap.trim() === name));
+                 let html = '';
+                 filtered.forEach(ac => {
+                    html += `<div class="bg-white/5 p-4 rounded-lg"><h4 class="font-bold text-white">${ac.Aircraft}</h4><p class="text-sm text-slate-400">Count: ${ac['In Service']}</p></div>`;
+                 });
+                 this.shadowRoot.getElementById('airportModalContent').innerHTML = html;
+                 this.shadowRoot.getElementById('airportModalTitle').textContent = name;
+                 this.openModal('airportModal');
+            }
+
+            openModal(id) { const modal = this.shadowRoot.getElementById(id); modal.classList.remove('hidden'); setTimeout(() => modal.classList.add('show'), 10); }
+            closeModal(id) { const modal = this.shadowRoot.getElementById(id); modal.classList.remove('show'); setTimeout(() => modal.classList.add('hidden'), 300); }
+
+            renderInitialStructure() {
+                const styles = `
+                @import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
+                @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+                :host { display: block; background: linear-gradient(135deg,rgba(15,23,42,1) 0%,rgba(30,41,59,1) 50%,rgba(12,30,61,1) 100%); position: relative; min-height: 100vh; overflow: hidden; font-family: 'Inter', sans-serif; }
+                .orbitron{font-family:'Orbitron',sans-serif} .aircraft-card{background:linear-gradient(135deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.02) 100%);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);} .manned-card{background:linear-gradient(135deg,rgba(0,31,63,.2) 0%,rgba(0,31,63,.1) 100%) !important;} .unmanned-card{background:linear-gradient(135deg,rgba(135,206,235,.2) 0%,rgba(135,206,235,.1) 100%) !important;}
+                .product-button { background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.4); color: #10b981; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-right:4px; display:inline-block; }
+                .company-button { background: rgba(234,179,8,0.2); border: 1px solid rgba(234,179,8,0.4); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-right:4px; display:inline-block; }
+                .airport-button { background: rgba(168,85,247,0.2); border: 1px solid rgba(168,85,247,0.4); color: #a855f7; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-right:4px; display:inline-block; }
+                #coreModal, #productModal, #companyModal, #airportModal { opacity: 0; transform: translateY(20px); transition: all 0.3s ease; } .show { opacity: 1 !important; transform: translateY(0) !important; }
+                `;
+
+                this.shadowRoot.innerHTML = `
+                <style>${styles}</style>
+                <div class="relative z-10 max-w-[1800px] mx-auto p-4 md:p-8">
+                    <div id="loading" class="text-center py-20">
+                        <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p class="text-slate-400">Loading dashboard data...</p>
+                    </div>
+                    <div id="mainContent" class="hidden">
+                        <div id="fleetContent">
+                            <div id="tabContent" class="min-h-screen"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="productModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-lg w-full border border-white/10"><div class="flex justify-between items-center mb-4"><h2 id="productModalTitle" class="text-xl font-bold text-white"></h2><button onclick="window.dashboardInstance.closeModal('productModal')" class="text-slate-400 hover:text-white">×</button></div><div id="productModalContent" class="text-slate-300"></div></div></div>
+                <div id="companyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-lg w-full border border-white/10"><div class="flex justify-between items-center mb-4"><h2 id="companyModalTitle" class="text-xl font-bold text-white"></h2><button onclick="window.dashboardInstance.closeModal('companyModal')" class="text-slate-400 hover:text-white">×</button></div><div id="companyModalContent" class="text-slate-300"></div></div></div>
+                <div id="airportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-4xl w-full border border-white/10"><div class="flex justify-between items-center mb-4"><h2 id="airportModalTitle" class="text-xl font-bold text-white"></h2><button onclick="window.dashboardInstance.closeModal('airportModal')" class="text-slate-400 hover:text-white">×</button></div><div id="airportModalContent" class="grid grid-cols-3 gap-4"></div></div></div>
+                <div id="coreModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"><div class="bg-slate-900 p-6 rounded-lg max-w-4xl w-full border border-white/10"><div class="flex justify-between items-center mb-4"><h2 id="modalTitle" class="text-xl font-bold text-white"></h2><button onclick="window.dashboardInstance.closeModal('coreModal')" class="text-slate-400 hover:text-white">×</button></div><div id="modalContent"></div></div></div>
+                `;
+            }
+
+            async init() {
+                try {
+                    await this.loadGlobalFleetData();
+                    const cData = await loadFeather('https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/calcs.feather');
+                    cData.forEach(row => { const c = this.countries.find(x => x.name === row.Country?.trim()); if(c) this.calcsData[c.code] = row; });
+                    
+                    const pData = await loadFeather('https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/products.feather');
+                    pData.forEach(row => { if (row.Product) this.productsData[row.Product.trim()] = row; });
+
+                    const coData = await loadFeather('https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/company.feather');
+                    coData.forEach(row => { if (row.Company) this.companiesData[row.Company.trim()] = row; });
+                    
+                    this.shadowRoot.getElementById('loading').classList.add('hidden');
+                    this.shadowRoot.getElementById('mainContent').classList.remove('hidden');
+                    this.renderTabContent('us');
+                } catch (e) { console.error(e); }
+            }
+
+            async loadGlobalFleetData() {
+                const rows = await loadFeather('https://cdn.jsdelivr.net/gh/ayeeff/aircombat@latest/data/global_merged.feather');
+                this.fleetData = {};
+                rows.forEach(row => {
+                    const code = this.filenameToCodeMap[row.country] || row.country;
+                    if(!this.fleetData[code]) this.fleetData[code] = [];
+                    if(row.Aircraft && row['In Service']) this.fleetData[code].push(row);
+                });
+            }
+
+            renderTabContent(cc) {
+                const calcData=this.calcsData[cc]||{};
+                const aircraft=this.fleetData[cc]||[];
+                
+                const subsystemHTML=Object.keys(this.subsystemLabels).map(key=>{
+                    const info=this.subsystemLabels[key];
+                    return `<div class="p-3 bg-gradient-to-br from-slate-700/40 to-slate-800/40 rounded-lg border border-slate-600/30"><div class="text-xs text-${info.color}-400 font-semibold mb-1">${key}. ${info.name}</div><div class="text-2xl font-black orbitron text-white">${parseInt(calcData[key])||0}</div></div>`;
+                }).join('');
+
+                const content = `
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold text-white orbitron mb-4">Detailed Fleet Analysis</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 mb-6">${subsystemHTML}</div>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    ${aircraft.map(ac => {
+                        const style = ac.Manned === 'Yes' ? 'manned-card' : 'unmanned-card';
+                        const products = (ac['Associated products']||'').split(',').filter(x=>x.trim()).map(p=>`<span class="product-button" onclick="window.dashboardInstance.showProductModal('${p.trim()}')">${p.trim()}</span>`).join('');
+                        const company = `<span class="company-button" onclick="window.dashboardInstance.showCompanyModal('${ac.Company}')">${ac.Company}</span>`;
+                        const airports = (ac['Airport']||'').split(',').filter(x=>x.trim()).map(a=>`<span class="airport-button" onclick="window.dashboardInstance.showAirportModal('${a.trim()}')">${a.trim()}</span>`).join('');
+                        
+                        return `<div class="aircraft-card ${style} p-4 rounded-xl flex flex-col md:flex-row gap-4">
+                            <img src="${ac.Photo}" class="w-full md:w-48 h-32 object-cover rounded bg-black/50" onerror="this.style.display='none'">
+                            <div class="flex-1">
+                                <div class="flex justify-between">
+                                    <h3 class="text-xl font-bold text-white">${ac.Aircraft}</h3>
+                                    <span class="bg-white/10 px-2 rounded text-white font-bold">${ac['In Service']} Units</span>
+                                </div>
+                                <div class="text-sm text-blue-300 mt-1 mb-2">${ac['BVR kill chain'] || 'No Data'}</div>
+                                <div class="flex flex-wrap gap-2 items-center mt-2">
+                                    <span class="text-xs text-slate-500">Mfr:</span> ${company}
+                                    <span class="text-xs text-slate-500 ml-2">Base:</span> ${airports}
+                                </div>
+                                <div class="mt-2">${products}</div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+                
+                this.shadowRoot.getElementById('tabContent').innerHTML = content;
+            }
+        }
+        customElements.define('combat-dashboard', CombatDashboard);
+    </script>
+</body>
+</html>
