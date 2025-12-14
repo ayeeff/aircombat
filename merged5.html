@@ -53,12 +53,12 @@
         /* Badges */
         .core-badge { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(59,130,246,0.4); color: #60a5fa; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; margin-right: 4px; margin-bottom: 4px; cursor: pointer; }
         
-        /* Updated Trade Badge Style */
-        .trade-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; font-family: 'Orbitron', sans-serif; display: inline-flex; align-items: center; gap: 6px; margin-right: 4px; margin-bottom: 4px; cursor: pointer; transition: all 0.2s ease; }
-        .trade-badge:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); transform: scale(1.05); }
+        /* Trade Badge - Bigger Flags */
+        .trade-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; font-family: 'Orbitron', sans-serif; display: inline-flex; align-items: center; gap: 8px; margin-right: 6px; margin-bottom: 6px; cursor: pointer; transition: all 0.2s ease; }
+        .trade-badge:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); transform: scale(1.05); box-shadow: 0 0 10px rgba(255,255,255,0.1); }
 
         /* Multi Vendor Penalty */
-        .multi-vendor-penalty { background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; animation: pulse 2s infinite; display: inline-flex; align-items: center; margin-top: 4px; } 
+        .multi-vendor-penalty { background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; animation: pulse 2s infinite; display: inline-flex; align-items: center; margin-top: 4px; margin-left: 4px; } 
         .multi-vendor-penalty:hover { background: linear-gradient(135deg, rgba(239,68,68,0.4), rgba(220,38,38,0.3)); border-color: #ef4444; transform: scale(1.05); } 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
         
@@ -122,7 +122,7 @@
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs text-cyan-400 font-bold uppercase">Core System</span>
                     </div>
-                    <div id="lpCore" class="flex flex-wrap gap-1"></div>
+                    <div id="lpCore" class="flex flex-wrap gap-1 items-center"></div>
                 </div>
 
                 <div class="mb-4">
@@ -328,7 +328,11 @@
                 initGlobe();
                 
                 document.getElementById('loadingOverlay').style.opacity='0';
-                setTimeout(()=>document.getElementById('loadingOverlay').remove(),1000)
+                setTimeout(()=>document.getElementById('loadingOverlay').remove(),1000);
+                
+                // Set Default Country to US onload
+                window.selectCountry('us');
+                
             }catch(err){
                 console.error("Critical Init Error:",err);
                 alert("Failed to load data.")
@@ -406,6 +410,8 @@
             world.polygonStrokeColor(world.polygonStrokeColor());
         }
         
+        window.highlightCountriesByCode = highlightCountriesByCode; // Expose to global scope for HTML badges
+
         window.clearHighlights = function() {
             highlightedGroup.clear();
             world.polygonCapColor(world.polygonCapColor()); 
@@ -439,12 +445,11 @@
 
             const coreRaw = data.Core || 'Unknown';
             const cores = coreRaw.split('-').filter(s=>s.trim());
-            // Updated Badges: Mouseover highlights, click opens modal only
-            let coreHtml = cores.map(c => `<span class="core-badge" onmouseover="window.highlightCore('${c.trim()}')" onmouseout="window.clearHighlights()" onclick="window.showCoreModal('${c.trim()}')">${c.trim()}</span>`).join('');
             
-            // --- Multi Vendor Penalty Logic ---
+            // Core System Badges + Multi-Vendor Penalty Check
+            let coreHtml = cores.map(c => `<span class="core-badge" onmouseover="window.highlightCore('${c.trim()}')" onmouseout="window.clearHighlights()" onclick="window.showCoreModal('${c.trim()}')">${c.trim()}</span>`).join('');
             if (cores.length >= 4) {
-                coreHtml += '<span class="multi-vendor-penalty">Multi Vendor Penalty</span>';
+                coreHtml += `<span class="multi-vendor-penalty">Multi Vendor Penalty</span>`;
             }
             document.getElementById('lpCore').innerHTML = coreHtml || '<span class="text-xs text-slate-500">No data</span>';
 
@@ -455,7 +460,7 @@
             const sells = data.Sell ? data.Sell.split('-').map(s=>s.trim()).filter(s=>s) : [];
             const buys = data.Buy ? data.Buy.split('-').map(s=>s.trim()).filter(s=>s) : [];
             
-            // --- Updated Trade Badge with Flag Sizing & Globe Highlight ---
+            // Updated Trade Badges with Globe Highlight and Bigger Flags
             const makeTradeBadge = (name) => {
                 const partner = countriesMeta.find(c => c.name.toLowerCase().includes(name.toLowerCase()));
                 if(partner) {
@@ -480,19 +485,20 @@
                 tradeSec.classList.add('hidden');
                 tradeSec.classList.remove('flex');
             }
-            
-            // --- New Supply Chain Mapping Logic ---
+
+            // Supply Chain Logic
             const getStatus = (val) => {
+                if (val === undefined || val === null || val === '') return 'N/A';
                 const v = parseInt(val);
                 if (v === 2) return 'Fully self-reliant';
                 if (v === 1) return 'Partially reliant';
-                return 'Import-reliant';
+                return 'Import-reliant'; // Default for 0 or NaN
             };
-            
-            document.getElementById('lpHull').innerText = getStatus(data['Hull & Airframe'] || 0);
-            document.getElementById('lpElec').innerText = getStatus(data['Electronics & Radar'] || 0);
-            document.getElementById('lpEng').innerText = getStatus(data['Engines & Transmission'] || 0);
-            document.getElementById('lpRaw').innerText = getStatus(data['Raw Materials'] || 0);
+
+            document.getElementById('lpHull').innerText = getStatus(data['Hull & Airframe']);
+            document.getElementById('lpElec').innerText = getStatus(data['Electronics & Radar']);
+            document.getElementById('lpEng').innerText = getStatus(data['Engines & Transmission']);
+            document.getElementById('lpRaw').innerText = getStatus(data['Raw Materials']);
 
             document.getElementById('lpTotalFleet').innerText = meta.fleetCount;
 
