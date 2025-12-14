@@ -52,7 +52,16 @@
         
         /* Badges */
         .core-badge { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(59,130,246,0.4); color: #60a5fa; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; margin-right: 4px; margin-bottom: 4px; cursor: pointer; }
-        .trade-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px; margin-bottom: 4px; cursor: pointer;}
+        
+        /* Updated Trade Badge Style */
+        .trade-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; font-family: 'Orbitron', sans-serif; display: inline-flex; align-items: center; gap: 6px; margin-right: 4px; margin-bottom: 4px; cursor: pointer; transition: all 0.2s ease; }
+        .trade-badge:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); transform: scale(1.05); }
+
+        /* Multi Vendor Penalty */
+        .multi-vendor-penalty { background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; animation: pulse 2s infinite; display: inline-flex; align-items: center; margin-top: 4px; } 
+        .multi-vendor-penalty:hover { background: linear-gradient(135deg, rgba(239,68,68,0.4), rgba(220,38,38,0.3)); border-color: #ef4444; transform: scale(1.05); } 
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        
         .metric-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px; border-radius: 6px; }
         
         /* Modal Styles */
@@ -98,7 +107,7 @@
 
         <div id="globeViz" class="w-full h-full bg-slate-900 cursor-move"></div>
         
-        <div id="leftPanel" class="absolute top-80 left-6 w-[24rem] max-h-[60vh] glass-panel rounded-xl p-0 z-40 flex flex-col transition-all duration-500 ease-out panel-hidden-left pointer-events-auto shadow-2xl overflow-hidden">
+        <div id="leftPanel" class="absolute top-80 left-6 w-[24rem] max-h-[75vh] glass-panel rounded-xl p-0 z-40 flex flex-col transition-all duration-500 ease-out panel-hidden-left pointer-events-auto shadow-2xl overflow-hidden">
             <div class="overflow-y-auto p-5 custom-scrollbar">
                 
                 <div class="flex items-center gap-4 mb-6 border-b border-white/10 pb-4">
@@ -113,7 +122,7 @@
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs text-cyan-400 font-bold uppercase">Core System</span>
                     </div>
-                    <div id="lpCore" class="flex flex-wrap"></div>
+                    <div id="lpCore" class="flex flex-wrap gap-1"></div>
                 </div>
 
                 <div class="mb-4">
@@ -135,13 +144,21 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="metric-box bg-red-900/10 border-red-500/20">
-                        <div class="text-[10px] text-red-400 font-semibold uppercase">BVR Range</div>
-                        <div id="lpBVR" class="text-lg font-bold text-white orbitron">0 km</div>
+                    <div class="metric-box bg-blue-900/10 border-blue-500/20">
+                        <div class="text-[10px] text-blue-400 font-semibold uppercase mb-1">Hull & Airframe</div>
+                        <div id="lpHull" class="text-xs font-bold text-white">Loading...</div>
                     </div>
                     <div class="metric-box bg-purple-900/10 border-purple-500/20">
-                        <div class="text-[10px] text-purple-400 font-semibold uppercase">AEW Range</div>
-                        <div id="lpAEW" class="text-lg font-bold text-white orbitron">0 km</div>
+                        <div class="text-[10px] text-purple-400 font-semibold uppercase mb-1">Electronics & Radar</div>
+                        <div id="lpElec" class="text-xs font-bold text-white">Loading...</div>
+                    </div>
+                    <div class="metric-box bg-yellow-900/10 border-yellow-500/20">
+                        <div class="text-[10px] text-yellow-400 font-semibold uppercase mb-1">Engines</div>
+                        <div id="lpEng" class="text-xs font-bold text-white">Loading...</div>
+                    </div>
+                    <div class="metric-box bg-red-900/10 border-red-500/20">
+                        <div class="text-[10px] text-red-400 font-semibold uppercase mb-1">Raw Materials</div>
+                        <div id="lpRaw" class="text-xs font-bold text-white">Loading...</div>
                     </div>
                 </div>
                 
@@ -423,7 +440,12 @@
             const coreRaw = data.Core || 'Unknown';
             const cores = coreRaw.split('-').filter(s=>s.trim());
             // Updated Badges: Mouseover highlights, click opens modal only
-            const coreHtml = cores.map(c => `<span class="core-badge" onmouseover="window.highlightCore('${c.trim()}')" onmouseout="window.clearHighlights()" onclick="window.showCoreModal('${c.trim()}')">${c.trim()}</span>`).join('');
+            let coreHtml = cores.map(c => `<span class="core-badge" onmouseover="window.highlightCore('${c.trim()}')" onmouseout="window.clearHighlights()" onclick="window.showCoreModal('${c.trim()}')">${c.trim()}</span>`).join('');
+            
+            // --- Multi Vendor Penalty Logic ---
+            if (cores.length >= 4) {
+                coreHtml += '<span class="multi-vendor-penalty">Multi Vendor Penalty</span>';
+            }
             document.getElementById('lpCore').innerHTML = coreHtml || '<span class="text-xs text-slate-500">No data</span>';
 
             const guide = data.Guidance || 'Unknown';
@@ -433,10 +455,11 @@
             const sells = data.Sell ? data.Sell.split('-').map(s=>s.trim()).filter(s=>s) : [];
             const buys = data.Buy ? data.Buy.split('-').map(s=>s.trim()).filter(s=>s) : [];
             
+            // --- Updated Trade Badge with Flag Sizing & Globe Highlight ---
             const makeTradeBadge = (name) => {
                 const partner = countriesMeta.find(c => c.name.toLowerCase().includes(name.toLowerCase()));
                 if(partner) {
-                    return `<span class="trade-badge hover:bg-white/10" onclick="window.selectCountry('${partner.code}')"><img src="${partner.flag}" class="w-3 h-2 rounded-sm"> ${partner.code.toUpperCase()}</span>`;
+                    return `<span class="trade-badge hover:bg-white/10" onclick="window.selectCountry('${partner.code}')" onmouseover="window.highlightCountriesByCode(['${partner.code}'])" onmouseout="window.clearHighlights()"><img src="${partner.flag}" class="w-5 h-3.5 rounded-sm"> ${partner.code.toUpperCase()}</span>`;
                 }
                 return `<span class="trade-badge">${name}</span>`;
             };
@@ -457,9 +480,20 @@
                 tradeSec.classList.add('hidden');
                 tradeSec.classList.remove('flex');
             }
+            
+            // --- New Supply Chain Mapping Logic ---
+            const getStatus = (val) => {
+                const v = parseInt(val);
+                if (v === 2) return 'Fully self-reliant';
+                if (v === 1) return 'Partially reliant';
+                return 'Import-reliant';
+            };
+            
+            document.getElementById('lpHull').innerText = getStatus(data['Hull & Airframe'] || 0);
+            document.getElementById('lpElec').innerText = getStatus(data['Electronics & Radar'] || 0);
+            document.getElementById('lpEng').innerText = getStatus(data['Engines & Transmission'] || 0);
+            document.getElementById('lpRaw').innerText = getStatus(data['Raw Materials'] || 0);
 
-            document.getElementById('lpBVR').innerText = (data.BVR || 'N/A') + '';
-            document.getElementById('lpAEW').innerText = (data.AEW || 'N/A') + '';
             document.getElementById('lpTotalFleet').innerText = meta.fleetCount;
 
             const productSet = new Set();
