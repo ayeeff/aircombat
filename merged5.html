@@ -52,13 +52,9 @@
         
         /* Badges */
         .core-badge { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(59,130,246,0.4); color: #60a5fa; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; margin-right: 4px; margin-bottom: 4px; cursor: pointer; }
-        .trade-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px; margin-bottom: 4px; cursor: pointer; transition: all 0.2s ease; }
+        .trade-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 2px 6px; border-radius: 4px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px; margin-bottom: 4px; cursor: pointer;}
         .metric-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px; border-radius: 6px; }
         
-        /* Multi Vendor Penalty */
-        .multi-vendor-penalty { background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2)); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; animation: pulse 2s infinite; display: inline-flex; align-items: center; margin-left: 2px; margin-bottom: 4px; } 
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-
         /* Modal Styles */
         #coreModal, #productModal, #companyModal, #airportModal { opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
         #coreModal.show, #productModal.show, #companyModal.show, #airportModal.show { opacity: 1; pointer-events: auto; }
@@ -117,7 +113,7 @@
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs text-cyan-400 font-bold uppercase">Core System</span>
                     </div>
-                    <div id="lpCore" class="flex flex-wrap items-center"></div>
+                    <div id="lpCore" class="flex flex-wrap"></div>
                 </div>
 
                 <div class="mb-4">
@@ -130,11 +126,11 @@
                 <div id="lpTradeSection" class="hidden flex-col gap-3 mb-4 p-3 bg-white/5 rounded-lg border border-white/5">
                     <div id="lpSellsGroup" class="hidden">
                         <span class="text-[10px] text-green-400 font-bold uppercase mb-1 block">Exports To:</span>
-                        <div id="lpSells" class="flex flex-wrap gap-1"></div>
+                        <div id="lpSells" class="flex flex-wrap"></div>
                     </div>
                     <div id="lpBuysGroup" class="hidden">
                         <span class="text-[10px] text-orange-400 font-bold uppercase mb-1 block">Imports From:</span>
-                        <div id="lpBuys" class="flex flex-wrap gap-1"></div>
+                        <div id="lpBuys" class="flex flex-wrap"></div>
                     </div>
                 </div>
 
@@ -398,9 +394,6 @@
             world.polygonCapColor(world.polygonCapColor()); 
             world.polygonStrokeColor(world.polygonStrokeColor());
         }
-        
-        // Explicitly exposing for trade badge usage
-        window.highlightCountriesByCode = highlightCountriesByCode;
 
         window.highlightCore = function(system) {
             const matchingCountries = countriesMeta.filter(c => {
@@ -430,13 +423,7 @@
             const coreRaw = data.Core || 'Unknown';
             const cores = coreRaw.split('-').filter(s=>s.trim());
             // Updated Badges: Mouseover highlights, click opens modal only
-            let coreHtml = cores.map(c => `<span class="core-badge" onmouseover="window.highlightCore('${c.trim()}')" onmouseout="window.clearHighlights()" onclick="window.showCoreModal('${c.trim()}')">${c.trim()}</span>`).join('');
-            
-            // Multi Vendor Penalty Logic
-            if(cores.length >= 4) {
-                coreHtml += `<span class="multi-vendor-penalty">Multi Vendor Penalty</span>`;
-            }
-            
+            const coreHtml = cores.map(c => `<span class="core-badge" onmouseover="window.highlightCore('${c.trim()}')" onmouseout="window.clearHighlights()" onclick="window.showCoreModal('${c.trim()}')">${c.trim()}</span>`).join('');
             document.getElementById('lpCore').innerHTML = coreHtml || '<span class="text-xs text-slate-500">No data</span>';
 
             const guide = data.Guidance || 'Unknown';
@@ -449,7 +436,7 @@
             const makeTradeBadge = (name) => {
                 const partner = countriesMeta.find(c => c.name.toLowerCase().includes(name.toLowerCase()));
                 if(partner) {
-                    return `<span class="trade-badge hover:bg-white/10" onclick="window.selectCountry('${partner.code}')" onmouseover="window.highlightCountriesByCode(['${partner.code}'])" onmouseout="window.clearHighlights()"><img src="${partner.flag}" class="w-5 h-3.5 inline-block mr-1 rounded"> ${partner.code.toUpperCase()}</span>`;
+                    return `<span class="trade-badge hover:bg-white/10" onclick="window.selectCountry('${partner.code}')"><img src="${partner.flag}" class="w-3 h-2 rounded-sm"> ${partner.code.toUpperCase()}</span>`;
                 }
                 return `<span class="trade-badge">${name}</span>`;
             };
