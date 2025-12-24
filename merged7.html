@@ -87,8 +87,9 @@
         
         /* Jet Marker Styles */
         .jet-marker-container { display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; text-align: center; }
-        .jet-icon { filter: drop-shadow(0 0 5px rgba(0,255,255,0.8)); }
-        .jet-count { color: #22d3ee; font-family: 'Orbitron', sans-serif; font-weight: 900; text-shadow: 0 2px 4px rgba(0,0,0,0.8); background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; margin-top: -5px; border: 1px solid rgba(34,211,238,0.3); }
+        .jet-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(2px); }
+        .jet-icon { filter: drop-shadow(0 0 2px rgba(34, 211, 238, 0.6)); width: 12px; height: 12px; }
+        .jet-count { color: #22d3ee; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 14px; text-shadow: 0 2px 4px rgba(0,0,0,1); background: rgba(15, 23, 42, 0.8); padding: 2px 8px; border-radius: 4px; margin-bottom: 4px; border: 1px solid rgba(34,211,238,0.4); box-shadow: 0 0 10px rgba(34,211,238,0.2); }
     </style>
 </head>
 <body class="text-slate-200">
@@ -381,14 +382,14 @@
                         
                         // --- Choropleth Logic based on Lethality Index (LI) ---
                         // Top 3 get distinct, high-contrast colors
-                        if(meta.rank === 1) return 'rgba(239, 68, 68, 0.8)';   // Red-500
-                        if(meta.rank === 2) return 'rgba(245, 158, 11, 0.8)';  // Amber-500
-                        if(meta.rank === 3) return 'rgba(6, 182, 212, 0.8)';   // Cyan-500
+                        if(meta.rank === 1) return 'rgba(255, 215, 0, 0.9)';   // Gold
+                        if(meta.rank === 2) return 'rgba(229, 228, 226, 0.95)';  // Platinum (Shiny/White)
+                        if(meta.rank === 3) return 'rgba(169, 169, 169, 0.9)';   // Silver (Dull)
                         
                         // Ranks 4-20 get a subtle blue gradient based on LI
                         // LI typically ranges from ~50 to 90 for these ranks
                         const li = meta.li || 0;
-                        const opacity = 0.15 + (li / 150); // Maps 0-100 to approx 0.15 - 0.8
+                        const opacity = 0.2 + (li / 200); // Maps range to approx 0.2 - 0.7
                         return `rgba(59, 130, 246, ${opacity})`; // Blue-500 with variable opacity
                     }
                     return 'rgba(20, 20, 30, 0.1)';
@@ -407,17 +408,22 @@
                 .polygonLabel(({properties:d})=>`<div class="bg-slate-900/80 backdrop-blur px-2 py-1 rounded text-xs text-white border border-white/10">${d.NAME}</div>`)
                 .htmlElementsData(countriesMeta) // Add Fleet Data Layer
                 .htmlElement(d => {
-                    const size = Math.log(d.fleetCount || 1) * 4 + 10; // Logarithmic scale for icon size
+                    // Logic: 1 icon per 250 jets
+                    const iconCount = Math.max(1, Math.round((d.fleetCount || 0) / 250));
+                    
                     // Jet Fighter SVG Icon
-                    const svg = `<svg viewBox="0 0 24 24" fill="#22d3ee" width="${size}px" height="${size}px" class="jet-icon">
-                        <path d="M21,16V14L13,9V3.5A1.5,1.5 0 0,0 11.5,2A1.5,1.5 0 0,0 10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5L21,16Z"/>
-                    </svg>`;
+                    const svgIcon = `<svg viewBox="0 0 24 24" fill="#22d3ee" width="12px" height="12px" class="jet-icon"><path d="M21,16V14L13,9V3.5A1.5,1.5 0 0,0 11.5,2A1.5,1.5 0 0,0 10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5L21,16Z"/></svg>`;
+                    
+                    let iconsHtml = '';
+                    for(let i=0; i<iconCount; i++) {
+                        iconsHtml += svgIcon;
+                    }
                     
                     const el = document.createElement('div');
                     el.className = 'jet-marker-container';
                     el.innerHTML = `
-                        ${svg}
                         <div class="jet-count">${d.fleetCount}</div>
+                        <div class="jet-grid">${iconsHtml}</div>
                     `;
                     return el;
                 })
