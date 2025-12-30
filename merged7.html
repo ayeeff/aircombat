@@ -324,9 +324,15 @@
                 const compRows=await loadFeather(FEATHER_URL_COMP);
                 compRows.forEach(row=>{if(row.Company) companiesData[row.Company.trim()]=row});
                 
+                // Calculate Total Fleet (Strictly where Manned == 'Yes')
                 countriesMeta.forEach(c=>{
                     c.li=parseFloat(calcsData[c.code]?.LI||0);
-                    c.fleetCount=fleetData[c.code]?.reduce((sum,r)=>sum+(parseInt(r['In Service'])||0),0)||0
+                    c.fleetCount=fleetData[c.code]?.reduce((sum,r)=>{
+                        if(r.Manned === 'Yes') {
+                             return sum+(parseInt(r['In Service'])||0);
+                        }
+                        return sum;
+                    },0)||0
                 });
                 
                 countriesMeta.sort((a,b)=>b.li-a.li);
@@ -921,7 +927,12 @@
                     if (ac.Aircraft && ac.Type && ac['In Service']) {
                         const type = ac.Type;
                         const inService = parseInt(ac['In Service']) || 0;
-                        totalInService += inService;
+                        
+                        // STRICTLY FILTER 'TOTAL' FOR MANNED ONLY
+                        if (ac.Manned === 'Yes') {
+                            totalInService += inService;
+                        }
+
                         if (!typeMap[type]) { typeMap[type] = { versions: [], total: 0 }; }
                         typeMap[type].versions.push(ac.Versions || 'N/A');
                         typeMap[type].total += inService;
